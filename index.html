@@ -120,6 +120,24 @@
   label.chk{display:flex;align-items:center;gap:9px;font-size:14.5px;color:var(--text);margin-top:13px;font-weight:600;cursor:pointer}
   label.chk input{width:18px;height:18px;accent-color:var(--mag)}
   .regfoot{text-align:center;color:var(--blue);font-weight:700;margin-top:16px;cursor:pointer;font-size:14px}
+  .page select{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:15px;font-family:inherit;color:var(--text);background:var(--card);-webkit-appearance:none;appearance:none}
+  .page select:focus{outline:none;border-color:var(--mag)}
+  .fsec{font-size:13px;font-weight:800;color:var(--mag);margin:20px 0 4px;text-transform:uppercase;letter-spacing:.4px}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+  .chip{white-space:nowrap;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .chip.on{background:var(--mag);color:#fff;border-color:var(--mag)}
+  .vcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:11px}
+  .vtop{display:flex;gap:12px}
+  .vlogo{width:46px;height:46px;border-radius:12px;background:#faf2f6;color:var(--mag);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+  .vname{font-size:16px;font-weight:700}.vcat{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .vbadges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .vb{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+  .vb svg{font-size:13px}
+  .vb.ap{background:#e3f6ee;color:#0f7a52}.vb.pt{background:#eef0ff;color:#4a44b8}.vb.nw{background:#fff0e0;color:#b5700d}.vb.geo{background:var(--bg);color:var(--muted)}
+  .vbot{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
+  .vstat{font-size:12px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:4px}.vstat svg{font-size:15px;color:var(--mag)}
+  .btn2{margin-left:auto;background:var(--mag);color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer}
+  .btn2:active{transform:scale(.98)}
   .tag1{font-size:14px;font-weight:700;color:var(--mag);margin-top:8px}
   .tag2{font-size:13px;color:var(--muted);margin-top:1px}
   .gate{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 22px;text-align:center;position:relative}
@@ -208,7 +226,8 @@ const IC={
   cart:'<circle cx="9.5" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2.2l2.4 12h10L20 8H6.2"/>',
   briefcase:'<rect x="3" y="7.5" width="18" height="11.5" rx="2.2"/><path d="M9 7.5v-2A2 2 0 0 1 11 3.5h2a2 2 0 0 1 2 2v2M3 12.5h18"/>',
   star:'<path d="M12 3.2l2.7 5.8 6.3.8-4.7 4.2 1.3 6.2L12 17.6 6.1 20.2l1.3-6.2L2.7 9.8l6.3-.8z" fill="currentColor" stroke="none"/>',
-  check:'<path d="M5 13l4 4L19 7"/>'
+  check:'<path d="M5 13l4 4L19 7"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>'
 };
 function ic(n){return `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[n]||''}</svg>`;}
 
@@ -416,19 +435,131 @@ function live(){
     ${MATCHES.map((m,i)=>`<div class="lmatch" style="min-width:auto;margin-bottom:10px" onclick="openURL('${i===2?'https://sport.vbet.am/en/sports/pre-match/event-view/Soccer/World/2969/world-cup/30235556/spain-belgium':'https://sport.vbet.am/en/sports/live/event-view/Soccer/World/573/club-friendlies/30257052/fc-zlin-fk-dukla-banska-bystrica'}')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}
     <button class="btn" onclick="openURL('https://sport.vbet.am/en/sports/live/list')">${t('openAllLive')} ${ic('external')}</button></div>`;
 }
+const MKT_CATS=['Все','Игры','Платёжки','Аффилейты','Лицензии','Платформы'];
+let mktCat='Все';
+const VENDORS=[
+  ['SoftGaming','Игры','Casino Suite · 5000+ слотов','approved',1240,96,'LATAM · EU'],
+  ['CoinsPaid','Платёжки','Crypto gateway · USDT/BTC','approved',980,91,'Global'],
+  ['AdsCompass','Аффилейты','CPA-сеть · LATAM трафик','partner',430,88,'LATAM'],
+  ['Curanet','Лицензии','Curaçao сопровождение','partner',310,84,'Global'],
+  ['NovaSpin','Игры','Crash & instant games','new',120,72,'EU · Азия'],
+  ['TrafficLab','Аффилейты','Трафик Tier-2','new',95,68,'CIS']
+];
+function badgeHTML(b){
+  if(b==='approved')return `<span class="vb ap">${ic('check')} Approved by BetConstruct</span>`;
+  if(b==='partner')return `<span class="vb pt">${ic('star')} Partner by BetConstruct</span>`;
+  return `<span class="vb nw">${ic('sparkles')} New</span>`;
+}
+function vendorCard(v){
+  return `<div class="vcard"><div class="vtop"><div class="vlogo">${ic('building')}</div>
+    <div class="vmain"><div class="vname">${v[0]}</div><div class="vcat">${v[1]} · ${v[2]}</div>
+      <div class="vbadges">${badgeHTML(v[3])}<span class="vb geo">${ic('pin')} ${v[6]}</span></div></div></div>
+    <div class="vbot"><span class="vstat">${ic('target')} match ${v[5]}%</span><span class="vstat">${ic('chart')} ${v[4]} показов</span>
+      <button class="btn2" onclick="toast('Запрос демо → менеджеру')">Запросить демо</button></div></div>`;
+}
 function market(){
-  const cats=[['gamepad','catGames'],['card','catPay'],['megaphone','catAff'],['badge','catLic']];
-  const vendors=[['SoftGaming','catGames',1],['CoinsPaid','catPay',1],['AdsCompass','catAff',1],['TrafficLab','catAff',0]];
+  const list=VENDORS.filter(v=>mktCat==='Все'||v[1]===mktCat);
   return header()+`<div class="page"><h2>${ic('store')} Marketplace</h2><p class="sub">${t('mktSub')}</p>
-    <div class="list2" style="padding:0;margin-bottom:14px">
-      <div class="lcard" onclick="go('products')">${ic('cart')} ${t('mktBuy')}</div>
-      <div class="lcard" onclick="go('register')">${ic('briefcase')} ${t('mktProvide')}</div>
+    <div class="list2" style="padding:0;margin-bottom:13px">
+      <div class="lcard" onclick="go('partner')">${ic('plus')} Разместить продукт</div>
+      <div class="lcard" onclick="go('affiliate')">${ic('megaphone')} Аффилейт / Маркетинг</div>
     </div>
-    <div class="h2" style="margin:6px 0 10px"><span class="lft">${t('mktCats')}</span></div>
-    <div class="qa" style="padding:0">${cats.map(c=>`<div class="qtile" onclick="toast(t('${c[1]}'))">${ic(c[0])}<p>${t(c[1])}</p></div>`).join('')}</div>
-    <div class="h2" style="margin:18px 0 10px"><span class="lft">${t('mktFeatured')}</span></div>
-    ${vendors.map(v=>`<div class="pcat"><div class="hd"><span class="l">${ic('building')} ${v[0]}<span style="color:var(--muted);font-weight:400;font-size:13px;margin-left:6px">· ${t(v[1])}</span></span><span class="more">${v[2]?ic('star')+' Approved':t('checked')||'на проверке'}</span></div></div>`).join('')}
+    <div class="chips">${MKT_CATS.map(c=>`<span class="chip ${mktCat===c?'on':''}" onclick="setMktCat('${c}')">${c}</span>`).join('')}</div>
+    ${list.map(vendorCard).join('')||'<p class="sub">Пусто в этой категории</p>'}
   </div>`;
+}
+function setMktCat(c){mktCat=c;render('market');}
+
+/* ----- Форма «Стать партнёром» ----- */
+function pf(l,id,ph,type){return `<label>${l}</label><input id="pf_${id}" type="${type||'text'}" placeholder="${ph||''}" autocomplete="off">`;}
+function pfa(l,id,ph){return `<label>${l}</label><textarea id="pf_${id}" rows="2" placeholder="${ph||''}"></textarea>`;}
+function pfs(l,id,opts){return `<label>${l}</label><select id="pf_${id}">${opts.map(o=>`<option>${o}</option>`).join('')}</select>`;}
+function pfc(l,id){return `<label class="chk"><input type="checkbox" id="pf_${id}"> ${l}</label>`;}
+function partner(){
+  return header()+`<div class="page"><div class="back" onclick="go('market')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('briefcase')} Стать партнёром</h2>
+    <p class="sub">Разместите продукт или игру на BetConstructAI. После модерации он появится в Marketplace и в AI-рекомендациях оператору.</p>
+    <div class="fsec">1 · Юридические данные (KYB)</div>
+    ${pf('Юр. название компании','company','ООО «...» / Ltd')}
+    ${pf('Страна регистрации','country')}
+    ${pf('Рег. номер / VAT','reg')}
+    ${pf('Контактное лицо','person')}
+    ${pf('Email','email','name@company.com','email')}
+    ${pf('Телефон / Telegram','phone')}
+    ${pf('Сайт','site','https://')}
+    ${pfa('Лицензии и сертификаты','lic','Номера, юрисдикции (Curaçao, MGA, RNG-лаборатории…)')}
+    <div class="fsec">2 · Продукт / игра</div>
+    ${pfs('Тип','ptype',['Игра','Платёжная система','Платформа','Инструмент / Софт','Лицензионный сервис','Маркетинг / Affiliate'])}
+    ${pf('Название продукта','pname')}
+    ${pf('Категория','pcat','Слот / Live / Crash / Crypto gateway / CRM…')}
+    ${pfa('Краткое описание','pdesc')}
+    ${pfa('Чем полезен (ценность)','pvalue','Какую задачу решает для оператора')}
+    ${pfa('Ключевые фичи','pfeat')}
+    ${pf('Демо-ссылка','pdemo','https://')}
+    <div class="fsec">3 · Регионы и условия</div>
+    ${pfa('Разрешённые регионы / юрисдикции','pregions','LATAM, EU, Африка…')}
+    ${pf('Запрещённые рынки','pforbidden','US, UK…')}
+    ${pf('Языки','plang','EN, ES, RU…')}
+    ${pf('Валюты','pcur','EUR, USD, USDT, BTC…')}
+    ${pfc('Поддержка крипто (USDT/BTC)','pcrypto')}
+    ${pfa('Комплаенс / возрастные условия','pcompliance')}
+    <div class="fsec">4 · Коммерческое</div>
+    ${pfs('Модель монетизации','pmodel',['RevShare','CPA','Fixed fee','License','Hybrid'])}
+    ${pf('Ценовой ориентир','pprice','от €… / % …')}
+    ${pf('% платформе BetConstructAI','pshare','напр. 10%')}
+    ${pfc('Готов к KYB-проверке','pkyb')}
+    <div class="fsec">5 · AI-теги (для рекомендаций советника)</div>
+    ${pf('Вертикаль','tvert','Казино / Спорт / Платежи / Маркетинг')}
+    ${pf('Гео-фокус','tgeo')}
+    ${pfs('Сегмент клиента','tseg',['SMB','Mid-market','Enterprise'])}
+    <div class="disc">${ic('shield')} После отправки заявка попадает в админ-панель на модерацию. Проверенным партнёрам админ ставит бейдж «Approved by BetConstruct» или «Partner by BetConstruct».</div>
+    <button class="btn" onclick="submitPartner()">${ic('check')} Отправить на модерацию</button></div>`;
+}
+function affiliate(){
+  return header()+`<div class="page"><div class="back" onclick="go('market')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('megaphone')} Аффилейт / Маркетинг</h2>
+    <p class="sub">Зарегистрируйтесь как аффилейт или маркетинг-агентство и предлагайте операторам услуги продвижения. После модерации — листинг в Marketplace.</p>
+    <div class="fsec">1 · Кто вы</div>
+    ${pf('Компания / название команды','afcompany')}
+    ${pfs('Тип','aftype',['Affiliate-сеть','Трафик-команда','Маркетинг-агентство','Инфлюенсер / Стример'])}
+    ${pf('Контактное лицо','afperson')}
+    ${pf('Email','afemail','name@company.com','email')}
+    ${pf('Телефон / Telegram','afphone')}
+    ${pf('Сайт / портфолио','afsite','https://')}
+    <div class="fsec">2 · Услуги</div>
+    ${pfs('Модель','afmodel',['CPA','RevShare','Hybrid','Fixed fee'])}
+    ${pf('Гео-фокус','afgeo','LATAM, EU, CIS…')}
+    ${pf('Вертикали','afvert','Казино / Спорт / Крипто')}
+    ${pfa('Источники трафика','aftraffic','SEO, PPC, Social, ASO, Email, стримеры…')}
+    ${pf('Объёмы в месяц','afvol','напр. 5 000 FTD / 200k кликов')}
+    ${pfa('Кейсы и метрики','afcases','ROI, EPC, конверсия, примеры проектов')}
+    <div class="fsec">3 · Условия</div>
+    ${pf('Минимальные условия','afmin','мин. депозит, гарантии…')}
+    ${pfc('Готов к проверке (KYB)','afkyb')}
+    <div class="disc">${ic('shield')} Заявка попадает в админ-панель на модерацию. Проверенным — бейдж «Approved / Partner by BetConstruct».</div>
+    <button class="btn" onclick="submitAff()">${ic('check')} Отправить на модерацию</button></div>`;
+}
+function submitAff(){
+  const c=(document.getElementById('pf_afcompany')||{}).value||'';
+  const e=(document.getElementById('pf_afemail')||{}).value||'';
+  if(!c.trim()){toast('Укажите компанию/команду');return;}
+  if(!e.trim()){toast('Укажите email');return;}
+  $('#scroll').innerHTML=header()+`<div class="page">
+    <div class="rec"><div class="row">${ic('check')}<div><b>${c}</b><br>Заявка на аффилейт/маркетинг отправлена в админ-панель.</div></div>
+      <div class="row">${ic('shield')}<div>Статус: <b>на проверке (KYB)</b>. После одобрения — листинг и бейдж в Marketplace.</div></div></div>
+    <button class="btn" onclick="go('market')">${ic('store')} В Marketplace</button></div>`;
+  $('#scroll').scrollTop=0;
+}
+function submitPartner(){
+  const c=(document.getElementById('pf_company')||{}).value||'';
+  const e=(document.getElementById('pf_email')||{}).value||'';
+  if(!c.trim()){toast('Укажите компанию');return;}
+  if(!e.trim()){toast('Укажите email');return;}
+  $('#scroll').innerHTML=header()+`<div class="page">
+    <div class="rec"><div class="row">${ic('check')}<div><b>${c}</b><br>Заявка отправлена в админ-панель на модерацию.</div></div>
+      <div class="row">${ic('shield')}<div>Статус: <b>на проверке (KYB)</b>. После одобрения — бейдж «Approved / Partner by BetConstruct» и листинг в Marketplace.</div></div></div>
+    <button class="btn" onclick="go('market')">${ic('store')} В Marketplace</button></div>`;
+  $('#scroll').scrollTop=0;
 }
 function partners(){
   return header()+`<div class="page"><h2>${ic('users')} ${t('nav')[3]}</h2><p class="sub">${t('partnersSub')}</p>
@@ -509,7 +640,7 @@ function submitEntry(){
   render('home');
 }
 
-const PAGES={home,products,live,market,partners,more,register};
+const PAGES={home,products,live,market,partner,affiliate,partners,more,register};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
   if(pg==='entry'){$('#nav').style.display='none';$('#scroll').innerHTML=entry();$('#scroll').scrollTop=0;return;}
