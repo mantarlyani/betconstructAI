@@ -76,15 +76,47 @@
 <div class="top">
   <div class="wm"><span class="b">Bet</span>Construct<span class="a">AI</span></div>
   <span class="chip-admin">ADMIN</span>
-  <div class="who"><span>Администратор · <b>Илья</b></span></div>
+  <div class="who"><span>Персонал</span><button class="btn sec sm" onclick="logout()">Выйти</button></div>
 </div>
 <div class="tabs" id="tabs"></div>
 <main id="main"></main>
 <div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $=s=>document.querySelector(s);
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2200);}
 function now(){return new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+/* ---------- Supabase + auth ---------- */
+const SB_URL='https://smddtvaewmmpuyvtuscb.supabase.co';
+const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
+const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
+const STAFF_ROLES=['sales','lawyer','moderator','marketing','finance','admin'];
+let profileRole=null;
+function kindLabel(k){return ({game:'Игра',payment:'Платёжная система',platform:'Платформа',tool:'Инструмент',license:'Лицензия',affiliate:'Аффилейт',marketing:'Маркетинг'})[k]||k;}
+async function getRole(){const u=(await db.auth.getUser()).data.user;if(!u)return null;const {data}=await db.from('profiles').select('role').eq('id',u.id).single();return data?data.role:null;}
+async function loadApps(){if(!db)return;const {data,error}=await db.from('applications').select('*').order('created_at',{ascending:false});if(error){toast('Чтение заявок: '+error.message);return;}if(data){apps=data.map(a=>({id:a.id,name:a.company,type:kindLabel(a.kind),cat:a.category||a.product_name||'',contact:a.email,regions:a.regions||'',desc:a.description||a.value_prop||'',status:a.status}));render();}}
+function renderLogin(){
+  document.querySelector('.tabs').style.display='none';
+  $('#main').innerHTML=`<div style="max-width:360px;margin:60px auto"><div class="card"><h3>${ic('shield')} Вход для персонала</h3>
+    <label>Email</label><input id="lg_email" type="email" value="mantarlyan.ilya@sofconstruct.com">
+    <label>Пароль</label><input id="lg_pass" type="password" placeholder="введите пароль" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn" style="margin-top:14px" onclick="doLogin()">Войти</button>
+    <p class="sub" style="margin-top:12px">Доступ только для сотрудников (sales / юрист / модератор / админ).</p></div></div>`;
+}
+async function doLogin(){const e=($('#lg_email')||{}).value||'';const p=($('#lg_pass')||{}).value||'';
+  const {error}=await db.auth.signInWithPassword({email:e,password:p});
+  if(error){toast('Ошибка входа: '+error.message);return;}
+  const r=await getRole();if(!STAFF_ROLES.includes(r)){toast('Нет доступа: не сотрудник');await db.auth.signOut();return;}
+  profileRole=r;startApp();
+}
+async function logout(){if(db)await db.auth.signOut();location.reload();}
+function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();if(cur==='mod')loadApps();}
+async function boot(){
+  if(!db){startApp();return;}
+  const {data:{session}}=await db.auth.getSession();
+  if(session){const r=await getRole();if(STAFF_ROLES.includes(r)){profileRole=r;startApp();return;}}
+  renderLogin();
+}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
   shield:'<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
@@ -147,7 +179,7 @@ let idxToggles={quick:true,live:true,promo:true,sections:true};
 const TABS=[['dash','Дашборд','dash'],['mod','Модерация','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['chat','Чат','megaphone'],['crm','CRM','crm'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();}
+function go(t){cur=t;renderTabs();render();if(t==='mod')loadApps();}
 
 /* ---------- VIEWS ---------- */
 function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
@@ -182,15 +214,18 @@ function appCard(a){
     :a.status==='partner'?`<span class="st pt">${ic('star')} Partner by BetConstruct</span>`
     :`<span class="st rej">${ic('x')} Отклонён</span>`;
   const actions=a.status==='pending'?`<div class="row" style="margin-top:11px">
-      <button class="btn g sm" onclick="setStatus(${a.id},'approved')">${ic('check')} Approved</button>
-      <button class="btn b sm" onclick="setStatus(${a.id},'partner')">${ic('star')} Partner</button>
-      <button class="btn r sm" onclick="setStatus(${a.id},'rejected')">${ic('x')} Отклонить</button></div>`
-    :`<div class="row" style="margin-top:11px"><button class="btn sec sm" onclick="setStatus(${a.id},'pending')">Вернуть на проверку</button></div>`;
+      <button class="btn g sm" onclick="setStatus('${a.id}','approved')">${ic('check')} Approved</button>
+      <button class="btn b sm" onclick="setStatus('${a.id}','partner')">${ic('star')} Partner</button>
+      <button class="btn r sm" onclick="setStatus('${a.id}','rejected')">${ic('x')} Отклонить</button></div>`
+    :`<div class="row" style="margin-top:11px"><button class="btn sec sm" onclick="setStatus('${a.id}','pending')">Вернуть на проверку</button></div>`;
   return `<div class="appc"><div class="h"><div class="lg">${ic('building')}</div>
     <div style="flex:1"><div class="nm">${a.name}</div><div class="mt">${a.type} · ${a.cat}</div></div>${st}</div>
     <div class="det">${a.desc}<br><b>Регионы:</b> ${a.regions} · <b>Контакт:</b> ${a.contact}</div>${actions}</div>`;
 }
-function setStatus(id,s){const a=apps.find(x=>x.id===id);a.status=s;
+async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
+  if(db){const {error}=await db.from('applications').update({status:s,reviewed_at:new Date().toISOString()}).eq('id',id);
+    if(error){toast('Ошибка: '+error.message);}
+    else if((s==='approved'||s==='partner')&&a){await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,badge:s,active:true,regions:a.regions});}}
   toast(s==='approved'?'✓ Approved by BetConstruct':s==='partner'?'★ Partner by BetConstruct':s==='rejected'?'Отклонён':'Возвращён на проверку');render();}
 
 function vStaff(){
@@ -309,7 +344,7 @@ function toggleBanner(i){banners[i].active=!banners[i].active;render();}
 function delBanner(i){banners.splice(i,1);render();toast('Баннер удалён');}
 function toggleIdx(k){idxToggles[k]=!idxToggles[k];render();toast(idxToggles[k]?'Раздел включён':'Раздел выключен');}
 
-renderTabs();render();
+boot();
 </script>
 </body>
 </html>

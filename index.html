@@ -175,6 +175,7 @@
   <div class="nav" id="nav"></div>
   <div class="toast" id="toast"></div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $=s=>document.querySelector(s);
 let lang='ru', cur='home';
@@ -182,6 +183,15 @@ let vpn={on:false,connecting:false,server:0}, vpnIP='';
 let regRole='buyer';
 const cap=s=>s[0].toUpperCase()+s.slice(1);
 let chatMsgs=[{who:'b',text:'Здравствуйте! Я Ани, менеджер BetConstruct. Чем помочь?'}];
+/* ---------- Supabase ---------- */
+const SB_URL='https://smddtvaewmmpuyvtuscb.supabase.co';
+const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
+const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
+let anonId=null;try{anonId=localStorage.getItem('bc_anon');if(!anonId){anonId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random());localStorage.setItem('bc_anon',anonId);}}catch(e){anonId=String(Date.now());}
+const sessionId=String(Date.now());
+async function track(type,target,meta){if(!db)return;try{await db.from('events').insert({visitor_anon:anonId,session_id:sessionId,type,target,meta:meta||null});}catch(e){}}
+const val=id=>{const el=document.getElementById(id);return el?(el.value||''):'';};
+const chk=id=>{const el=document.getElementById(id);return el?!!el.checked:false;};
 const SERVERS=[['🇳🇱','Нидерланды'],['🇩🇪','Германия'],['🇨🇼','Кюрасао'],['🇨🇾','Кипр'],['🇬🇧','Великобритания']];
 function randIP(){return (10+((Math.random()*90)|0))+'.'+((Math.random()*256)|0)+'.'+((Math.random()*256)|0)+'.'+((Math.random()*256)|0);}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2000);}
@@ -564,10 +574,12 @@ function affiliate(){
     <button class="btn" onclick="submitAff()">${ic('check')} Отправить на модерацию</button></div>`;
 }
 function submitAff(){
-  const c=(document.getElementById('pf_afcompany')||{}).value||'';
-  const e=(document.getElementById('pf_afemail')||{}).value||'';
+  const c=val('pf_afcompany');
+  const e=val('pf_afemail');
   if(!c.trim()){toast('Укажите компанию/команду');return;}
   if(!e.trim()){toast('Укажите email');return;}
+  const payload={kind:'affiliate',company:c,contact_name:val('pf_afperson'),email:e,phone:val('pf_afphone'),site:val('pf_afsite'),category:val('pf_aftype'),model:val('pf_afmodel'),regions:val('pf_afgeo'),value_prop:val('pf_afvert'),features:val('pf_aftraffic')+' | Объёмы: '+val('pf_afvol'),description:val('pf_afcases'),compliance:val('pf_afmin'),ai_tags:{type:val('pf_aftype'),model:val('pf_afmodel'),geo:val('pf_afgeo'),vertical:val('pf_afvert'),kyb_ready:chk('pf_afkyb')}};
+  if(db){db.from('applications').insert(payload).then(({error})=>{if(error)toast('Ошибка сохранения: '+error.message);});track('submit','affiliate_application',{company:c});}
   $('#scroll').innerHTML=header()+`<div class="page">
     <div class="rec"><div class="row">${ic('check')}<div><b>${c}</b><br>Заявка на аффилейт/маркетинг отправлена в админ-панель.</div></div>
       <div class="row">${ic('shield')}<div>Статус: <b>на проверке (KYB)</b>. После одобрения — листинг и бейдж в Marketplace.</div></div></div>
@@ -575,10 +587,13 @@ function submitAff(){
   $('#scroll').scrollTop=0;
 }
 function submitPartner(){
-  const c=(document.getElementById('pf_company')||{}).value||'';
-  const e=(document.getElementById('pf_email')||{}).value||'';
+  const c=val('pf_company');
+  const e=val('pf_email');
   if(!c.trim()){toast('Укажите компанию');return;}
   if(!e.trim()){toast('Укажите email');return;}
+  const typeMap={'Игра':'game','Платёжная система':'payment','Платформа':'platform','Инструмент / Софт':'tool','Лицензионный сервис':'license','Маркетинг / Affiliate':'marketing'};
+  const payload={kind:typeMap[val('pf_ptype')]||'game',company:c,country:val('pf_country'),reg_no:val('pf_reg'),contact_name:val('pf_person'),email:e,phone:val('pf_phone'),site:val('pf_site'),licenses:val('pf_lic'),product_name:val('pf_pname'),category:val('pf_pcat'),description:val('pf_pdesc'),value_prop:val('pf_pvalue'),features:val('pf_pfeat'),demo_url:val('pf_pdemo'),regions:val('pf_pregions'),forbidden_markets:val('pf_pforbidden'),languages:val('pf_plang'),currencies:val('pf_pcur'),crypto:chk('pf_pcrypto'),compliance:val('pf_pcompliance'),model:val('pf_pmodel'),price:val('pf_pprice'),platform_share:val('pf_pshare'),ai_tags:{vertical:val('pf_tvert'),geo:val('pf_tgeo'),segment:val('pf_tseg'),kyb_ready:chk('pf_pkyb')}};
+  if(db){db.from('applications').insert(payload).then(({error})=>{if(error)toast('Ошибка сохранения: '+error.message);});track('submit','partner_application',{company:c});}
   $('#scroll').innerHTML=header()+`<div class="page">
     <div class="rec"><div class="row">${ic('check')}<div><b>${c}</b><br>Заявка отправлена в админ-панель на модерацию.</div></div>
       <div class="row">${ic('shield')}<div>Статус: <b>на проверке (KYB)</b>. После одобрения — бейдж «Approved / Partner by BetConstruct» и листинг в Marketplace.</div></div></div>
@@ -653,7 +668,9 @@ function entry(){
       <label>${t('entryName')}</label><input id="en_name" autocomplete="off">
       <label>${t('entryContact')}</label><input id="en_contact" autocomplete="off" placeholder="name@mail.com / +374…">
       <button class="btn" onclick="submitEntry()">${ic('check')} ${t('entryBtn')}</button>
-    </div></div>`;
+    </div>
+    <div style="margin-top:18px"><span onclick="location.href='admin.html'" style="color:var(--blue);font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">${ic('shield')} Войти как админ / сотрудник →</span></div>
+    </div>`;
 }
 function submitEntry(){
   const n=(document.getElementById('en_name')||{}).value||'';
@@ -661,6 +678,7 @@ function submitEntry(){
   if(!n.trim()){toast(t('entryName'));return;}
   if(!c.trim()){toast(t('entryContact'));return;}
   window.USER=n.trim();
+  if(db){db.from('visitors').upsert({anon_id:anonId,device:{ua:navigator.userAgent,lang:navigator.language,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,screen:screen.width+'x'+screen.height}},{onConflict:'anon_id'}).then(()=>{});track('entry','login',{name:n.trim(),contact:c.trim()});}
   render('home');
 }
 
@@ -672,7 +690,7 @@ function render(pg){cur=pg;
   $('#nav').style.display='flex';fab.style.display=pg==='chat'?'none':'flex';
   if(pg==='advise'){advise();return;}
   $('#scroll').innerHTML=PAGES[pg]();$('#scroll').scrollTop=0;renderNav();}
-function go(pg){render(pg);}
+function go(pg){track('page',pg);render(pg);}
 $('#nav').addEventListener('click',e=>{const d=e.target.closest('[data-t]');if(d)go(d.dataset.t);});
 $('#fab').innerHTML=ic('message');
 render('entry');
