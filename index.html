@@ -133,8 +133,8 @@
   .gcard input:focus{outline:none;border-color:var(--mag)}
   .nav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;
     justify-content:space-around;padding:9px 0 13px}
-  .nav div{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer}
-  .nav div svg{font-size:23px}.nav div.on{color:var(--mag)}
+  .nav div{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .nav div svg{font-size:21px}.nav div.on{color:var(--mag)}
   .toast{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:11px 18px;
     border-radius:12px;font-size:13.5px;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;z-index:9;max-width:88%}
   .toast.show{opacity:1}
@@ -236,7 +236,9 @@ const T={
     entryName:'Как к вам обращаться',entryContact:'Email или телефон',entryBtn:'Войти в систему',entrySub:'Укажите имя и контакт, чтобы продолжить',
     qa:['Live','Слоты','Спорт','Live Casino','Игры','Колесо','Киберспорт','Партнёры'],
     sec:['iGaming решения','Платформы','Продукты','Backoffice / BME','Регионы','Платежи','Prediction','Новости','Marketplace'],
-    nav:['Главная','Продукты','Live','Партнёры','Ещё']},
+    nav:['Главная','Продукты','Live','Маркет','Партнёры','Ещё'],
+    mktSub:'Каталог вендоров и услуг экосистемы BetConstruct.',mktBuy:'Приобрести услуги',mktProvide:'Стать вендором',
+    mktCats:'Категории',mktFeatured:'Проверенные вендоры',catGames:'Игры',catPay:'Платёжки',catAff:'Аффилейты',catLic:'Лицензии'},
   en:{hi:'Welcome',q:'What shall we play today?',searchPh:'Search: games, sport, partners…',
     aiTitle:'AI advisor',aiDesc:'Describe your task — get a solution',quick:'Quick access',liveNow:'Live now',all:'all',
     wonderD:'Spin the wheel — offer of the week',allSections:'All sections',
@@ -259,7 +261,9 @@ const T={
     entryName:'How should we address you',entryContact:'Email or phone',entryBtn:'Enter',entrySub:'Enter your name and contact to continue',
     qa:['Live','Slots','Sport','Live Casino','Games','Wheel','Esports','Partners'],
     sec:['iGaming Solutions','Platforms','Products','Backoffice / BME','Regional','Payments','Prediction','News','Marketplace'],
-    nav:['Home','Products','Live','Partners','More']},
+    nav:['Home','Products','Live','Market','Partners','More'],
+    mktSub:'Catalogue of vendors and services in the BetConstruct ecosystem.',mktBuy:'Buy services',mktProvide:'Become a vendor',
+    mktCats:'Categories',mktFeatured:'Verified vendors',catGames:'Games',catPay:'Payments',catAff:'Affiliates',catLic:'Licenses'},
   hy:{hi:'Բարի գալուստ',q:'Ի՞նչ խաղանք այսօր',searchPh:'Որոնում՝ խաղեր, սպորտ, գործընկերներ…',
     aiTitle:'AI խորհրդատու',aiDesc:'Նկարագրիր խնդիրը — կառաջարկեմ լուծում',quick:'Արագ մուտք',liveNow:'Ուղիղ հիմա',all:'բոլորը',
     wonderD:'Պտտիր անիվը — շաբաթվա առաջարկ',allSections:'Բոլոր բաժինները',
@@ -282,7 +286,9 @@ const T={
     entryName:'Ինչպես դիմել ձեզ',entryContact:'Email կամ հեռախոս',entryBtn:'Մուտք գործել',entrySub:'Մուտքագրեք անունը և կոնտակտը շարունակելու համար',
     qa:['Live','Սլոտներ','Սպորտ','Live Casino','Խաղեր','Անիվ','Կիբերսպորտ','Գործընկերներ'],
     sec:['iGaming լուծումներ','Հարթակներ','Ապրանքներ','Backoffice / BME','Տարածաշրջան','Վճարումներ','Prediction','Նորություններ','Marketplace'],
-    nav:['Գլխավոր','Ապրանքներ','Live','Գործընկերներ','Ավելին']}
+    nav:['Գլխավոր','Ապրանքներ','Live','Market','Գործընկերներ','Ավելին'],
+    mktSub:'BetConstruct-ի էկոհամակարգի վենդորների և ծառայությունների կատալոգ։',mktBuy:'Ձեռք բերել ծառայություններ',mktProvide:'Դառնալ վենդոր',
+    mktCats:'Կատեգորիաներ',mktFeatured:'Ստուգված վենդորներ',catGames:'Խաղեր',catPay:'Վճարումներ',catAff:'Աֆիլիատներ',catLic:'Լիցենզիաներ'}
 };
 const t=k=>T[lang][k];
 function setLang(l){lang=l;document.documentElement.lang=l;render(cur);}
@@ -290,8 +296,8 @@ function setLang(l){lang=l;document.documentElement.lang=l;render(cur);}
 const QA_IC=['broadcast','cherry','ball','cards','gamepad','wheel','gamepad','users'];
 const QA_ROUTE=['live','products','live','products','products','products','products','partners'];
 const SEC_IC=['diamond','puzzle','box','gear','globe','card','bulb','news','store'];
-const NAV_IC=['home','box','broadcast','users','dots'];
-const NAV_KEY=['home','products','live','partners','more'];
+const NAV_IC=['home','box','broadcast','store','users','dots'];
+const NAV_KEY=['home','products','live','market','partners','more'];
 const MATCHES=[['Club Friendlies','1 : 1','2.20'],['Club Friendlies','0 : 0','2.25'],['World Cup','—','1.85']];
 const QUICK=[
   ['code','Partner API','https://www.betconstruct.com/products'],
@@ -330,7 +336,8 @@ function header(){
 }
 function home(){
   return header()+`
-  <div class="welcome"><div class="tag1">Leading iGaming Platform Provider</div>
+  <div class="welcome"><div class="s">${t('hi')}${window.USER?', <b style="color:var(--text)">'+window.USER+'</b>':''} 👋</div>
+    <div class="tag1">Leading iGaming Platform Provider</div>
     <div class="tag2">Experience the solutions first-hand</div></div>
   <div class="wrap">
     ${vpnCard()}
@@ -408,6 +415,20 @@ function live(){
   return header()+`<div class="page"><h2>${ic('broadcast')} ${t('liveNow')}</h2><p class="sub">${t('liveSub')}</p>
     ${MATCHES.map((m,i)=>`<div class="lmatch" style="min-width:auto;margin-bottom:10px" onclick="openURL('${i===2?'https://sport.vbet.am/en/sports/pre-match/event-view/Soccer/World/2969/world-cup/30235556/spain-belgium':'https://sport.vbet.am/en/sports/live/event-view/Soccer/World/573/club-friendlies/30257052/fc-zlin-fk-dukla-banska-bystrica'}')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}
     <button class="btn" onclick="openURL('https://sport.vbet.am/en/sports/live/list')">${t('openAllLive')} ${ic('external')}</button></div>`;
+}
+function market(){
+  const cats=[['gamepad','catGames'],['card','catPay'],['megaphone','catAff'],['badge','catLic']];
+  const vendors=[['SoftGaming','catGames',1],['CoinsPaid','catPay',1],['AdsCompass','catAff',1],['TrafficLab','catAff',0]];
+  return header()+`<div class="page"><h2>${ic('store')} Marketplace</h2><p class="sub">${t('mktSub')}</p>
+    <div class="list2" style="padding:0;margin-bottom:14px">
+      <div class="lcard" onclick="go('products')">${ic('cart')} ${t('mktBuy')}</div>
+      <div class="lcard" onclick="go('register')">${ic('briefcase')} ${t('mktProvide')}</div>
+    </div>
+    <div class="h2" style="margin:6px 0 10px"><span class="lft">${t('mktCats')}</span></div>
+    <div class="qa" style="padding:0">${cats.map(c=>`<div class="qtile" onclick="toast(t('${c[1]}'))">${ic(c[0])}<p>${t(c[1])}</p></div>`).join('')}</div>
+    <div class="h2" style="margin:18px 0 10px"><span class="lft">${t('mktFeatured')}</span></div>
+    ${vendors.map(v=>`<div class="pcat"><div class="hd"><span class="l">${ic('building')} ${v[0]}<span style="color:var(--muted);font-weight:400;font-size:13px;margin-left:6px">· ${t(v[1])}</span></span><span class="more">${v[2]?ic('star')+' Approved':t('checked')||'на проверке'}</span></div></div>`).join('')}
+  </div>`;
 }
 function partners(){
   return header()+`<div class="page"><h2>${ic('users')} ${t('nav')[3]}</h2><p class="sub">${t('partnersSub')}</p>
@@ -488,7 +509,7 @@ function submitEntry(){
   render('home');
 }
 
-const PAGES={home,products,live,partners,more,register};
+const PAGES={home,products,live,market,partners,more,register};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
   if(pg==='entry'){$('#nav').style.display='none';$('#scroll').innerHTML=entry();$('#scroll').scrollTop=0;return;}
