@@ -156,11 +156,22 @@
   .toast{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:11px 18px;
     border-radius:12px;font-size:13.5px;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;z-index:9;max-width:88%}
   .toast.show{opacity:1}
+  .fab{position:absolute;right:16px;bottom:92px;width:54px;height:54px;border-radius:50%;background:var(--mag);color:#fff;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(166,0,99,.4);cursor:pointer;z-index:8}
+  .fab svg{font-size:26px}
+  .chatbox{height:calc(100vh - 320px);min-height:240px;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:9px}
+  .cmsg{max-width:80%;padding:9px 12px;border-radius:13px;font-size:14px}
+  .cmsg.b{background:var(--card);border:1px solid var(--line);align-self:flex-start}
+  .cmsg.c{background:var(--mag);color:#fff;align-self:flex-end}
+  .cmgr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .cmgr .av{width:42px;height:42px;border-radius:50%;background:#faf2f6;color:var(--mag);display:flex;align-items:center;justify-content:center;font-size:20px}
+  .cmgr b{font-size:15px}.cmgr .on{font-size:12px;color:var(--green);font-weight:700}
 </style>
 </head>
 <body>
 <div class="phone">
   <div class="scroll" id="scroll"></div>
+  <div class="fab" id="fab" onclick="go('chat')"></div>
   <div class="nav" id="nav"></div>
   <div class="toast" id="toast"></div>
 </div>
@@ -170,6 +181,7 @@ let lang='ru', cur='home';
 let vpn={on:false,connecting:false,server:0}, vpnIP='';
 let regRole='buyer';
 const cap=s=>s[0].toUpperCase()+s.slice(1);
+let chatMsgs=[{who:'b',text:'Здравствуйте! Я Ани, менеджер BetConstruct. Чем помочь?'}];
 const SERVERS=[['🇳🇱','Нидерланды'],['🇩🇪','Германия'],['🇨🇼','Кюрасао'],['🇨🇾','Кипр'],['🇬🇧','Великобритания']];
 function randIP(){return (10+((Math.random()*90)|0))+'.'+((Math.random()*256)|0)+'.'+((Math.random()*256)|0)+'.'+((Math.random()*256)|0);}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2000);}
@@ -253,6 +265,7 @@ const T={
     submitReg:'Отправить заявку',regDone:'Заявка отправлена. Статус: на проверке (KYB). Менеджер свяжется с вами.',
     haveAcc:'Уже есть аккаунт? Войти',kyb:'Вендоры проходят KYB-верификацию перед публикацией.',
     entryName:'Как к вам обращаться',entryContact:'Email или телефон',entryBtn:'Войти в систему',entrySub:'Укажите имя и контакт, чтобы продолжить',
+    chatTitle:'Чат с менеджером',chatSub:'Ани · на связи',chatPh:'Напишите сообщение…',
     qa:['Live','Слоты','Спорт','Live Casino','Игры','Колесо','Киберспорт','Партнёры'],
     sec:['iGaming решения','Платформы','Продукты','Backoffice / BME','Регионы','Платежи','Prediction','Новости','Marketplace'],
     nav:['Главная','Продукты','Live','Маркет','Партнёры','Ещё'],
@@ -278,6 +291,7 @@ const T={
     submitReg:'Submit application',regDone:'Application submitted. Status: under review (KYB). A manager will contact you.',
     haveAcc:'Already have an account? Log in',kyb:'Vendors pass KYB verification before publishing.',
     entryName:'How should we address you',entryContact:'Email or phone',entryBtn:'Enter',entrySub:'Enter your name and contact to continue',
+    chatTitle:'Chat with a manager',chatSub:'Ani · online',chatPh:'Type a message…',
     qa:['Live','Slots','Sport','Live Casino','Games','Wheel','Esports','Partners'],
     sec:['iGaming Solutions','Platforms','Products','Backoffice / BME','Regional','Payments','Prediction','News','Marketplace'],
     nav:['Home','Products','Live','Market','Partners','More'],
@@ -303,6 +317,7 @@ const T={
     submitReg:'Ուղարկել հայտը',regDone:'Հայտն ուղարկված է։ Կարգավիճակ՝ ստուգման մեջ (KYB)։ Մենեջերը կկապվի ձեզ հետ։',
     haveAcc:'Արդեն ունե՞ք հաշիվ։ Մուտք',kyb:'Վենդորները անցնում են KYB ստուգում հրապարակումից առաջ։',
     entryName:'Ինչպես դիմել ձեզ',entryContact:'Email կամ հեռախոս',entryBtn:'Մուտք գործել',entrySub:'Մուտքագրեք անունը և կոնտակտը շարունակելու համար',
+    chatTitle:'Չաթ մենեջերի հետ',chatSub:'Անի · կապի մեջ',chatPh:'Գրեք հաղորդագրություն…',
     qa:['Live','Սլոտներ','Սպորտ','Live Casino','Խաղեր','Անիվ','Կիբերսպորտ','Գործընկերներ'],
     sec:['iGaming լուծումներ','Հարթակներ','Ապրանքներ','Backoffice / BME','Տարածաշրջան','Վճարումներ','Prediction','Նորություններ','Marketplace'],
     nav:['Գլխավոր','Ապրանքներ','Live','Market','Գործընկերներ','Ավելին'],
@@ -515,6 +530,15 @@ function partner(){
     <div class="disc">${ic('shield')} После отправки заявка попадает в админ-панель на модерацию. Проверенным партнёрам админ ставит бейдж «Approved by BetConstruct» или «Partner by BetConstruct».</div>
     <button class="btn" onclick="submitPartner()">${ic('check')} Отправить на модерацию</button></div>`;
 }
+function chat(){
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <div class="cmgr"><div class="av">${ic('user')}</div><div><b>${t('chatTitle')}</b><div class="on">● ${t('chatSub')}</div></div></div>
+    <div class="chatbox" id="cbox">${chatMsgs.map(m=>`<div class="cmsg ${m.who}">${m.text}</div>`).join('')}</div>
+    <div class="row" style="margin-top:10px"><input id="cin" placeholder="${t('chatPh')}" onkeydown="if(event.key==='Enter')sendChatMsg()"><button class="btn" style="width:auto;padding:0 16px" onclick="sendChatMsg()">▶</button></div></div>`;
+}
+function paintChat(){const b=$('#cbox');if(b){b.innerHTML=chatMsgs.map(m=>`<div class="cmsg ${m.who}">${m.text}</div>`).join('');b.scrollTop=b.scrollHeight;}}
+function sendChatMsg(){const el=$('#cin');const v=(el.value||'').trim();if(!v)return;chatMsgs.push({who:'c',text:v});el.value='';paintChat();
+  setTimeout(()=>{chatMsgs.push({who:'b',text:'Принял! Уточню детали и вернусь с вариантом. Можете также описать задачу AI-советнику на главной.'});paintChat();},900);}
 function affiliate(){
   return header()+`<div class="page"><div class="back" onclick="go('market')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('megaphone')} Аффилейт / Маркетинг</h2>
@@ -640,15 +664,17 @@ function submitEntry(){
   render('home');
 }
 
-const PAGES={home,products,live,market,partner,affiliate,partners,more,register};
+const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
-  if(pg==='entry'){$('#nav').style.display='none';$('#scroll').innerHTML=entry();$('#scroll').scrollTop=0;return;}
-  $('#nav').style.display='flex';
+  const fab=$('#fab');
+  if(pg==='entry'){$('#nav').style.display='none';fab.style.display='none';$('#scroll').innerHTML=entry();$('#scroll').scrollTop=0;return;}
+  $('#nav').style.display='flex';fab.style.display=pg==='chat'?'none':'flex';
   if(pg==='advise'){advise();return;}
   $('#scroll').innerHTML=PAGES[pg]();$('#scroll').scrollTop=0;renderNav();}
 function go(pg){render(pg);}
 $('#nav').addEventListener('click',e=>{const d=e.target.closest('[data-t]');if(d)go(d.dataset.t);});
+$('#fab').innerHTML=ic('message');
 render('entry');
 </script>
 </body>

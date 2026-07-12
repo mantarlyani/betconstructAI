@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetConstructAI — Админ-панель</title>
+<style>
+  :root{--mag:#A60063;--mag-dk:#7a0049;--bg:#f3f4f6;--card:#fff;--line:#e7e9ee;--text:#1d1f25;--muted:#8b909b;
+    --blue:#2f6bd6;--green:#2fb877;--amber:#c8860a;--red:#e2453f;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px}
+  svg.i{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;flex-shrink:0}
+  .top{background:var(--card);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
+  .wm{font-size:18px;font-weight:800}.wm .b{color:var(--mag)}.wm .a{color:var(--blue)}
+  .chip-admin{background:#faf2f6;color:var(--mag);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700}
+  .who{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+  .who b{color:var(--text)}
+  .tabs{display:flex;gap:4px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--line);padding:0 12px;position:sticky;top:57px;z-index:19;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:13px 14px;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;display:flex;align-items:center;gap:7px}
+  .tab.on{color:var(--mag);border-bottom-color:var(--mag)}.tab svg{font-size:17px}
+  main{max-width:1080px;margin:0 auto;padding:18px 16px 60px}
+  h2{font-size:19px;margin:0 0 3px}.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px}
+  .kpi .n{font-size:26px;font-weight:800}.kpi .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .kpi .ic{width:34px;height:34px;border-radius:9px;background:#faf2f6;color:var(--mag);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:9px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;margin-bottom:14px}
+  .card h3{margin:0 0 12px;font-size:15px;display:flex;align-items:center;gap:8px}.card h3 svg{color:var(--mag);font-size:18px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  label{display:block;font-size:12px;color:var(--muted);margin:11px 0 5px;font-weight:600}
+  input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;font-family:inherit;color:var(--text);background:var(--card)}
+  select{-webkit-appearance:none;appearance:none}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--mag)}
+  .btn{background:var(--mag);color:#fff;border:none;border-radius:10px;padding:10px 15px;font-weight:700;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .btn:active{transform:scale(.98)}.btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line)}
+  .btn.sm{padding:7px 11px;font-size:12.5px}.btn.g{background:var(--green)}.btn.b{background:var(--blue)}.btn.r{background:var(--red)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .appc{border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:11px}
+  .appc .h{display:flex;align-items:center;gap:11px}
+  .appc .lg{width:42px;height:42px;border-radius:11px;background:#faf2f6;color:var(--mag);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+  .appc .nm{font-weight:700;font-size:15px}.appc .mt{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .appc .det{font-size:12.5px;color:var(--muted);margin-top:9px;line-height:1.6}
+  .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+  .st svg{font-size:13px}
+  .st.pend{background:#fdf3dc;color:var(--amber)}.st.ap{background:#e3f6ee;color:#0f7a52}.st.pt{background:#eef0ff;color:#4a44b8}.st.rej{background:#fdecea;color:var(--red)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:600}
+  .pill{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);border:1px solid var(--line)}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+  .bar{height:9px;background:#faf2f6;border-radius:20px;overflow:hidden;flex:1;margin:0 10px}.bar span{display:block;height:100%;background:var(--mag)}
+  .fbar{display:flex;align-items:center;font-size:13px;margin-bottom:9px}
+  .step{display:flex;gap:9px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line)}
+  .step:last-child{border:none}.step .t{color:var(--muted);white-space:nowrap}.step svg{color:var(--green);font-size:15px}
+  .jrow{display:flex;gap:8px;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--line);align-items:center}
+  .jrow:last-child{border:none}.jrow .tm{color:var(--muted);white-space:nowrap;font-size:11.5px}
+  .tag{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-size:11.5px}
+  .view{display:none}.view.on{display:block}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:11px 18px;border-radius:11px;font-size:13.5px;opacity:0;transition:.3s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .banner{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:11px;display:flex;justify-content:space-between;align-items:center}
+  .banner.mag{background:var(--mag);color:#fff;border-color:var(--mag)}
+  .sw{width:44px;height:26px;background:#cfd3db;border-radius:20px;position:relative;cursor:pointer;flex-shrink:0}
+  .sw b{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s}
+  .sw.on{background:var(--green)}.sw.on b{left:21px}
+  .chatbox{height:300px;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:12px;display:flex;flex-direction:column;gap:9px}
+  .msg{max-width:78%;padding:9px 12px;border-radius:13px;font-size:13.5px}
+  .msg.v{background:var(--card);border:1px solid var(--line);align-self:flex-start}
+  .msg.s{background:var(--mag);color:#fff;align-self:flex-end}
+  .msg .mt2{font-size:10.5px;opacity:.7;margin-top:3px;text-align:right}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="wm"><span class="b">Bet</span>Construct<span class="a">AI</span></div>
+  <span class="chip-admin">ADMIN</span>
+  <div class="who"><span>Администратор · <b>Илья</b></span></div>
+</div>
+<div class="tabs" id="tabs"></div>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s);
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2200);}
+function now(){return new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+const IC={
+  dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  shield:'<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  users:'<circle cx="9" cy="8" r="3.2"/><path d="M3.2 20a5.8 5.8 0 0 1 11.6 0"/><path d="M15.5 5.1a3.2 3.2 0 0 1 0 6.2M17 14.4a5.8 5.8 0 0 1 3.8 5.6"/>',
+  crm:'<rect x="3" y="7.5" width="18" height="11.5" rx="2.2"/><path d="M9 7.5v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 12.5h18"/>',
+  chart:'<path d="M4 19V5M4 19h16"/><rect x="7" y="11" width="3" height="5"/><rect x="12" y="8" width="3" height="8"/><rect x="17" y="13" width="3" height="3"/>',
+  layout:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',
+  check:'<path d="M5 13l4 4L19 7"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',star:'<path d="M12 3.2l2.7 5.8 6.3.8-4.7 4.2 1.3 6.2L12 17.6 6.1 20.2l1.3-6.2L2.7 9.8l6.3-.8z" fill="currentColor" stroke="none"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',clock:'<circle cx="12" cy="12" r="8.2"/><path d="M12 7.5v4.7l3.2 2"/>',eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>',building:'<rect x="5.5" y="3.5" width="13" height="17" rx="1.4"/><path d="M9 7.5h2M13 7.5h2M9 11h2M13 11h2M9 14.5h2M13 14.5h2"/>',
+  scale:'<path d="M12 3v18M7 21h10M6 7h12M6 7l-3 6a3 3 0 0 0 6 0zM18 7l-3 6a3 3 0 0 0 6 0z"/>',pin:'<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  key:'<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M17 4l3 3M15 6l2 2"/>',megaphone:'<path d="M4 10v4l11 4.5V5.5z"/><path d="M15 8.5a3.8 3.8 0 0 1 0 7"/>'
+};
+function ic(n){return `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[n]||''}</svg>`;}
+function translit(s){const m={а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'ts',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya',' ':'.'};return s.toLowerCase().split('').map(c=>m[c]!==undefined?m[c]:c).join('').replace(/[^a-z0-9.]/g,'');}
+function genPass(){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<8;i++)p+=c[Math.floor(Math.random()*c.length)];return p;}
+
+/* ---------- DATA (демо) ---------- */
+let apps=[
+  {id:1,name:'NovaSpin',type:'Игра',cat:'Crash & instant',contact:'sales@novaspin.io',regions:'EU · Азия',desc:'Провайдер crash/instant игр, RTP 97%, сертификат iTech Labs.',status:'pending'},
+  {id:2,name:'PayStrike',type:'Платёжная система',cat:'Crypto gateway',contact:'bd@paystrike.com',regions:'LATAM · Global',desc:'USDT/BTC + локальные методы LATAM, расчёты T+1, PCI DSS.',status:'pending'},
+  {id:3,name:'TrafficLab',type:'Аффилейт',cat:'Трафик Tier-2',contact:'hi@trafficlab.net',regions:'CIS',desc:'SEO + PPC, ~200k кликов/мес, EPC €0.42, вертикаль казино.',status:'pending'},
+  {id:4,name:'SoftGaming',type:'Игра',cat:'Casino Suite слоты',contact:'partners@softgaming.com',regions:'LATAM · EU',desc:'5000+ слотов, совместимость с BetConstruct Casino Suite.',status:'approved'}
+];
+let staff=[
+  {name:'Ани Петросян',role:'Sales',login:'ani.petrosyan',pass:'Kp7mQx2r',status:'online',deals:9,payout:9200,conv:31,
+    sessions:[['Сегодня','09:02','сейчас'],['11.07','10:15','18:40'],['10.07','09:30','17:20']]},
+  {name:'Армен Казарян',role:'Sales',login:'armen.kazaryan',pass:'Zt4wLp9s',status:'offline',deals:6,payout:5400,conv:24,
+    sessions:[['11.07','11:00','19:10'],['10.07','10:05','16:45']]},
+  {name:'Лилит Саркисян',role:'Юрист',login:'lilit.sarkisyan',pass:'Nb8vRy3k',status:'offline'}
+];
+let convos=[
+  {id:1,visitor:'Гость #4821',rep:'Ани Петросян',online:true,unread:1,msgs:[
+    {who:'v',text:'Здравствуйте! Интересует крипто-казино для LATAM',tm:'13:38'},
+    {who:'s',text:'Здравствуйте! Подскажу по решению. Какой упор — слоты или ставки?',tm:'13:39'},
+    {who:'v',text:'Слоты + немного live',tm:'13:41'}]},
+  {id:2,visitor:'Гость #4820',rep:'Ани Петросян',online:false,unread:0,msgs:[
+    {who:'v',text:'Хочу разместить свою игру на платформе',tm:'13:20'},
+    {who:'s',text:'Отлично! Заполните форму «Стать партнёром» в Marketplace, дальше веду вас я.',tm:'13:22'}]},
+  {id:3,visitor:'Гость #4815',rep:'Армен Казарян',online:false,unread:0,msgs:[
+    {who:'v',text:'Какие лицензии нужны для EU?',tm:'12:50'},
+    {who:'s',text:'Подключу юриста — Лилит уточнит детали по юрисдикции.',tm:'12:53'}]}
+];
+let activeConvo=null;
+let deals=[
+  {id:'BC-1042',client:'CryptoCasino LATAM',resp:'Ани Петросян',stage:'Демо',steps:[{n:'Принял лид',by:'Ани',at:'12.07 09:14'},{n:'Первый контакт',by:'Ани',at:'12.07 10:02'},{n:'Назначил демо',by:'Ани',at:'12.07 11:30'}]},
+  {id:'BC-1039',client:'BetStart EU',resp:'Армен Казарян',stage:'Переговоры',steps:[{n:'Принял лид',by:'Армен',at:'11.07 15:20'},{n:'Демо проведено',by:'Армен',at:'12.07 12:00'},{n:'Юр. проверка',by:'Лилит',at:'12.07 13:10'}]}
+];
+const STAGES=['Новый','Контакт','Демо','Переговоры','Покупка'];
+let analytics={visitors:1287,today:143,sections:[['Home',100],['Быстрый доступ',72],['Live',54],['Products',48],['Marketplace',37],['AI-советник',29],['Регистрация',18]],
+  journeys:[
+    {u:'Гость #4821',path:['Вход','Home','Быстрый доступ → Live','AI-советник','Регистрация'],tm:'12.07 13:41'},
+    {u:'Гость #4820',path:['Вход','Home','Marketplace','Стать партнёром'],tm:'12.07 13:38'},
+    {u:'Гость #4818',path:['Вход','Home','Products → Подробно','Casino/Slots (vbet)'],tm:'12.07 13:30'}
+  ]};
+let banners=[{title:'Запусти казино за 2 недели',sub:'Turnkey · Curaçao · Casino Suite',active:true},{title:'WonderWheel — оффер недели',sub:'Крути колесо',active:true}];
+let idxToggles={quick:true,live:true,promo:true,sections:true};
+
+/* ---------- TABS ---------- */
+const TABS=[['dash','Дашборд','dash'],['mod','Модерация','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['chat','Чат','megaphone'],['crm','CRM','crm'],['stats','Аналитика','chart'],['content','Контент','layout']];
+let cur='dash';
+function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
+function go(t){cur=t;renderTabs();render();}
+
+/* ---------- VIEWS ---------- */
+function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
+
+function vDash(){
+  const pend=apps.filter(a=>a.status==='pending').length;
+  const online=staff.filter(s=>s.status==='online').length;
+  return `<h2>Дашборд</h2><p class="sub">Сводка платформы на ${now()}</p>
+  <div class="kpis">
+    <div class="kpi"><div class="ic">${ic('eye')}</div><div class="n">${analytics.visitors}</div><div class="l">Посетителей всего</div></div>
+    <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${analytics.today}</div><div class="l">Сегодня</div></div>
+    <div class="kpi"><div class="ic">${ic('shield')}</div><div class="n">${pend}</div><div class="l">Заявок на модерации</div></div>
+    <div class="kpi"><div class="ic">${ic('building')}</div><div class="n">${apps.filter(a=>a.status==='approved'||a.status==='partner').length}</div><div class="l">Одобрено вендоров</div></div>
+    <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${online}/${staff.length}</div><div class="l">Sales в сети</div></div>
+    <div class="kpi"><div class="ic">${ic('crm')}</div><div class="n">${deals.length}</div><div class="l">Активных сделок</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>${ic('chart')} Самые посещаемые разделы</h3>${sectionsBars()}</div>
+    <div class="card"><h3>${ic('shield')} Ждут модерации</h3>
+      ${apps.filter(a=>a.status==='pending').map(a=>`<div class="fbar"><span style="flex:1">${a.name} · <span class="muted" style="color:var(--muted)">${a.type}</span></span><button class="btn sm" onclick="go('mod')">Открыть</button></div>`).join('')||'<p class="sub">Нет новых заявок</p>'}</div>
+  </div>`;
+}
+function sectionsBars(){const max=Math.max(...analytics.sections.map(s=>s[1]));return analytics.sections.map(s=>`<div class="fbar"><span style="width:120px">${s[0]}</span><span class="bar"><span style="width:${s[1]/max*100}%"></span></span><b>${s[1]}%</b></div>`).join('');}
+
+function vMod(){
+  return `<h2>Модерация заявок</h2><p class="sub">Партнёры и аффилейты, ожидающие проверки (KYB). Одобрите и присвойте бейдж.</p>
+  ${apps.map(a=>appCard(a)).join('')}`;
+}
+function appCard(a){
+  const st=a.status==='pending'?`<span class="st pend">${ic('clock')} На проверке</span>`
+    :a.status==='approved'?`<span class="st ap">${ic('check')} Approved by BetConstruct</span>`
+    :a.status==='partner'?`<span class="st pt">${ic('star')} Partner by BetConstruct</span>`
+    :`<span class="st rej">${ic('x')} Отклонён</span>`;
+  const actions=a.status==='pending'?`<div class="row" style="margin-top:11px">
+      <button class="btn g sm" onclick="setStatus(${a.id},'approved')">${ic('check')} Approved</button>
+      <button class="btn b sm" onclick="setStatus(${a.id},'partner')">${ic('star')} Partner</button>
+      <button class="btn r sm" onclick="setStatus(${a.id},'rejected')">${ic('x')} Отклонить</button></div>`
+    :`<div class="row" style="margin-top:11px"><button class="btn sec sm" onclick="setStatus(${a.id},'pending')">Вернуть на проверку</button></div>`;
+  return `<div class="appc"><div class="h"><div class="lg">${ic('building')}</div>
+    <div style="flex:1"><div class="nm">${a.name}</div><div class="mt">${a.type} · ${a.cat}</div></div>${st}</div>
+    <div class="det">${a.desc}<br><b>Регионы:</b> ${a.regions} · <b>Контакт:</b> ${a.contact}</div>${actions}</div>`;
+}
+function setStatus(id,s){const a=apps.find(x=>x.id===id);a.status=s;
+  toast(s==='approved'?'✓ Approved by BetConstruct':s==='partner'?'★ Partner by BetConstruct':s==='rejected'?'Отклонён':'Возвращён на проверку');render();}
+
+function vStaff(){
+  return `<h2>Сотрудники и доступы</h2><p class="sub">Создавайте sales, юристов, модераторов — с выдачей логина и пароля.</p>
+  <div class="card"><h3>${ic('plus')} Новый сотрудник</h3>
+    <div class="grid2"><div><label>Имя и фамилия</label><input id="s_name" placeholder="Гор Казарян"></div>
+      <div><label>Роль</label><select id="s_role"><option>Sales</option><option>Юрист</option><option>Модератор</option><option>Маркетинг</option><option>Финансы</option><option>Админ</option></select></div></div>
+    <button class="btn" style="margin-top:13px" onclick="addStaff()">${ic('key')} Создать и выдать доступ</button></div>
+  <div class="card"><h3>${ic('users')} Команда (${staff.length})</h3>
+    <table><thead><tr><th>Имя</th><th>Роль</th><th>Логин</th><th>Пароль</th><th>Статус</th></tr></thead><tbody>
+    ${staff.map((s,i)=>`<tr><td><b>${s.name}</b></td><td><span class="pill">${s.role}</span></td>
+      <td class="mono">${s.login} <span style="cursor:pointer;color:var(--blue)" onclick="copyv('${s.login}')">${ic('copy')}</span></td>
+      <td class="mono">${s.pass}</td>
+      <td><span style="color:${s.status==='online'?'var(--green)':'var(--muted)'};font-weight:700">${s.status==='online'?'● в сети':'○ не в сети'}</span></td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+function addStaff(){const n=($('#s_name')||{}).value||'';const r=($('#s_role')||{}).value||'Sales';
+  if(!n.trim()){toast('Укажите имя');return;}
+  const login=translit(n.trim());const pass=genPass();
+  staff.unshift({name:n.trim(),role:r,login,pass,status:'offline'});
+  render();toast('Создан: '+login+' / '+pass);}
+function copyv(v){navigator.clipboard&&navigator.clipboard.writeText(v);toast('Скопировано: '+v);}
+
+function vCrm(){
+  return `<h2>CRM · процесс и ответственные</h2><p class="sub">Назначайте ответственных; каждый шаг фиксируется по времени (принял / сделал).</p>
+  ${deals.map(d=>dealCard(d)).join('')}`;
+}
+function dealCard(d){
+  const opts=staff.map(s=>`<option ${s.name===d.resp?'selected':''}>${s.name}</option>`).join('');
+  const si=STAGES.indexOf(d.stage);
+  return `<div class="card"><h3>${ic('crm')} ${d.id} · ${d.client}</h3>
+    <div class="grid2"><div><label>Ответственный</label><select onchange="setResp('${d.id}',this.value)">${opts}</select></div>
+      <div><label>Стадия: <b>${d.stage}</b></label><div class="row">
+        ${si>0?`<button class="btn sec sm" onclick="moveStage('${d.id}',-1)">◀</button>`:''}
+        ${si<STAGES.length-1?`<button class="btn sm" onclick="moveStage('${d.id}',1)">Следующая ▶</button>`:'<span class="st ap">'+ic('check')+' Закрыта</span>'}</div></div></div>
+    <label style="margin-top:14px">История процесса</label>
+    <div>${d.steps.map(s=>`<div class="step">${ic('check')}<div style="flex:1"><b>${s.n}</b> · ${s.by}</div><span class="t">${s.at}</span></div>`).join('')}</div></div>`;
+}
+function setResp(id,name){const d=deals.find(x=>x.id===id);d.resp=name;d.steps.push({n:'Переназначен ответственный',by:name.split(' ')[0],at:now()});render();toast('Ответственный: '+name);}
+function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=STAGES.indexOf(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i];d.steps.push({n:'Стадия → '+STAGES[i],by:d.resp.split(' ')[0],at:now()});render();}
+
+function vStats(){
+  const max=Math.max(...analytics.sections.map(s=>s[1]));
+  return `<h2>Аналитика посетителей</h2><p class="sub">Кто заходил, что нажимал, куда шёл. Всего посетителей: <b>${analytics.visitors}</b>, сегодня: <b>${analytics.today}</b>.</p>
+  <div class="grid2">
+    <div class="card"><h3>${ic('chart')} % посещаемости разделов</h3>${sectionsBars()}</div>
+    <div class="card"><h3>${ic('eye')} Последние пути посетителей</h3>
+      ${analytics.journeys.map(j=>`<div class="jrow"><div style="flex:1"><b>${j.u}</b><br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div><span class="tm">${j.tm}</span></div>`).join('')}</div>
+  </div>
+  <div class="card"><h3>${ic('chart')} Воронка визита → лид</h3>
+    ${[['Зашли',1287],['Смотрели разделы',940],['AI-советник / чат',372],['Оставили заявку',118],['Стали лидом',118]].map((f,i,arr)=>`<div class="fbar"><span style="width:170px">${f[0]}</span><span class="bar"><span style="width:${f[1]/1287*100}%"></span></span><b>${f[1]}</b></div>`).join('')}</div>`;
+}
+
+function vSales(){
+  const sales=staff.filter(s=>s.role==='Sales');
+  const online=sales.filter(s=>s.status==='online').length;
+  const totalDeals=sales.reduce((a,s)=>a+(s.deals||0),0);
+  const totalPay=sales.reduce((a,s)=>a+(s.payout||0),0);
+  return `<h2>Отдел продаж</h2><p class="sub">Присутствие, сделки и выплаты по каждому менеджеру.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${online}/${sales.length}</div><div class="l">В сети сейчас</div></div>
+    <div class="kpi"><div class="ic">${ic('crm')}</div><div class="n">${totalDeals}</div><div class="l">Сделок всего</div></div>
+    <div class="kpi"><div class="ic">${ic('star')}</div><div class="n">€${totalPay.toLocaleString('ru-RU')}</div><div class="l">К выплате (система должна)</div></div>
+  </div>
+  ${sales.map(s=>salesCard(s)).join('')}`;
+}
+function salesCard(s){
+  const dot=s.status==='online'?'<span style="color:var(--green);font-weight:700">● в сети</span>':'<span style="color:var(--muted);font-weight:700">○ не в сети</span>';
+  return `<div class="card"><h3>${ic('users')} ${s.name} · <span class="pill">${s.role}</span> &nbsp; ${dot}</h3>
+    <div class="kpis" style="margin-bottom:12px">
+      <div class="kpi"><div class="n">${s.deals}</div><div class="l">Сделок</div></div>
+      <div class="kpi"><div class="n">€${s.payout.toLocaleString('ru-RU')}</div><div class="l">К выплате</div></div>
+      <div class="kpi"><div class="n">${s.conv}%</div><div class="l">Конверсия</div></div>
+    </div>
+    <label>Онлайн-сессии (когда был в сети)</label>
+    <div>${s.sessions.map(x=>`<div class="step">${ic('clock')}<div style="flex:1"><b>${x[0]}</b></div><span class="t">${x[1]} — ${x[2]}</span></div>`).join('')}</div>
+    <div class="row" style="margin-top:12px"><button class="btn sm" onclick="go('chat')">${ic('megaphone')} Чаты менеджера</button>
+      <button class="btn sec sm" onclick="toast('Выплата поставлена в очередь')">Отметить выплату</button></div></div>`;
+}
+
+function vChat(){
+  if(activeConvo!=null){
+    const c=convos.find(x=>x.id===activeConvo);
+    return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeConvo()">‹ Все чаты</button></div>
+    <div class="card"><h3>${ic('megaphone')} ${c.visitor} ${c.online?'<span style="color:var(--green);font-weight:700;font-size:12px">● online</span>':''} · менеджер ${c.rep}</h3>
+      <div class="chatbox">${c.msgs.map(m=>`<div class="msg ${m.who}"><div>${m.text}</div><div class="mt2">${m.tm}</div></div>`).join('')}</div>
+      <div class="row" style="margin-top:10px"><input id="cmsg" placeholder="Ответить посетителю…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn" onclick="sendMsg()">▶</button></div></div>`;
+  }
+  return `<h2>Чаты с посетителями</h2><p class="sub">Диалоги менеджеров с посетителями платформы.</p>
+  ${convos.map(c=>`<div class="appc" style="cursor:pointer" onclick="openConvo(${c.id})"><div class="h"><div class="lg">${ic('megaphone')}</div>
+    <div style="flex:1"><div class="nm">${c.visitor} ${c.unread?`<span class="st pend" style="margin-left:6px">${c.unread} новое</span>`:''}</div>
+      <div class="mt">${c.msgs[c.msgs.length-1].text}</div></div>
+    <div style="text-align:right"><div style="font-size:11.5px;color:var(--muted)">${c.msgs[c.msgs.length-1].tm}</div>
+      <div style="font-size:11.5px;color:${c.online?'var(--green)':'var(--muted)'};font-weight:700">${c.online?'online':'офлайн'}</div></div></div></div>`).join('')}`;
+}
+function openConvo(id){activeConvo=id;const c=convos.find(x=>x.id===id);c.unread=0;render();}
+function closeConvo(){activeConvo=null;render();}
+function sendMsg(){const el=$('#cmsg');const t=(el.value||'').trim();if(!t)return;const c=convos.find(x=>x.id===activeConvo);
+  c.msgs.push({who:'s',text:t,tm:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})});render();}
+
+function vContent(){
+  return `<h2>Контент и управление index</h2><p class="sub">Создавайте баннеры и управляйте главной страницей.</p>
+  <div class="card"><h3>${ic('plus')} Новый баннер</h3>
+    <div class="grid2"><div><label>Заголовок</label><input id="b_title" placeholder="Заголовок баннера"></div>
+      <div><label>Подзаголовок</label><input id="b_sub" placeholder="Короткое описание"></div></div>
+    <button class="btn" style="margin-top:13px" onclick="addBanner()">${ic('megaphone')} Опубликовать баннер</button></div>
+  <div class="card"><h3>${ic('layout')} Баннеры на index</h3>
+    ${banners.map((b,i)=>`<div class="banner ${b.active?'mag':''}"><div><b>${b.title}</b><div style="font-size:12.5px;opacity:.85">${b.sub}</div></div>
+      <div class="row"><div class="sw ${b.active?'on':''}" onclick="toggleBanner(${i})"><b></b></div><button class="btn r sm" onclick="delBanner(${i})">${ic('x')}</button></div></div>`).join('')}</div>
+  <div class="card"><h3>${ic('layout')} Разделы index (вкл/выкл)</h3>
+    ${Object.entries({quick:'Быстрый доступ',live:'Live сейчас',promo:'Промо-баннер',sections:'Все разделы'}).map(([k,l])=>`<div class="banner"><b>${l}</b><div class="sw ${idxToggles[k]?'on':''}" onclick="toggleIdx('${k}')"><b></b></div></div>`).join('')}
+    <p class="sub" style="margin-top:10px">⚠ В демо это визуальные переключатели. В проде — управляют реальными блоками index через бэкенд/конфиг.</p></div>`;
+}
+function addBanner(){const t=($('#b_title')||{}).value||'';const s=($('#b_sub')||{}).value||'';if(!t.trim()){toast('Заголовок пуст');return;}banners.unshift({title:t.trim(),sub:s.trim(),active:true});render();toast('Баннер опубликован');}
+function toggleBanner(i){banners[i].active=!banners[i].active;render();}
+function delBanner(i){banners.splice(i,1);render();toast('Баннер удалён');}
+function toggleIdx(k){idxToggles[k]=!idxToggles[k];render();toast(idxToggles[k]?'Раздел включён':'Раздел выключен');}
+
+renderTabs();render();
+</script>
+</body>
+</html>
