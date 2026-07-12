@@ -108,6 +108,29 @@
     display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;margin-top:10px}
   .btn svg{font-size:19px}.btn:active{transform:scale(.99)}
   textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;font-family:inherit;resize:none;color:var(--text)}
+  .page label{display:block;font-size:12px;color:var(--muted);margin:13px 0 5px;font-weight:600}
+  .page input[type=text],.page input[type=email],.page input[type=password]{width:100%;border:1px solid var(--line);
+    border-radius:11px;padding:12px;font-size:15px;font-family:inherit;color:var(--text);background:var(--card)}
+  .page input:focus{outline:none;border-color:var(--mag)}
+  .roleg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+  .rolec{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px;display:flex;flex-direction:column;
+    gap:8px;cursor:pointer;font-size:13px;font-weight:700}
+  .rolec svg{font-size:23px;color:var(--mag)}
+  .rolec.on{border-color:var(--mag);background:#faf2f6}
+  label.chk{display:flex;align-items:center;gap:9px;font-size:14.5px;color:var(--text);margin-top:13px;font-weight:600;cursor:pointer}
+  label.chk input{width:18px;height:18px;accent-color:var(--mag)}
+  .regfoot{text-align:center;color:var(--blue);font-weight:700;margin-top:16px;cursor:pointer;font-size:14px}
+  .tag1{font-size:14px;font-weight:700;color:var(--mag);margin-top:8px}
+  .tag2{font-size:13px;color:var(--muted);margin-top:1px}
+  .gate{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 22px;text-align:center;position:relative}
+  .glang{position:absolute;top:16px;right:16px;display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .gwm{font-size:30px;font-weight:800;margin-bottom:8px}.gwm .b{color:var(--mag)}.gwm .a{color:var(--blue)}
+  .gtag{font-size:16px;font-weight:700}.gtag2{font-size:13.5px;color:var(--muted);margin-bottom:24px}
+  .gcard{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;text-align:left}
+  .gcard h2{font-size:20px;margin:0 0 3px}.gsub{color:var(--muted);font-size:13px;margin:0 0 4px}
+  .gcard label{display:block;font-size:12px;color:var(--muted);margin:13px 0 5px;font-weight:600}
+  .gcard input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:15px;font-family:inherit;color:var(--text);background:var(--bg)}
+  .gcard input:focus{outline:none;border-color:var(--mag)}
   .nav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;
     justify-content:space-around;padding:9px 0 13px}
   .nav div{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer}
@@ -127,6 +150,8 @@
 const $=s=>document.querySelector(s);
 let lang='ru', cur='home';
 let vpn={on:false,connecting:false,server:0}, vpnIP='';
+let regRole='buyer';
+const cap=s=>s[0].toUpperCase()+s.slice(1);
 const SERVERS=[['🇳🇱','Нидерланды'],['🇩🇪','Германия'],['🇨🇼','Кюрасао'],['🇨🇾','Кипр'],['🇬🇧','Великобритания']];
 function randIP(){return (10+((Math.random()*90)|0))+'.'+((Math.random()*256)|0)+'.'+((Math.random()*256)|0)+'.'+((Math.random()*256)|0);}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2000);}
@@ -182,7 +207,8 @@ const IC={
   message:'<path d="M5 5h14a1.3 1.3 0 0 1 1.3 1.3v8.4A1.3 1.3 0 0 1 19 16H9l-4 3.5V6.3A1.3 1.3 0 0 1 6.3 5z"/>',
   cart:'<circle cx="9.5" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2.2l2.4 12h10L20 8H6.2"/>',
   briefcase:'<rect x="3" y="7.5" width="18" height="11.5" rx="2.2"/><path d="M9 7.5v-2A2 2 0 0 1 11 3.5h2a2 2 0 0 1 2 2v2M3 12.5h18"/>',
-  star:'<path d="M12 3.2l2.7 5.8 6.3.8-4.7 4.2 1.3 6.2L12 17.6 6.1 20.2l1.3-6.2L2.7 9.8l6.3-.8z" fill="currentColor" stroke="none"/>'
+  star:'<path d="M12 3.2l2.7 5.8 6.3.8-4.7 4.2 1.3 6.2L12 17.6 6.1 20.2l1.3-6.2L2.7 9.8l6.3-.8z" fill="currentColor" stroke="none"/>',
+  check:'<path d="M5 13l4 4L19 7"/>'
 };
 function ic(n){return `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[n]||''}</svg>`;}
 
@@ -200,6 +226,14 @@ const T={
     disc:'✦ Совет сформирован Google Gemini на основе каталога BetConstruct. Предварительная рекомендация, не юридическая консультация — финал с менеджером.',
     rRegion:'Регион',rProduct:'Продукт',rPay:'Платежи',rLic:'Лицензия',rMkt:'Маркетинг',
     vpnOff:'Отключено',vpnConnecting:'Подключение…',vpnConnected:'Подключено',vpnChange:'Сменить сервер',
+    regTitle:'Регистрация',regSub:'Выберите роль и заполните данные — заявка уйдёт на проверку.',
+    roleBuyer:'Оператор / стартап',roleGame:'Гейм-провайдер',rolePay:'Платёжная система',roleAff:'Аффилейт / Маркетинг',
+    fName:'Имя и фамилия',fCompany:'Компания',fEmail:'Email',fPhone:'Телефон / Telegram',fCountry:'Страна',fPass:'Пароль',
+    fInterest:'Что интересует (вертикаль, гео)',fGameType:'Типы игр (слоты / лайв / краш)',fPayMethods:'Методы оплаты и валюты',fCrypto:'Поддержка крипто (USDT/BTC)',
+    fModel:'Модель (CPA / RevShare / Hybrid)',fGeo:'Гео-фокус',fTraffic:'Источники трафика',
+    submitReg:'Отправить заявку',regDone:'Заявка отправлена. Статус: на проверке (KYB). Менеджер свяжется с вами.',
+    haveAcc:'Уже есть аккаунт? Войти',kyb:'Вендоры проходят KYB-верификацию перед публикацией.',
+    entryName:'Как к вам обращаться',entryContact:'Email или телефон',entryBtn:'Войти в систему',entrySub:'Укажите имя и контакт, чтобы продолжить',
     qa:['Live','Слоты','Спорт','Live Casino','Игры','Колесо','Киберспорт','Партнёры'],
     sec:['iGaming решения','Платформы','Продукты','Backoffice / BME','Регионы','Платежи','Prediction','Новости','Marketplace'],
     nav:['Главная','Продукты','Live','Партнёры','Ещё']},
@@ -215,6 +249,14 @@ const T={
     disc:'✦ Advice generated by Google Gemini from the BetConstruct catalogue. Preliminary recommendation, not legal advice — finalize with a manager.',
     rRegion:'Region',rProduct:'Product',rPay:'Payments',rLic:'License',rMkt:'Marketing',
     vpnOff:'Off',vpnConnecting:'Connecting…',vpnConnected:'Connected',vpnChange:'Change server',
+    regTitle:'Sign up',regSub:'Choose a role and fill in the details — your application goes to review.',
+    roleBuyer:'Operator / startup',roleGame:'Game provider',rolePay:'Payment system',roleAff:'Affiliate / Marketing',
+    fName:'Full name',fCompany:'Company',fEmail:'Email',fPhone:'Phone / Telegram',fCountry:'Country',fPass:'Password',
+    fInterest:'Your interest (vertical, geo)',fGameType:'Game types (slots / live / crash)',fPayMethods:'Payment methods and currencies',fCrypto:'Crypto support (USDT/BTC)',
+    fModel:'Model (CPA / RevShare / Hybrid)',fGeo:'Geo focus',fTraffic:'Traffic sources',
+    submitReg:'Submit application',regDone:'Application submitted. Status: under review (KYB). A manager will contact you.',
+    haveAcc:'Already have an account? Log in',kyb:'Vendors pass KYB verification before publishing.',
+    entryName:'How should we address you',entryContact:'Email or phone',entryBtn:'Enter',entrySub:'Enter your name and contact to continue',
     qa:['Live','Slots','Sport','Live Casino','Games','Wheel','Esports','Partners'],
     sec:['iGaming Solutions','Platforms','Products','Backoffice / BME','Regional','Payments','Prediction','News','Marketplace'],
     nav:['Home','Products','Live','Partners','More']},
@@ -230,6 +272,14 @@ const T={
     disc:'✦ Խորհուրդը գեներացվել է Google Gemini-ի կողմից՝ BetConstruct-ի կատալոգից։ Նախնական առաջարկ, ոչ իրավաբանական խորհրդատվություն — վերջնականը՝ մենեջերի հետ։',
     rRegion:'Տարածաշրջան',rProduct:'Ապրանք',rPay:'Վճարումներ',rLic:'Լիցենզիա',rMkt:'Մարքեթինգ',
     vpnOff:'Անջատված',vpnConnecting:'Միանում…',vpnConnected:'Միացված',vpnChange:'Փոխել սերվերը',
+    regTitle:'Գրանցում',regSub:'Ընտրիր դերը և լրացրու տվյալները — հայտը կուղարկվի ստուգման։',
+    roleBuyer:'Օպերատոր / սթարթափ',roleGame:'Խաղերի մատակարար',rolePay:'Վճարային համակարգ',roleAff:'Աֆիլիատ / Մարքեթինգ',
+    fName:'Անուն Ազգանուն',fCompany:'Ընկերություն',fEmail:'Email',fPhone:'Հեռախոս / Telegram',fCountry:'Երկիր',fPass:'Գաղտնաբառ',
+    fInterest:'Ինչ է հետաքրքրում (ուղղություն, գեո)',fGameType:'Խաղերի տեսակներ (սլոտ / լայվ / կրաշ)',fPayMethods:'Վճարման մեթոդներ և արժույթներ',fCrypto:'Կրիպտո աջակցություն (USDT/BTC)',
+    fModel:'Մոդել (CPA / RevShare / Hybrid)',fGeo:'Գեո ֆոկուս',fTraffic:'Տրաֆիկի աղբյուրներ',
+    submitReg:'Ուղարկել հայտը',regDone:'Հայտն ուղարկված է։ Կարգավիճակ՝ ստուգման մեջ (KYB)։ Մենեջերը կկապվի ձեզ հետ։',
+    haveAcc:'Արդեն ունե՞ք հաշիվ։ Մուտք',kyb:'Վենդորները անցնում են KYB ստուգում հրապարակումից առաջ։',
+    entryName:'Ինչպես դիմել ձեզ',entryContact:'Email կամ հեռախոս',entryBtn:'Մուտք գործել',entrySub:'Մուտքագրեք անունը և կոնտակտը շարունակելու համար',
     qa:['Live','Սլոտներ','Սպորտ','Live Casino','Խաղեր','Անիվ','Կիբերսպորտ','Գործընկերներ'],
     sec:['iGaming լուծումներ','Հարթակներ','Ապրանքներ','Backoffice / BME','Տարածաշրջան','Վճարումներ','Prediction','Նորություններ','Marketplace'],
     nav:['Գլխավոր','Ապրանքներ','Live','Գործընկերներ','Ավելին']}
@@ -250,12 +300,14 @@ function header(){
       ${vpn.on?`<div class="vchip">${ic('shield')} VPN</div>`:''}
       <div class="langseg">${['ru','en','hy'].map(l=>`<span class="lg ${lang===l?'active':''}" onclick="setLang('${l}')">${l==='ru'?'РУ':l==='en'?'EN':'ՀՅ'}</span>`).join('')}</div>
       <div class="hbtn" onclick="toast('•')">${ic('bell')}</div>
-      <div class="hbtn" onclick="toast('•')">${ic('user')}</div>
+      <div class="hbtn" onclick="go('register')">${ic('user')}</div>
     </div></div>`;
 }
 function home(){
   return header()+`
-  <div class="welcome"><div class="s">${t('hi')} 👋</div><h1>${t('q')}</h1></div>
+  <div class="welcome"><div class="s">${t('hi')} 👋</div><h1>${t('q')}</h1>
+    <div class="tag1">Leading iGaming Platform Provider</div>
+    <div class="tag2">Experience the solutions first-hand</div></div>
   <div class="wrap">
     ${vpnCard()}
     <div class="search" onclick="toast('•')">${ic('search')} ${t('searchPh')}</div>
@@ -360,12 +412,68 @@ function runAI(){
   $('#aiOut').innerHTML=`<div class="rec" style="margin-top:14px">${rows.map(r=>`<div class="row">${ic(r[0])}<div>${r[1]}</div></div>`).join('')}</div>
     <div class="disc">${t('disc')}</div><button class="btn" onclick="toast('✓')">${ic('message')} ${t('discuss')}</button>`;
 }
-const PAGES={home,products,live,partners,more};
+/* ---------- РЕГИСТРАЦИЯ ---------- */
+const REG_ROLES=[['buyer','briefcase'],['game','gamepad'],['pay','card'],['aff','megaphone']];
+function fld(k,id,type){return `<label>${t(k)}</label><input id="rg_${id}" type="${type||'text'}" autocomplete="off">`;}
+function regFields(){
+  let extra='';
+  if(regRole==='buyer') extra=fld('fInterest','interest');
+  else if(regRole==='game') extra=fld('fGameType','gametype');
+  else if(regRole==='pay') extra=fld('fPayMethods','methods')+`<label class="chk"><input type="checkbox" id="rg_crypto"> ${t('fCrypto')}</label>`;
+  else if(regRole==='aff') extra=fld('fModel','model')+fld('fGeo','geo')+fld('fTraffic','traffic');
+  const kyb=regRole!=='buyer'?`<div class="disc">${ic('shield')} ${t('kyb')}</div>`:'';
+  return fld('fName','name')+fld('fCompany','company')+fld('fEmail','email','email')+fld('fPhone','phone')+fld('fCountry','country')+fld('fPass','pass','password')
+    +extra+kyb+`<button class="btn" onclick="submitReg()">${ic('check')} ${t('submitReg')}</button>
+    <div class="regfoot" onclick="toast('•')">${t('haveAcc')}</div>`;
+}
+function register(){
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('user')} ${t('regTitle')}</h2><p class="sub">${t('regSub')}</p>
+    <div class="roleg">${REG_ROLES.map(r=>`<div class="rolec ${regRole===r[0]?'on':''}" data-r="${r[0]}" onclick="setRole('${r[0]}')">${ic(r[1])}<span>${t('role'+cap(r[0]))}</span></div>`).join('')}</div>
+    <div id="regForm">${regFields()}</div></div>`;
+}
+function setRole(r){regRole=r;document.querySelectorAll('.rolec').forEach(c=>c.classList.toggle('on',c.dataset.r===r));document.getElementById('regForm').innerHTML=regFields();}
+function submitReg(){
+  const email=(document.getElementById('rg_email')||{}).value||'';
+  if(!email.trim()){toast(t('fEmail'));return;}
+  const role=t('role'+cap(regRole));
+  document.getElementById('regForm').innerHTML=`<div class="rec"><div class="row">${ic('check')}<div><b>${role}</b><br>${t('regDone')}</div></div></div>
+    <button class="btn" onclick="go('home')">${t('back')}</button>`;
+}
+
+/* ---------- ВХОД (первый экран) ---------- */
+function entry(){
+  return `<div class="gate">
+    <div class="glang">${['ru','en','hy'].map(l=>`<span class="lg ${lang===l?'active':''}" onclick="setLang('${l}')">${l==='ru'?'РУ':l==='en'?'EN':'ՀՅ'}</span>`).join('')}</div>
+    <div class="gwm"><span class="b">Bet</span>Construct<span class="a">AI</span></div>
+    <div class="gtag">Leading iGaming Platform Provider</div>
+    <div class="gtag2">Experience the solutions first-hand</div>
+    <div class="gcard">
+      <h2>${t('regTitle')}</h2><p class="gsub">${t('entrySub')}</p>
+      <label>${t('entryName')}</label><input id="en_name" autocomplete="off">
+      <label>${t('entryContact')}</label><input id="en_contact" autocomplete="off" placeholder="name@mail.com / +374…">
+      <button class="btn" onclick="submitEntry()">${ic('check')} ${t('entryBtn')}</button>
+    </div></div>`;
+}
+function submitEntry(){
+  const n=(document.getElementById('en_name')||{}).value||'';
+  const c=(document.getElementById('en_contact')||{}).value||'';
+  if(!n.trim()){toast(t('entryName'));return;}
+  if(!c.trim()){toast(t('entryContact'));return;}
+  window.USER=n.trim();
+  render('home');
+}
+
+const PAGES={home,products,live,partners,more,register};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
-function render(pg){cur=pg;if(pg==='advise'){advise();return;}$('#scroll').innerHTML=PAGES[pg]();$('#scroll').scrollTop=0;renderNav();}
+function render(pg){cur=pg;
+  if(pg==='entry'){$('#nav').style.display='none';$('#scroll').innerHTML=entry();$('#scroll').scrollTop=0;return;}
+  $('#nav').style.display='flex';
+  if(pg==='advise'){advise();return;}
+  $('#scroll').innerHTML=PAGES[pg]();$('#scroll').scrollTop=0;renderNav();}
 function go(pg){render(pg);}
 $('#nav').addEventListener('click',e=>{const d=e.target.closest('[data-t]');if(d)go(d.dataset.t);});
-renderNav();render('home');
+render('entry');
 </script>
 </body>
 </html>
