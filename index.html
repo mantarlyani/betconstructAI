@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BetConstructAI — App</title>
+<style>
+  :root{
+    --mag:#A60063; --mag-dk:#7a0049; --bg:#f3f4f6; --card:#ffffff; --line:#e7e9ee;
+    --text:#1d1f25; --muted:#8b909b; --blue:#2f6bd6; --green:#2fb877; --live:#e2453f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#d9dce3;display:flex;justify-content:center;min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text)}
+  .phone{width:412px;max-width:100vw;background:var(--bg);min-height:100vh;position:relative;display:flex;flex-direction:column;overflow:hidden}
+  .scroll{flex:1;overflow-y:auto;padding-bottom:80px}
+  svg.i{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;flex-shrink:0}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:15px 16px 6px;gap:8px}
+  .wm{font-size:19px;font-weight:800;white-space:nowrap}.wm .b{color:var(--mag)}.wm .a{color:var(--blue)}
+  .hright{display:flex;align-items:center;gap:8px}
+  .langseg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .lg{padding:7px 9px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
+  .lg.active{background:var(--mag);color:#fff}
+  .hbtn{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:var(--card);
+    display:flex;align-items:center;justify-content:center;font-size:20px;color:#555;cursor:pointer}
+  .welcome{padding:10px 18px 4px}
+  .welcome .s{color:var(--muted);font-size:15px}
+  .welcome h1{margin:2px 0 0;font-size:25px;font-weight:800}
+  .wrap{padding:0 16px}
+  .rowcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-top:14px;
+    display:flex;align-items:center;justify-content:space-between}
+  .rowcard .lft{display:flex;align-items:center;gap:11px;font-size:17px;font-weight:600}
+  .rowcard .lft svg{font-size:22px;color:var(--mag)}
+  .tgl{width:52px;height:30px;background:#cfd3db;border-radius:20px;position:relative;transition:.2s;cursor:pointer;flex-shrink:0}
+  .tgl b{position:absolute;top:3px;left:3px;width:24px;height:24px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .tgl.on{background:var(--green)}.tgl.on b{left:25px}
+  .tgl.busy{background:#f2c14e}
+  .vchip{display:flex;align-items:center;gap:4px;background:#e3f6ee;color:var(--green);border-radius:9px;
+    padding:7px 9px;font-size:12px;font-weight:800}.vchip svg{font-size:15px}
+  .vpncard .lft2{display:flex;align-items:center;gap:12px}
+  .vicon{width:38px;height:38px;border-radius:11px;background:#eceef2;color:var(--muted);display:flex;
+    align-items:center;justify-content:center;font-size:20px;transition:.2s}
+  .vicon.on{background:#e3f6ee;color:var(--green)}.vicon.cn{background:#fdf3dc;color:#c8860a}
+  .vtitle{font-size:16px;font-weight:700}
+  .vsub{font-size:12px;color:var(--muted);margin-top:2px}
+  .vst.on{color:var(--green);font-weight:700}.vst.cn{color:#c8860a;font-weight:700}.vst.off{color:var(--muted)}
+  .vpncard.act{border-color:#b7e6d3}
+  .vserver{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:8px;padding:12px 14px;
+    display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;cursor:pointer}
+  .vserver svg{font-size:19px;color:var(--mag)}.vserver .ch{margin-left:auto;color:var(--blue);font-size:13px;font-weight:700}
+  .search{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-top:12px;
+    color:var(--muted);font-size:16px;display:flex;align-items:center;gap:10px;cursor:pointer}
+  .search svg{font-size:21px}
+  .aicard{background:var(--mag);color:#fff;border-radius:16px;padding:18px;margin-top:14px;display:flex;
+    align-items:center;justify-content:space-between;cursor:pointer}
+  .aicard .t{font-size:19px;font-weight:800;display:flex;align-items:center;gap:9px}
+  .aicard .t svg{font-size:22px}
+  .aicard .chev{font-size:22px}
+  .h2{font-size:20px;font-weight:800;margin:22px 18px 12px;display:flex;justify-content:space-between;align-items:center}
+  .h2 .lft{display:flex;align-items:center;gap:8px}.h2 .lft svg{color:var(--live);font-size:14px}
+  .h2 a{font-size:14px;color:var(--blue);font-weight:600;text-decoration:none;cursor:pointer}
+  .qa{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;padding:0 16px}
+  .qtile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 4px 12px;text-align:center;cursor:pointer}
+  .qtile svg{font-size:28px;color:var(--mag)}.qtile p{margin:8px 0 0;font-size:12.5px;font-weight:700}
+  .qtile:active{background:#faf2f6}
+  .lscroll{display:flex;gap:12px;overflow-x:auto;padding:0 16px 4px;scrollbar-width:none}
+  .lscroll::-webkit-scrollbar{display:none}
+  .lmatch{min-width:258px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer}
+  .lmatch .lg2{color:var(--muted);font-size:14px;display:flex;align-items:center;gap:7px}
+  .lmatch .lg2 svg{color:var(--live);font-size:12px}
+  .lmatch .bot{display:flex;justify-content:space-between;align-items:center;margin-top:26px}
+  .lmatch .sc{color:var(--green);font-weight:800;font-size:16px}
+  .lmatch .od{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:8px 18px;color:var(--muted);font-weight:700}
+  .promo{background:var(--mag);color:#fff;border-radius:16px;padding:18px;margin:16px 16px 4px;display:flex;
+    align-items:center;justify-content:space-between;cursor:pointer}
+  .promo .t{font-size:20px;font-weight:800;display:flex;align-items:center;gap:9px}.promo .t svg{font-size:23px}
+  .promo .d{font-size:14px;opacity:.9;margin-top:3px}
+  .list2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px}
+  .lcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 14px;display:flex;
+    align-items:center;gap:11px;font-size:15px;font-weight:700;cursor:pointer;min-height:58px}
+  .lcard svg{font-size:23px;color:var(--mag)}
+  .lcard:active{background:#faf2f6}
+  .page{padding:16px}.page h2{font-size:22px;margin:4px 0 2px;display:flex;align-items:center;gap:9px}
+  .page h2 svg{font-size:22px;color:var(--mag)}
+  .page .sub{color:var(--muted);font-size:14px;margin:0 0 16px}
+  .back{display:inline-flex;align-items:center;gap:5px;color:var(--mag);font-size:15px;font-weight:700;cursor:pointer;margin-bottom:14px}
+  .back svg{font-size:18px}
+  .pcat{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+  .pcat .hd{padding:15px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+  .pcat .hd .l{display:flex;align-items:center;gap:11px;font-size:16px;font-weight:700}
+  .pcat .hd .l svg{color:var(--mag);font-size:22px}
+  .pcat .more{color:var(--mag);font-size:14px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:5px}
+  .pcat .more svg{transition:.2s;font-size:16px}
+  .pcat .body{display:none;border-top:1px solid var(--line)}
+  .pcat.open .body{display:block}
+  .pcat.open .more svg{transform:rotate(180deg)}
+  .lnk{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-top:1px solid var(--line);
+    text-decoration:none;color:var(--text);font-size:14.5px}
+  .lnk:first-child{border-top:none}
+  .lnk .nm{display:flex;align-items:center;gap:10px}.lnk .nm svg{font-size:20px;color:var(--mag)}
+  .lnk .go{color:var(--blue);font-size:17px}
+  .lnk:active{background:#faf2f6}
+  .rec{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:12px}
+  .rec .row{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:flex-start}.rec .row:last-child{border:none}
+  .rec .row svg{font-size:20px;color:var(--mag)}
+  .disc{font-size:12px;color:var(--muted);background:var(--bg);border-radius:11px;padding:11px;margin-bottom:12px}
+  .btn{width:100%;height:46px;border:none;border-radius:13px;background:var(--mag);color:#fff;font-weight:800;font-size:15px;
+    display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;margin-top:10px}
+  .btn svg{font-size:19px}.btn:active{transform:scale(.99)}
+  textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;font-family:inherit;resize:none;color:var(--text)}
+  .nav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;
+    justify-content:space-around;padding:9px 0 13px}
+  .nav div{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer}
+  .nav div svg{font-size:23px}.nav div.on{color:var(--mag)}
+  .toast{position:absolute;bottom:92px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:11px 18px;
+    border-radius:12px;font-size:13.5px;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;z-index:9;max-width:88%}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="scroll" id="scroll"></div>
+  <div class="nav" id="nav"></div>
+  <div class="toast" id="toast"></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+let lang='ru', cur='home';
+let vpn={on:false,connecting:false,server:0}, vpnIP='';
+const SERVERS=[['🇳🇱','Нидерланды'],['🇩🇪','Германия'],['🇨🇼','Кюрасао'],['🇨🇾','Кипр'],['🇬🇧','Великобритания']];
+function randIP(){return (10+((Math.random()*90)|0))+'.'+((Math.random()*256)|0)+'.'+((Math.random()*256)|0)+'.'+((Math.random()*256)|0);}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2000);}
+function openURL(u){window.open(u,'_blank');}
+
+/* ---------- inline SVG icons (iOS-style, stroke) ---------- */
+const IC={
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  shield:'<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><rect x="9.3" y="11" width="5.4" height="4.4" rx="1"/><path d="M10.3 11v-1.2a1.7 1.7 0 0 1 3.4 0V11"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  sparkles:'<path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7z"/><path d="M18.5 14l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/>',
+  chevL:'<path d="M15 6l-6 6 6 6"/>',
+  chevD:'<path d="M6 9l6 6 6-6"/>',
+  external:'<path d="M14 4.5h5.5V10"/><path d="M19.5 4.5l-8.5 8.5"/><path d="M18 13.5V18a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18V7.5A1.5 1.5 0 0 1 6 6h4.5"/>',
+  dot:'<circle cx="12" cy="12" r="5" fill="currentColor" stroke="none"/>',
+  wheel:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M12 3.2v6.6M20.8 12h-6.6M12 20.8v-6.6M3.2 12h6.6M5.8 5.8l4.6 4.6M18.2 5.8l-4.6 4.6M18.2 18.2l-4.6-4.6M5.8 18.2l4.6-4.6"/>',
+  broadcast:'<circle cx="12" cy="12" r="2.3"/><path d="M7.5 7.5a6.5 6.5 0 0 0 0 9M16.5 7.5a6.5 6.5 0 0 1 0 9M4.7 4.7a10.5 10.5 0 0 0 0 14.6M19.3 4.7a10.5 10.5 0 0 1 0 14.6"/>',
+  cherry:'<circle cx="7.5" cy="16" r="3"/><circle cx="16.5" cy="16" r="3"/><path d="M7.5 13c0-4.5 4-6.5 9-8M16.5 13c0-2 .5-3.5-1-5"/>',
+  ball:'<circle cx="12" cy="12" r="9"/><path d="M12 7.2l3.4 2.5-1.3 4h-4.2l-1.3-4z"/><path d="M12 7.2V4M15.4 9.7l2.8-1M14.1 13.7l1.7 2.6M9.9 13.7l-1.7 2.6M8.6 9.7l-2.8-1"/>',
+  cards:'<rect x="6.5" y="4" width="11" height="15" rx="2.2"/><path d="M12 8.5l2.3 3.5-2.3 3.5-2.3-3.5z"/>',
+  gamepad:'<rect x="2.5" y="8" width="19" height="9" rx="4.5"/><path d="M7.5 11.5v3M6 13h3"/><circle cx="16" cy="11.8" r=".9" fill="currentColor" stroke="none"/><circle cx="18.2" cy="14" r=".9" fill="currentColor" stroke="none"/>',
+  users:'<circle cx="9" cy="8" r="3.2"/><path d="M3.2 20a5.8 5.8 0 0 1 11.6 0"/><path d="M15.5 5.1a3.2 3.2 0 0 1 0 6.2M17 14.4a5.8 5.8 0 0 1 3.8 5.6"/>',
+  diamond:'<path d="M6 3.5h12l3 5-9 12L3 8.5z"/><path d="M3 8.5h18M9.5 3.5L6.5 8.5 12 20.5M14.5 3.5l3 5L12 20.5"/>',
+  puzzle:'<path d="M4.5 8.5H8a1.8 1.8 0 1 1 3.6 0h3.9v3.5a1.8 1.8 0 1 1 0 3.6v3.9H11a1.8 1.8 0 1 0-3.6 0H4.5V8.5z"/>',
+  box:'<path d="M3.5 8L12 4l8.5 4-8.5 4z"/><path d="M3.5 8v8L12 20l8.5-4V8"/><path d="M12 12v8"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2.3M12 18.2v2.3M4.4 7.5l2 1.1M17.6 15.4l2 1.1M4.4 16.5l2-1.1M17.6 8.6l2-1.1"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  card:'<rect x="3" y="6" width="18" height="12" rx="2.4"/><path d="M3 10h18M7 15h3.5"/>',
+  bulb:'<path d="M9 18.5h6M10 21.5h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1.3-1 2.2H9c0-.9-.3-1.6-1-2.2A6 6 0 0 1 12 3z"/>',
+  news:'<rect x="4" y="5" width="16" height="14" rx="2.2"/><path d="M8 9h8M8 12.5h8M8 16h5"/>',
+  store:'<path d="M4 9.5L5 5h14l1 4.5"/><path d="M4 9.5a2.4 2.4 0 0 0 4.7 0 2.4 2.4 0 0 0 4.6 0 2.4 2.4 0 0 0 4.7 0"/><path d="M5.2 11.5V19h13.6v-7.5"/><path d="M9.5 19v-4h5v4"/>',
+  home:'<path d="M4 11l8-7 8 7"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5V14h4v5.5"/>',
+  dots:'<circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
+  desktop:'<rect x="3" y="4" width="18" height="12.5" rx="2.2"/><path d="M8.5 20h7M12 16.5V20"/>',
+  building:'<rect x="5.5" y="3.5" width="13" height="17" rx="1.4"/><path d="M9 7.5h2M13 7.5h2M9 11h2M13 11h2M9 14.5h2M13 14.5h2M10.5 20.5v-3h3v3"/>',
+  code:'<path d="M8.5 8L4.5 12l4 4M15.5 8l4 4-4 4"/>',
+  book:'<path d="M5 4.5h10.5A1.5 1.5 0 0 1 17 6v13.5H6.5A1.5 1.5 0 0 1 5 18z"/><path d="M17 19.5H6.5A1.5 1.5 0 0 0 5 21"/>',
+  target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/>',
+  trophy:'<path d="M8 4h8v3.5a4 4 0 0 1-8 0z"/><path d="M8 5.5H5v1a3 3 0 0 0 3 3M16 5.5h3v1a3 3 0 0 1-3 3"/><path d="M12 11.5v4M9 20h6M10 20l.6-4.5h2.8L14 20"/>',
+  clock:'<circle cx="12" cy="12" r="8.2"/><path d="M12 7.5v4.7l3.2 2"/>',
+  cash:'<rect x="3" y="6" width="18" height="12" rx="2.2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9v.01M18 15v.01"/>',
+  spade:'<path d="M12 3.5c3 3.7 6.5 5.7 6.5 8.7a2.9 2.9 0 0 1-4.8 2.1c.3 2 .8 3 2 4H8.3c1.2-1 1.7-2 2-4a2.9 2.9 0 0 1-4.8-2.1c0-3 3.5-5 6.5-8.7z" fill="currentColor" stroke="none"/>',
+  dice:'<rect x="4" y="4" width="16" height="16" rx="3.2"/><circle cx="9" cy="9" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.1" fill="currentColor" stroke="none"/>',
+  tv:'<rect x="3" y="6.5" width="18" height="12" rx="2.2"/><path d="M8 3.5l4 3 4-3"/>',
+  activity:'<path d="M3.5 12H7l2.2-5.5 3.4 11 2.1-5.5h3.8"/>',
+  chart:'<path d="M4 19V5M4 19h16"/><circle cx="9" cy="13.5" r="1.3"/><circle cx="13" cy="9.5" r="1.3"/><circle cx="17" cy="12.5" r="1.3"/><path d="M9.9 12.7l2.2-2.3M13.9 10.2l2.2 1.5"/>',
+  robot:'<rect x="5" y="8" width="14" height="10" rx="3.2"/><path d="M12 8V5.2M9 13h.01M15 13h.01"/><circle cx="12" cy="4" r="1.2"/><path d="M5 12.5H3.5M20.5 12.5H19"/>',
+  umbrella:'<path d="M12 3.2a8.8 8.8 0 0 1 8.8 8.8H3.2A8.8 8.8 0 0 1 12 3.2z"/><path d="M12 12v5.8a2.2 2.2 0 0 0 4.4 0"/>',
+  pin:'<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
+  badge:'<circle cx="12" cy="9" r="5"/><path d="M8.8 13.2L7.5 20.5l4.5-2.2 4.5 2.2-1.3-7.3"/>',
+  megaphone:'<path d="M4 10v4l11 4.5V5.5z"/><path d="M15 8.5a3.8 3.8 0 0 1 0 7"/>',
+  message:'<path d="M5 5h14a1.3 1.3 0 0 1 1.3 1.3v8.4A1.3 1.3 0 0 1 19 16H9l-4 3.5V6.3A1.3 1.3 0 0 1 6.3 5z"/>',
+  cart:'<circle cx="9.5" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2.2l2.4 12h10L20 8H6.2"/>',
+  briefcase:'<rect x="3" y="7.5" width="18" height="11.5" rx="2.2"/><path d="M9 7.5v-2A2 2 0 0 1 11 3.5h2a2 2 0 0 1 2 2v2M3 12.5h18"/>',
+  star:'<path d="M12 3.2l2.7 5.8 6.3.8-4.7 4.2 1.3 6.2L12 17.6 6.1 20.2l1.3-6.2L2.7 9.8l6.3-.8z" fill="currentColor" stroke="none"/>'
+};
+function ic(n){return `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[n]||''}</svg>`;}
+
+/* ---------- i18n ---------- */
+const T={
+  ru:{hi:'Добро пожаловать',q:'Что сыграем сегодня?',searchPh:'Поиск: игры, спорт, партнёры…',
+    aiTitle:'AI-советник',aiDesc:'Опишите задачу — подскажу решение',quick:'Быстрый доступ',liveNow:'Live сейчас',all:'все',
+    wonderD:'Крути колесо — оффер недели',allSections:'Все разделы',
+    productsSub:'Демо front-end опции (Partner iFrame / API) и продукты BetConstruct. Нажмите «Подробно» — откроются реальные ссылки.',
+    feCat:'Front-end опции (iFrame / API)',bcCat:'Продукты BetConstruct',details:'Подробно',askAI:'Спросить AI-советника',
+    liveSub:'Прямые события — тап открывает реальную витрину.',openAllLive:'Открыть все live-события',
+    partnersSub:'Два пути и проверенные партнёры.',buy:'Приобрести услуги',provide:'Предоставлять услуги',
+    moreSub:'Дополнительные разделы и продукты.',back:'Назад',aiPageSub:'✦ Powered by Google Gemini — опишите задачу.',
+    aiPh:'Хочу крипто-казино в LATAM с упором на слоты',getRec:'Получить рекомендацию',discuss:'Обсудить с менеджером',
+    disc:'✦ Совет сформирован Google Gemini на основе каталога BetConstruct. Предварительная рекомендация, не юридическая консультация — финал с менеджером.',
+    rRegion:'Регион',rProduct:'Продукт',rPay:'Платежи',rLic:'Лицензия',rMkt:'Маркетинг',
+    vpnOff:'Отключено',vpnConnecting:'Подключение…',vpnConnected:'Подключено',vpnChange:'Сменить сервер',
+    qa:['Live','Слоты','Спорт','Live Casino','Игры','Колесо','Киберспорт','Партнёры'],
+    sec:['iGaming решения','Платформы','Продукты','Backoffice / BME','Регионы','Платежи','Prediction','Новости','Marketplace'],
+    nav:['Главная','Продукты','Live','Партнёры','Ещё']},
+  en:{hi:'Welcome',q:'What shall we play today?',searchPh:'Search: games, sport, partners…',
+    aiTitle:'AI advisor',aiDesc:'Describe your task — get a solution',quick:'Quick access',liveNow:'Live now',all:'all',
+    wonderD:'Spin the wheel — offer of the week',allSections:'All sections',
+    productsSub:'Demo front-end options (Partner iFrame / API) and BetConstruct products. Tap “Details” to open real links.',
+    feCat:'Front-end options (iFrame / API)',bcCat:'BetConstruct products',details:'Details',askAI:'Ask the AI advisor',
+    liveSub:'Live events — tap opens the real storefront.',openAllLive:'Open all live events',
+    partnersSub:'Two paths and verified partners.',buy:'Buy services',provide:'Provide services',
+    moreSub:'Extra sections and products.',back:'Back',aiPageSub:'✦ Powered by Google Gemini — describe your task.',
+    aiPh:'I want a crypto casino in LATAM focused on slots',getRec:'Get recommendation',discuss:'Discuss with a manager',
+    disc:'✦ Advice generated by Google Gemini from the BetConstruct catalogue. Preliminary recommendation, not legal advice — finalize with a manager.',
+    rRegion:'Region',rProduct:'Product',rPay:'Payments',rLic:'License',rMkt:'Marketing',
+    vpnOff:'Off',vpnConnecting:'Connecting…',vpnConnected:'Connected',vpnChange:'Change server',
+    qa:['Live','Slots','Sport','Live Casino','Games','Wheel','Esports','Partners'],
+    sec:['iGaming Solutions','Platforms','Products','Backoffice / BME','Regional','Payments','Prediction','News','Marketplace'],
+    nav:['Home','Products','Live','Partners','More']},
+  hy:{hi:'Բարի գալուստ',q:'Ի՞նչ խաղանք այսօր',searchPh:'Որոնում՝ խաղեր, սպորտ, գործընկերներ…',
+    aiTitle:'AI խորհրդատու',aiDesc:'Նկարագրիր խնդիրը — կառաջարկեմ լուծում',quick:'Արագ մուտք',liveNow:'Ուղիղ հիմա',all:'բոլորը',
+    wonderD:'Պտտիր անիվը — շաբաթվա առաջարկ',allSections:'Բոլոր բաժինները',
+    productsSub:'Դեմո front-end տարբերակներ (Partner iFrame / API) և BetConstruct-ի ապրանքներ։ Սեղմիր «Մանրամասն»՝ իրական հղումների համար։',
+    feCat:'Front-end տարբերակներ (iFrame / API)',bcCat:'BetConstruct-ի ապրանքներ',details:'Մանրամասն',askAI:'Հարցնել AI խորհրդատուին',
+    liveSub:'Ուղիղ իրադարձություններ — սեղմումը բացում է իրական էջը։',openAllLive:'Բացել բոլոր ուղիղ իրադարձությունները',
+    partnersSub:'Երկու ուղի և ստուգված գործընկերներ։',buy:'Ձեռք բերել ծառայություններ',provide:'Տրամադրել ծառայություններ',
+    moreSub:'Լրացուցիչ բաժիններ և ապրանքներ։',back:'Հետ',aiPageSub:'✦ Powered by Google Gemini — նկարագրիր խնդիրը։',
+    aiPh:'Ուզում եմ կրիպտո-կազինո LATAM-ում՝ սլոտների շեշտով',getRec:'Ստանալ առաջարկ',discuss:'Քննարկել մենեջերի հետ',
+    disc:'✦ Խորհուրդը գեներացվել է Google Gemini-ի կողմից՝ BetConstruct-ի կատալոգից։ Նախնական առաջարկ, ոչ իրավաբանական խորհրդատվություն — վերջնականը՝ մենեջերի հետ։',
+    rRegion:'Տարածաշրջան',rProduct:'Ապրանք',rPay:'Վճարումներ',rLic:'Լիցենզիա',rMkt:'Մարքեթինգ',
+    vpnOff:'Անջատված',vpnConnecting:'Միանում…',vpnConnected:'Միացված',vpnChange:'Փոխել սերվերը',
+    qa:['Live','Սլոտներ','Սպորտ','Live Casino','Խաղեր','Անիվ','Կիբերսպորտ','Գործընկերներ'],
+    sec:['iGaming լուծումներ','Հարթակներ','Ապրանքներ','Backoffice / BME','Տարածաշրջան','Վճարումներ','Prediction','Նորություններ','Marketplace'],
+    nav:['Գլխավոր','Ապրանքներ','Live','Գործընկերներ','Ավելին']}
+};
+const t=k=>T[lang][k];
+function setLang(l){lang=l;document.documentElement.lang=l;render(cur);}
+
+const QA_IC=['broadcast','cherry','ball','cards','gamepad','wheel','gamepad','users'];
+const QA_ROUTE=['live','products','live','products','products','products','products','partners'];
+const SEC_IC=['diamond','puzzle','box','gear','globe','card','bulb','news','store'];
+const NAV_IC=['home','box','broadcast','users','dots'];
+const NAV_KEY=['home','products','live','partners','more'];
+const MATCHES=[['Club Friendlies','1 : 1','2.20'],['Club Friendlies','0 : 0','2.25'],['World Cup','—','1.85']];
+
+function header(){
+  return `<div class="top"><div class="wm"><span class="b">Bet</span>Construct<span class="a">AI</span></div>
+    <div class="hright">
+      ${vpn.on?`<div class="vchip">${ic('shield')} VPN</div>`:''}
+      <div class="langseg">${['ru','en','hy'].map(l=>`<span class="lg ${lang===l?'active':''}" onclick="setLang('${l}')">${l==='ru'?'РУ':l==='en'?'EN':'ՀՅ'}</span>`).join('')}</div>
+      <div class="hbtn" onclick="toast('•')">${ic('bell')}</div>
+      <div class="hbtn" onclick="toast('•')">${ic('user')}</div>
+    </div></div>`;
+}
+function home(){
+  return header()+`
+  <div class="welcome"><div class="s">${t('hi')} 👋</div><h1>${t('q')}</h1></div>
+  <div class="wrap">
+    ${vpnCard()}
+    <div class="search" onclick="toast('•')">${ic('search')} ${t('searchPh')}</div>
+    <div class="aicard" onclick="advise()"><div><div class="t">${ic('sparkles')} ${t('aiTitle')}</div><div class="d" style="font-size:14px;opacity:.9;margin-top:3px">${t('aiDesc')}</div></div><div class="chev">›</div></div>
+  </div>
+  <div class="h2"><span class="lft">${t('quick')}</span></div>
+  <div class="qa">${t('qa').map((n,i)=>`<div class="qtile" onclick="go('${QA_ROUTE[i]}')">${ic(QA_IC[i])}<p>${n}</p></div>`).join('')}</div>
+  <div class="h2"><span class="lft">${ic('dot')} ${t('liveNow')}</span><a onclick="go('live')">${t('all')} ›</a></div>
+  <div class="lscroll">${MATCHES.map(m=>`<div class="lmatch" onclick="go('live')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}</div>
+  <div class="promo" onclick="openURL('https://www.vbet.am/en/wonderwheel')"><div><div class="t">${ic('wheel')} WonderWheel</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
+  <div class="h2"><span class="lft">${t('allSections')}</span></div>
+  <div class="list2">${t('sec').map((n,i)=>`<div class="lcard" onclick="sectionTap('${i}')">${ic(SEC_IC[i])} ${n}</div>`).join('')}</div>
+  <div style="height:16px"></div>`;
+}
+function vpnCard(){
+  const s=SERVERS[vpn.server];
+  const status=vpn.connecting?t('vpnConnecting'):vpn.on?t('vpnConnected'):t('vpnOff');
+  let sub;
+  if(vpn.on) sub=`<span class="vst on">● ${status}</span> · ${s[0]} ${s[1]} · IP ${vpnIP}`;
+  else if(vpn.connecting) sub=`<span class="vst cn">◐ ${status}</span> · ${s[0]} ${s[1]}`;
+  else sub=`<span class="vst off">○ ${status}</span>`;
+  return `<div class="rowcard vpncard ${vpn.on?'act':''}">
+      <div class="lft2"><div class="vicon ${vpn.on?'on':vpn.connecting?'cn':''}">${ic('shield')}</div>
+        <div><div class="vtitle">VPN</div><div class="vsub">${sub}</div></div></div>
+      <div class="tgl ${vpn.on?'on':''} ${vpn.connecting?'busy':''}" onclick="toggleVpn()"><b></b></div>
+    </div>
+    ${(vpn.on||vpn.connecting)?`<div class="vserver" onclick="changeServer()">${ic('globe')} ${s[0]} ${s[1]}<span class="ch">${t('vpnChange')} ›</span></div>`:''}`;
+}
+function toggleVpn(){
+  if(vpn.on){vpn.on=false;vpn.connecting=false;render('home');toast('VPN '+t('vpnOff'));return;}
+  vpn.connecting=true;render('home');
+  setTimeout(()=>{vpn.connecting=false;vpn.on=true;vpnIP=randIP();render('home');toast(t('vpnConnected')+' · '+SERVERS[vpn.server][1]);},1000);
+}
+function changeServer(){vpn.server=(vpn.server+1)%SERVERS.length;if(vpn.on)vpnIP=randIP();render('home');toast(SERVERS[vpn.server][1]);}
+const SEC_URL={4:'https://www.betconstruct.com/products',5:'https://www.betconstruct.com/products',6:'https://www.vbet.am/en/casino/game-view/555588000/adi-predictstreet-fifa',7:'https://www.betconstruct.com/product-blog'};
+function sectionTap(i){i=+i;if([1,2,8].includes(i))go('products');else if(SEC_URL[i])openURL(SEC_URL[i]);else toast(t('sec')[i]);}
+
+const FRONTEND=[
+  ['code','Partner (iFrame) / API front-end','https://www.betconstruct.com/products'],
+  ['broadcast','Live (Soccer)','https://sport.vbet.am/en/sports/live/event-view/Soccer/World/573/club-friendlies/30257052/fc-zlin-fk-dukla-banska-bystrica'],
+  ['ball','Sports (pre-match)','https://sport.vbet.am/en/sports/pre-match/event-view/Soccer/World/2969/world-cup/30235556/spain-belgium'],
+  ['cherry','Casino / Slots','https://www.vbet.am/en/casino/slots/-1/all'],
+  ['cards','Live Casino','https://www.vbet.am/en/live-casino/home'],
+  ['book','Eventbook','https://www.vbet.am/en/casino/game-view/555579000/eventbook'],
+  ['target','ADI PredictStreet FIFA','https://www.vbet.am/en/casino/game-view/555588000/adi-predictstreet-fifa'],
+  ['wheel','WonderWheel','https://www.vbet.am/en/wonderwheel'],
+  ['trophy','Goallywood 2026','https://www.vbet.am/en/wonder-wheel-harmony'],
+  ['store','Betshops','https://promo.vbet.am/betshops'],
+  ['clock','Tik-tak','https://www.vbet.am/en/win-wheel'],
+  ['cash','Cashback reverse','https://www.vbet.am/en/'],
+  ['cards','Belote','https://www.vbet.am/en/casino/game-view/10/belote'],
+  ['spade','Poker','https://www.vbet.am/en/page/casino/poker/28'],
+  ['dice','Backgammon','https://skillgames-web.vbet.am/backgammon/1/#/product/2/2/cash-cat/2'],
+  ['gamepad','Esports','https://sport.vbet.am/en/esports'],
+  ['gamepad','Games','https://www.vbet.am/en/games/home'],
+  ['tv','TV-games','https://www.vbet.am/en/tv-games/home'],
+  ['activity','Virtual sports','https://www.vbet.am/en/virtual-sports/home']
+];
+const BCPRODUCTS=[
+  ['chart','Dataspot','https://www.betconstruct.com/products/dataspot'],
+  ['robot','CRM-AI','https://www.betconstruct.com/products/crm'],
+  ['umbrella','Umbrella','https://www.betconstruct.com/products/umbrella'],
+  ['news','Product Blog','https://www.betconstruct.com/product-blog']
+];
+function linkRows(a){return a.map(l=>`<a class="lnk" href="${l[2]}" target="_blank" rel="noopener"><span class="nm">${ic(l[0])} ${l[1]}</span><span class="go">${ic('external')}</span></a>`).join('');}
+function products(){
+  return header()+`<div class="page"><h2>${ic('box')} ${t('nav')[1]}</h2><p class="sub">${t('productsSub')}</p>
+    <div class="pcat" id="pc1"><div class="hd" onclick="togglePc('pc1')"><span class="l">${ic('desktop')} ${t('feCat')}</span><span class="more">${t('details')} ${ic('chevD')}</span></div><div class="body">${linkRows(FRONTEND)}</div></div>
+    <div class="pcat" id="pc2"><div class="hd" onclick="togglePc('pc2')"><span class="l">${ic('building')} ${t('bcCat')}</span><span class="more">${t('details')} ${ic('chevD')}</span></div><div class="body">${linkRows(BCPRODUCTS)}</div></div>
+    <button class="btn" onclick="advise()">${ic('sparkles')} ${t('askAI')}</button></div>`;
+}
+function togglePc(id){document.getElementById(id).classList.toggle('open');}
+function live(){
+  return header()+`<div class="page"><h2>${ic('broadcast')} ${t('liveNow')}</h2><p class="sub">${t('liveSub')}</p>
+    ${MATCHES.map((m,i)=>`<div class="lmatch" style="min-width:auto;margin-bottom:10px" onclick="openURL('${i===2?'https://sport.vbet.am/en/sports/pre-match/event-view/Soccer/World/2969/world-cup/30235556/spain-belgium':'https://sport.vbet.am/en/sports/live/event-view/Soccer/World/573/club-friendlies/30257052/fc-zlin-fk-dukla-banska-bystrica'}')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}
+    <button class="btn" onclick="openURL('https://sport.vbet.am/en/sports/live/list')">${t('openAllLive')} ${ic('external')}</button></div>`;
+}
+function partners(){
+  return header()+`<div class="page"><h2>${ic('users')} ${t('nav')[3]}</h2><p class="sub">${t('partnersSub')}</p>
+    <div class="lcard" style="width:100%;margin-bottom:10px" onclick="go('products')">${ic('cart')} ${t('buy')}</div>
+    <div class="lcard" style="width:100%;margin-bottom:14px" onclick="toast('•')">${ic('briefcase')} ${t('provide')}</div>
+    ${[['SoftGaming',1],['CoinsPaid',1],['TrafficLab',0]].map(p=>`<div class="pcat"><div class="hd"><span class="l">${p[0]}</span><span class="more">${p[1]?ic('star')+' Approved':'на проверке'}</span></div></div>`).join('')}</div>`;
+}
+function more(){
+  const items=[['globe',t('sec')[4],'https://www.betconstruct.com/products'],['card',t('sec')[5],'https://www.betconstruct.com/products'],['bulb','Prediction','https://www.vbet.am/en/casino/game-view/555588000/adi-predictstreet-fifa'],['chart','Dataspot','https://www.betconstruct.com/products/dataspot'],['umbrella','Umbrella','https://www.betconstruct.com/products/umbrella'],['news',t('sec')[7],'https://www.betconstruct.com/product-blog']];
+  return header()+`<div class="page"><h2>${ic('dots')} ${t('nav')[4]}</h2><p class="sub">${t('moreSub')}</p><div class="pcat"><div class="body" style="display:block;border:none">${linkRows(items)}</div></div></div>`;
+}
+function advise(){
+  cur='advise';renderNav();
+  $('#scroll').innerHTML=header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('sparkles')} ${t('aiTitle')}</h2><p class="sub">${t('aiPageSub')}</p>
+    <textarea id="aiq" rows="3" placeholder="${t('aiPh')}"></textarea>
+    <button class="btn" onclick="runAI()">${t('getRec')}</button><div id="aiOut"></div></div>`;
+  $('#scroll').scrollTop=0;
+}
+function runAI(){
+  const q=($('#aiq')&&$('#aiq').value.trim())||'';if(!q){toast('•');return;}
+  const geo=/latam|латам|brazil|бразил|mexic|мекси/i.test(q)?'LATAM':/africa|африк/i.test(q)?'Africa':/asia|азия/i.test(q)?'Asia':'Tier-1 / EU';
+  const crypto=/крипт|crypto|usdt|btc/i.test(q),slots=/слот|slot|казино|casino/i.test(q);
+  const rows=[['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${slots?'Casino Suite + slots':'Sportsbook + live'}`],
+    ['card',`<b>${t('rPay')}:</b> ${crypto?'Crypto Gateway (USDT/BTC) + fiat':'cards + e-wallets'}`],['badge',`<b>${t('rLic')}:</b> Curaçao`],['megaphone',`<b>${t('rMkt')}:</b> CPA`]];
+  $('#aiOut').innerHTML=`<div class="rec" style="margin-top:14px">${rows.map(r=>`<div class="row">${ic(r[0])}<div>${r[1]}</div></div>`).join('')}</div>
+    <div class="disc">${t('disc')}</div><button class="btn" onclick="toast('✓')">${ic('message')} ${t('discuss')}</button>`;
+}
+const PAGES={home,products,live,partners,more};
+function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
+function render(pg){cur=pg;if(pg==='advise'){advise();return;}$('#scroll').innerHTML=PAGES[pg]();$('#scroll').scrollTop=0;renderNav();}
+function go(pg){render(pg);}
+$('#nav').addEventListener('click',e=>{const d=e.target.closest('[data-t]');if(d)go(d.dataset.t);});
+renderNav();render('home');
+</script>
+</body>
+</html>
