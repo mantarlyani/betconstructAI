@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetConstructAI — Единый поток лидов</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#2a3240;
+    --text:#e6edf3; --muted:#8b98a9; --accent:#00d68f; --accent2:#3b82f6;
+    --warn:#f5a623; --danger:#f85149; --chip:#232c3b;
+    --ai:#a855f7; --shop:#3b82f6; --chat:#00d68f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);font-size:14px;line-height:1.45}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#11161f,#0d1117);
+    border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{font-weight:800;letter-spacing:.3px}
+  .logo b{color:var(--accent)}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .tab{padding:8px 14px;border-radius:10px;background:var(--panel);border:1px solid var(--border);
+    cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+  .tab.active{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  main{max-width:1180px;margin:0 auto;padding:18px 16px 80px}
+  .view{display:none;animation:fade .2s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  h2{font-size:18px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:13px}
+  .grid{display:grid;gap:14px}
+  .cards3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .card h3{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700}
+  .b-ai{background:rgba(168,85,247,.15);color:var(--ai)}
+  .b-shop{background:rgba(59,130,246,.15);color:var(--shop)}
+  .b-chat{background:rgba(0,214,143,.15);color:var(--chat)}
+  textarea,input,select{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:10px;padding:10px;font-family:inherit;font-size:13px;resize:vertical}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  .btn{background:var(--accent);color:#03231a;border:none;border-radius:10px;padding:10px 16px;
+    font-weight:700;cursor:pointer;font-size:13px}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+  .btn.blue{background:var(--accent2);color:#fff}
+  .btn.sm{padding:6px 10px;font-size:12px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .muted{color:var(--muted)}
+  .ai-out{background:var(--panel2);border:1px dashed var(--ai);border-radius:12px;padding:14px;margin-top:12px}
+  .rec-item{display:flex;gap:8px;align-items:flex-start;margin:8px 0}
+  .rec-item .dot{color:var(--ai);font-weight:900}
+  .catalog{display:grid;gap:10px}
+  .prod{display:flex;justify-content:space-between;align-items:center;background:var(--panel2);
+    border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  .prod small{color:var(--muted)}
+  .cart{margin-top:10px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px}
+  .chat-box{height:230px;overflow-y:auto;background:var(--panel2);border:1px solid var(--border);
+    border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+  .msg{max-width:80%;padding:8px 11px;border-radius:12px;font-size:13px}
+  .msg.c{background:#243b53;align-self:flex-end}
+  .msg.b{background:#1d2b22;align-self:flex-start;border:1px solid var(--accent)}
+  .row{display:flex;gap:8px;align-items:center}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);
+    color:#03231a;padding:12px 20px;border-radius:12px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.4);
+    opacity:0;pointer-events:none;transition:.3s;z-index:50;max-width:90%}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  /* pipeline */
+  .pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;overflow-x:auto}
+  .col{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px;min-width:180px}
+  .col h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);
+    display:flex;justify-content:space-between}
+  .col .cnt{background:var(--chip);border-radius:20px;padding:1px 8px;font-size:11px}
+  .lead{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:9px;margin-bottom:8px;cursor:grab}
+  .lead:active{cursor:grabbing}
+  .lead .name{font-weight:700;font-size:13px}
+  .lead .meta{font-size:11px;color:var(--muted);margin-top:3px}
+  .lead .who{font-size:11px;margin-top:5px;display:flex;align-items:center;gap:5px}
+  .stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .kpi .n{font-size:24px;font-weight:800}
+  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase}
+  tr:hover td{background:var(--panel2)}
+  .pill{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--chip)}
+  .online{color:var(--accent)}
+  .offline{color:var(--muted)}
+  .dotg{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .doto{width:8px;height:8px;border-radius:50%;display:inline-block;background:#586170}
+  .team{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .mgr{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 12px;
+    display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .mgr small{color:var(--muted)}
+  .flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 18px;color:var(--muted);font-size:12px}
+  .flow b{color:var(--text)}
+  .arr{color:var(--accent)}
+  @media(max-width:720px){
+    .pipe{grid-template-columns:1fr 1fr}
+    .tabs{width:100%;order:3}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">BetConstruct<b>AI</b> · Lead Flow</div>
+  <div class="tabs">
+    <div class="tab active" data-v="client">🌐 Клиент (входы)</div>
+    <div class="tab" data-v="sales">💼 Кабинет Sales</div>
+    <div class="tab" data-v="crm">📊 CRM</div>
+  </div>
+</header>
+<main>
+
+  <!-- ===================== CLIENT ===================== -->
+  <section class="view active" id="v-client">
+    <h2>Три входа → один лид</h2>
+    <p class="sub">AI-советник, магазин услуг и живой чат — каждый создаёт единый лид, который сразу попадает в пайплайн и CRM.</p>
+    <div class="flow">
+      <b>Вход</b> <span class="arr">→</span> Единый лид <span class="arr">→</span> Распределение online-менеджеру <span class="arr">→</span> <b>Пайплайн</b> <span class="arr">→</span> <b>CRM</b>
+    </div>
+
+    <div class="grid cards3">
+      <!-- AI -->
+      <div class="card">
+        <h3>🤖 AI-советник <span class="badge b-ai">Gemini*</span></h3>
+        <p class="muted" style="font-size:12px;margin:0">Опиши идею — соберём вариант развития и услуги.</p>
+        <label>Твой запрос</label>
+        <textarea id="aiInput" rows="3" placeholder="Хочу запустить крипто-казино в LATAM с упором на слоты"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" onclick="runAI()">Получить рекомендацию</button>
+        </div>
+        <div id="aiOut"></div>
+      </div>
+
+      <!-- SHOP -->
+      <div class="card">
+        <h3>🛒 Магазин услуг <span class="badge b-shop">Каталог</span></h3>
+        <div class="catalog" id="catalog"></div>
+        <div class="cart" id="cart"><span class="muted">Корзина пуста</span></div>
+        <label>Контакт (email / компания)</label>
+        <input id="shopContact" placeholder="operator@company.com">
+        <button class="btn blue" style="margin-top:10px" onclick="submitShop()">Оставить заявку</button>
+      </div>
+
+      <!-- CHAT -->
+      <div class="card">
+        <h3>💬 Живой чат <span class="badge b-chat">Online</span></h3>
+        <div class="chat-box" id="chatBox"></div>
+        <div class="row" style="margin-top:8px">
+          <input id="chatMsg" placeholder="Напишите сообщение..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn sm" onclick="sendChat()">▶</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SALES ===================== -->
+  <section class="view" id="v-sales">
+    <h2>Кабинет Sales</h2>
+    <p class="sub">Лиды долетают сюда автоматически. Кликни менеджера, чтобы переключить online/offline — распределение изменится вживую.</p>
+    <div class="team" id="team"></div>
+    <div class="pipe" id="pipe"></div>
+  </section>
+
+  <!-- ===================== CRM ===================== -->
+  <section class="view" id="v-crm">
+    <h2>CRM — единый учёт</h2>
+    <p class="sub">Все лиды из всех входов в одной таблице. Счётчики и конверсия считаются автоматически.</p>
+    <div class="stat" id="kpi"></div>
+    <div class="card" style="padding:6px 12px">
+      <table>
+        <thead><tr><th>#</th><th>Контакт</th><th>Источник</th><th>Интерес</th><th>Стадия</th><th>Менеджер</th><th>Создан</th></tr></thead>
+        <tbody id="crmRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- STATE ----------
+const STAGES = ["Новый","Контакт","Демо","Переговоры","Покупка"];
+const SRC = {
+  ai:{label:"AI-советник",cls:"b-ai",icon:"🤖"},
+  shop:{label:"Магазин",cls:"b-shop",icon:"🛒"},
+  chat:{label:"Чат",cls:"b-chat",icon:"💬"}
+};
+let team = [
+  {id:1,name:"Ани",online:true},
+  {id:2,name:"Армен",online:true},
+  {id:3,name:"Лена",online:false}
+];
+let leads = [];
+let leadSeq = 1;
+let rr = 0; // round-robin pointer
+
+const PRODUCTS = [
+  {id:"p1",name:"Sportsbook Platform",price:"от €4 000/мес"},
+  {id:"p2",name:"Casino Aggregator (5000+ слотов)",price:"RevShare 12%"},
+  {id:"p3",name:"Crypto Payment Gateway",price:"1.2% / tx"},
+  {id:"p4",name:"CPA Affiliate Network",price:"CPA €35+"},
+  {id:"p5",name:"Curaçao лицензия (сопровождение)",price:"от €18 000"}
+];
+let cart = [];
+
+// ---------- HELpers ----------
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');
+  clearTimeout(window._tt);window._tt=setTimeout(()=>e.classList.remove('show'),2600);}
+function onlineTeam(){return team.filter(m=>m.online);}
+function assignLead(){
+  const on = onlineTeam();
+  if(!on.length) return null;
+  const m = on[rr % on.length]; rr++;
+  return m;
+}
+function timeNow(){const d=new Date();return d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});}
+
+function createLead({source,contact,interest}){
+  const mgr = assignLead();
+  const lead = {
+    id: leadSeq++,
+    source, contact: contact||"Аноним",
+    interest: interest||"—",
+    stage: 0,
+    mgr: mgr? mgr.name : "— (нет online)",
+    mgrId: mgr? mgr.id : null,
+    created: timeNow()
+  };
+  leads.push(lead);
+  renderAll();
+  const s = SRC[source];
+  toast(`${s.icon} Лид #${lead.id} создан → ${lead.mgr}`);
+  return lead;
+}
+
+// ---------- AI ENTRY ----------
+function runAI(){
+  const q = document.getElementById('aiInput').value.trim();
+  if(!q){toast("Опиши идею");return;}
+  // mock "Gemini" reasoning -> recommendation
+  const geo = /latam|латам|бразил|brazil|mexic|мекси/i.test(q)?"LATAM":
+              /africa|африк|нигер/i.test(q)?"Африка":
+              /asia|азия|инди/i.test(q)?"Азия":"Tier-1 / EU";
+  const crypto = /крипт|crypto|bitcoin|usdt/i.test(q);
+  const slots = /слот|slot|казино|casino/i.test(q);
+  const recs = [];
+  recs.push(`Регион: <b>${geo}</b> — рекомендуем локальные платёжки и гео-таргетинг трафика.`);
+  recs.push(slots?`Контент: <b>Casino Aggregator</b> (5000+ слотов) как ядро продукта.`:`Контент: <b>Sportsbook Platform</b> + live-события.`);
+  recs.push(crypto?`Платежи: <b>Crypto Payment Gateway</b> (USDT/BTC) + фиат-онрамп.`:`Платежи: локальные карты + e-wallets.`);
+  recs.push(`Лицензия: <b>Curaçao</b> для быстрого старта.`);
+  recs.push(`Трафик: <b>CPA Affiliate Network</b> под выбранный гео.`);
+  const html = `<div class="ai-out">
+    <div style="font-weight:700;color:var(--ai);margin-bottom:6px">Вариант развития идеи</div>
+    ${recs.map(r=>`<div class="rec-item"><span class="dot">▹</span><span>${r}</span></div>`).join("")}
+    <label>Оставь контакт, чтобы sales собрал это в предложение</label>
+    <input id="aiContact" placeholder="email / telegram">
+    <button class="btn" style="margin-top:10px" onclick="submitAI()">Отправить заявку в sales</button>
+  </div>`;
+  document.getElementById('aiOut').innerHTML = html;
+}
+function submitAI(){
+  const c = document.getElementById('aiContact').value.trim();
+  const q = document.getElementById('aiInput').value.trim();
+  createLead({source:"ai",contact:c,interest:q.slice(0,60)});
+  document.getElementById('aiOut').innerHTML = `<div class="ai-out muted">✅ Заявка ушла в кабинет sales.</div>`;
+  document.getElementById('aiInput').value="";
+}
+
+// ---------- SHOP ENTRY ----------
+function renderCatalog(){
+  document.getElementById('catalog').innerHTML = PRODUCTS.map(p=>`
+    <div class="prod"><div><div>${p.name}</div><small>${p.price}</small></div>
+    <button class="btn sec sm" onclick="addCart('${p.id}')">+ в корзину</button></div>`).join("");
+}
+function addCart(id){
+  const p = PRODUCTS.find(x=>x.id===id);
+  if(!cart.find(x=>x.id===id)) cart.push(p);
+  renderCart();
+}
+function renderCart(){
+  const el = document.getElementById('cart');
+  if(!cart.length){el.innerHTML='<span class="muted">Корзина пуста</span>';return;}
+  el.innerHTML = cart.map(p=>`<div class="row" style="justify-content:space-between">
+    <span>${p.name}</span><button class="btn sec sm" onclick="rmCart('${p.id}')">✕</button></div>`).join("");
+}
+function rmCart(id){cart=cart.filter(x=>x.id!==id);renderCart();}
+function submitShop(){
+  if(!cart.length){toast("Добавь услуги в корзину");return;}
+  const c = document.getElementById('shopContact').value.trim();
+  createLead({source:"shop",contact:c,interest:cart.map(p=>p.name).join(", ")});
+  cart=[];renderCart();document.getElementById('shopContact').value="";
+}
+
+// ---------- CHAT ENTRY ----------
+let chatStep=0;
+function chatPush(text,who){
+  const b=document.getElementById('chatBox');
+  const d=document.createElement('div');d.className='msg '+who;d.innerHTML=text;
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+function initChat(){document.getElementById('chatBox').innerHTML='';chatStep=0;
+  chatPush("Здравствуйте! Расскажите, что вас интересует — подберём решение BetConstruct.","b");}
+function sendChat(){
+  const inp=document.getElementById('chatMsg');const t=inp.value.trim();if(!t)return;
+  chatPush(t,'c');inp.value='';
+  window._chatInterest = (window._chatInterest? window._chatInterest+"; ":"")+t;
+  chatStep++;
+  setTimeout(()=>{
+    if(chatStep===1){chatPush("Понял. В каком регионе планируете запуск и какой продукт (спорт/казино)?","b");}
+    else if(chatStep===2){chatPush("Отлично. Оставьте email или telegram — передам менеджеру.","b");}
+    else{
+      const c = t.includes('@')||t.length<40? t : "чат-контакт";
+      createLead({source:"chat",contact:c,interest:(window._chatInterest||t).slice(0,60)});
+      chatPush("✅ Спасибо! Заявка передана менеджеру, он на связи.","b");
+      window._chatInterest=""; chatStep=0;
+    }
+  },500);
+}
+
+// ---------- SALES / PIPELINE ----------
+function renderTeam(){
+  document.getElementById('team').innerHTML = team.map(m=>`
+    <div class="mgr" onclick="toggleOnline(${m.id})">
+      <span class="${m.online?'dotg':'doto'}"></span>
+      <span>${m.name}</span>
+      <small>${m.online?'в сети':'не в сети'} · ${leads.filter(l=>l.mgrId===m.id).length} лид.</small>
+    </div>`).join("");
+}
+function toggleOnline(id){
+  const m=team.find(x=>x.id===id);m.online=!m.online;
+  if(!onlineTeam().length){toast("⚠ Никого нет в сети — новые лиды повиснут");}
+  else toast(`${m.name}: ${m.online?'в сети':'не в сети'}`);
+  renderAll();
+}
+function renderPipe(){
+  document.getElementById('pipe').innerHTML = STAGES.map((s,i)=>{
+    const items = leads.filter(l=>l.stage===i);
+    return `<div class="col" ondragover="event.preventDefault()" ondrop="drop(event,${i})">
+      <h4>${s} <span class="cnt">${items.length}</span></h4>
+      ${items.map(l=>leadCard(l)).join("")}
+    </div>`;
+  }).join("");
+}
+function leadCard(l){
+  const s=SRC[l.source];
+  return `<div class="lead" draggable="true" ondragstart="drag(event,${l.id})">
+    <div class="name">#${l.id} ${l.contact}</div>
+    <div class="meta"><span class="badge ${s.cls}">${s.icon} ${s.label}</span></div>
+    <div class="meta">${l.interest}</div>
+    <div class="who">👤 ${l.mgr} · ${l.created}</div>
+    <div class="row" style="margin-top:6px;gap:4px">
+      ${l.stage>0?`<button class="btn sec sm" onclick="move(${l.id},-1)">◀</button>`:''}
+      ${l.stage<STAGES.length-1?`<button class="btn sm" onclick="move(${l.id},1)">▶</button>`:''}
+    </div>
+  </div>`;
+}
+function move(id,d){const l=leads.find(x=>x.id===id);l.stage=Math.max(0,Math.min(STAGES.length-1,l.stage+d));renderAll();}
+let dragId=null;
+function drag(e,id){dragId=id;}
+function drop(e,stage){if(dragId!=null){const l=leads.find(x=>x.id===dragId);l.stage=stage;dragId=null;renderAll();}}
+
+// ---------- CRM ----------
+function renderCRM(){
+  const total=leads.length;
+  const byStage=STAGES.map((s,i)=>leads.filter(l=>l.stage===i).length);
+  const closed=byStage[STAGES.length-1];
+  const conv= total? Math.round(closed/total*100):0;
+  const bySrc=Object.keys(SRC).map(k=>({k,n:leads.filter(l=>l.source===k).length}));
+  document.getElementById('kpi').innerHTML = `
+    <div class="kpi"><div class="n">${total}</div><div class="l">Всего лидов</div></div>
+    <div class="kpi"><div class="n">${byStage[0]}</div><div class="l">Новые</div></div>
+    <div class="kpi"><div class="n">${total-byStage[0]-closed}</div><div class="l">В работе</div></div>
+    <div class="kpi"><div class="n">${closed}</div><div class="l">Покупка</div></div>
+    <div class="kpi"><div class="n">${conv}%</div><div class="l">Конверсия</div></div>
+    ${bySrc.map(x=>`<div class="kpi"><div class="n">${x.n}</div><div class="l">${SRC[x.k].icon} ${SRC[x.k].label}</div></div>`).join("")}
+  `;
+  document.getElementById('crmRows').innerHTML = leads.slice().reverse().map(l=>{
+    const s=SRC[l.source];
+    return `<tr><td>#${l.id}</td><td>${l.contact}</td>
+      <td><span class="badge ${s.cls}">${s.icon} ${s.label}</span></td>
+      <td>${l.interest}</td><td><span class="pill">${STAGES[l.stage]}</span></td>
+      <td>${l.mgr}</td><td class="muted">${l.created}</td></tr>`;
+  }).join("") || `<tr><td colspan="7" class="muted" style="padding:20px;text-align:center">Пока нет лидов — создай их во вкладке «Клиент»</td></tr>`;
+}
+
+// ---------- RENDER ALL ----------
+function renderAll(){renderTeam();renderPipe();renderCRM();}
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('v-'+t.dataset.v).classList.add('active');
+});
+
+// ---------- INIT ----------
+renderCatalog();renderCart();initChat();renderAll();
+</script>
+</body>
+</html>

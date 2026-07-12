@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BetConstructAI — единый поток (Sales-first)</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/tabler-icons.min.css" rel="stylesheet">
+<style>
+  :root{
+    --mag:#A60063; --mag-soft:#FBEAF0; --mag-bd:#ED93B1; --mag-dk:#72243E;
+    --bg:#f4f5f7; --card:#ffffff; --line:#e6e8ec; --text:#1c1d21; --muted:#8a8f99;
+    --green:#1d9e75; --green-bg:#e1f5ee; --live:#e24b4a; --blue:#185fa5; --blue-bg:#e6f1fb;
+    --ai:#7f77dd; --ai-bg:#eeedfe;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);
+    padding:9px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:8px;font-weight:800}
+  .logo .m{width:28px;height:28px;border-radius:8px;background:var(--mag);color:#fff;display:flex;
+    align-items:center;justify-content:center;font-size:15px}
+  .logo b{color:var(--mag)}
+  .roles{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+  .role{padding:7px 13px;border-radius:10px;background:var(--bg);border:1px solid var(--line);cursor:pointer;
+    color:var(--muted);font-weight:600;font-size:13px;white-space:nowrap}
+  .role.active{background:var(--mag);color:#fff;border-color:var(--mag)}
+  main{max-width:1140px;margin:0 auto;padding:16px 16px 90px}
+  .view{display:none}.view.active{display:block}
+  h2{font-size:17px;margin:0 0 3px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:2px 0 16px;color:var(--muted);font-size:12px}
+  .flow b{color:var(--text)}.flow .a{color:var(--mag);font-weight:800}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px}
+  .card h3{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700}
+  .b-ai{background:var(--ai-bg);color:#534ab7}.b-shop{background:var(--blue-bg);color:var(--blue)}
+  .b-chat{background:var(--green-bg);color:var(--green)}
+  textarea,input,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:10px;font-family:inherit;font-size:13px;resize:vertical}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  .btn{background:var(--mag);color:#fff;border:none;border-radius:10px;padding:10px 15px;font-weight:700;
+    cursor:pointer;font-size:13px}
+  .btn:active{transform:scale(.98)}
+  .btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line)}
+  .btn.sm{padding:6px 10px;font-size:12px}
+  .muted{color:var(--muted)}
+  .ai-out{background:var(--ai-bg);border:1px solid #cecbf6;border-radius:12px;padding:13px;margin-top:12px}
+  .rec-item{display:flex;gap:8px;align-items:flex-start;margin:7px 0;font-size:13px}
+  .rec-item i{color:var(--ai)}
+  .prod{display:flex;justify-content:space-between;align-items:center;background:var(--bg);
+    border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:8px}
+  .prod small{color:var(--muted)}
+  .cart{margin-top:8px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .chat-box{height:220px;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+    padding:10px;display:flex;flex-direction:column;gap:8px}
+  .msg{max-width:82%;padding:8px 11px;border-radius:12px;font-size:13px}
+  .msg.c{background:var(--mag);color:#fff;align-self:flex-end}
+  .msg.b{background:var(--card);align-self:flex-start;border:1px solid var(--line)}
+  .row{display:flex;gap:8px;align-items:center}
+  .disc{font-size:11px;color:var(--muted);background:var(--bg);border-radius:9px;padding:9px;margin-top:10px}
+  /* pipeline */
+  .team{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .mgr{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;display:flex;
+    align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .mgr small{color:var(--muted)}
+  .dotg{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
+  .doto{width:8px;height:8px;border-radius:50%;background:#c2c7d0;display:inline-block}
+  .presence{background:var(--green-bg);color:var(--green);border-radius:10px;padding:8px 12px;font-weight:700;
+    font-size:13px;display:inline-flex;align-items:center;gap:7px;margin-bottom:14px}
+  .pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;overflow-x:auto}
+  .col{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;min-width:175px}
+  .col h4{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);
+    display:flex;justify-content:space-between}
+  .col .cnt{background:var(--bg);border-radius:20px;padding:1px 8px;font-size:11px}
+  .lead{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px;margin-bottom:8px;cursor:grab}
+  .lead .name{font-weight:700;font-size:13px}
+  .lead .meta{font-size:11px;color:var(--muted);margin-top:3px}
+  .lead .who{font-size:11px;margin-top:5px}
+  .stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .kpi .n{font-size:22px;font-weight:800}
+  .kpi .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .funnel{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+  .fbar{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 11px;display:flex;
+    justify-content:space-between;align-items:center;font-size:13px}
+  .fbar .track{height:8px;background:var(--mag-soft);border-radius:20px;overflow:hidden;flex:1;margin:0 10px}
+  .fbar .fill{height:100%;background:var(--mag)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase}
+  .pill{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);border:1px solid var(--line)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#222;color:#fff;
+    padding:11px 18px;border-radius:11px;font-weight:600;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2);
+    opacity:0;pointer-events:none;transition:.3s;z-index:50;max-width:92%}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  @media(max-width:720px){.pipe{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="m">B</span> BetConstruct<b>AI</b></div>
+  <div class="roles">
+    <div class="role active" data-v="client"><i class="ti ti-device-mobile"></i> Клиент</div>
+    <div class="role" data-v="sales"><i class="ti ti-headset"></i> Sales</div>
+    <div class="role" data-v="crm"><i class="ti ti-chart-bar"></i> CRM</div>
+  </div>
+</header>
+<main>
+
+  <section class="view active" id="v-client">
+    <h2>Три двери входа → один лид</h2>
+    <p class="sub">Sales-first по спецификации. AI-советник (Gemini) только рекомендует; всё сходится в один лид.</p>
+    <div class="flow"><b>Вход</b><span class="a">→</span>Лид<span class="a">→</span>Online-менеджер<span class="a">→</span><b>Пайплайн</b><span class="a">→</span><b>CRM</b></div>
+    <div class="grid3">
+      <div class="card">
+        <h3><i class="ti ti-sparkles" style="color:var(--ai)"></i> AI-советник <span class="badge b-ai">✦ Gemini</span></h3>
+        <p class="muted" style="font-size:12px;margin:0">Опиши интерес и ожидания.</p>
+        <label>Запрос</label>
+        <textarea id="aiInput" rows="3" placeholder="Хочу крипто-казино в LATAM с упором на слоты"></textarea>
+        <button class="btn" style="margin-top:8px" onclick="runAI()"><i class="ti ti-wand"></i> Получить рекомендацию</button>
+        <div id="aiOut"></div>
+      </div>
+      <div class="card">
+        <h3><i class="ti ti-building-store" style="color:var(--blue)"></i> Магазин <span class="badge b-shop">Каталог</span></h3>
+        <div id="catalog"></div>
+        <div class="cart" id="cart"><span class="muted">Корзина пуста</span></div>
+        <label>Контакт (email / компания)</label>
+        <input id="shopContact" placeholder="operator@company.com">
+        <button class="btn sec" style="margin-top:9px;border-color:var(--blue);color:var(--blue)" onclick="submitShop()">Оставить заявку</button>
+      </div>
+      <div class="card">
+        <h3><i class="ti ti-message-2" style="color:var(--green)"></i> Живой чат <span class="badge b-chat">Sales online</span></h3>
+        <div class="chat-box" id="chatBox"></div>
+        <div class="row" style="margin-top:8px">
+          <input id="chatMsg" placeholder="Сообщение..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn sm" onclick="sendChat()">▶</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-sales">
+    <h2>Кабинет Sales</h2>
+    <p class="sub">Лиды долетают автоматически. Правило (Notion 10.6): новый лид → тому, кто в сети. Кликни менеджера, чтобы сменить статус.</p>
+    <div class="presence" id="presence"></div>
+    <div class="team" id="team"></div>
+    <div class="pipe" id="pipe"></div>
+  </section>
+
+  <section class="view" id="v-crm">
+    <h2>Общий CRM</h2>
+    <p class="sub">Единый учёт лидов из всех входов: воронка, источники, конверсия.</p>
+    <div class="stat" id="kpi"></div>
+    <div class="funnel" id="funnel"></div>
+    <div class="card" style="padding:4px 12px">
+      <table><thead><tr><th>#</th><th>Контакт</th><th>Источник</th><th>Интерес</th><th>Стадия</th><th>Менеджер</th><th>Время</th></tr></thead>
+      <tbody id="crmRows"></tbody></table>
+    </div>
+  </section>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const STAGES=["Новый","Контакт","Демо","Переговоры","Покупка"];
+const SRC={ai:{label:"AI-советник",cls:"b-ai",icon:"ti-sparkles"},shop:{label:"Магазин",cls:"b-shop",icon:"ti-building-store"},chat:{label:"Чат",cls:"b-chat",icon:"ti-message-2"}};
+let team=[{id:1,name:"Ани",online:true},{id:2,name:"Армен",online:true},{id:3,name:"Лена",online:false}];
+let leads=[],seq=1,rr=0;
+const PRODUCTS=[["Sportsbook Platform","от €19 900"],["Casino Suite (5000+ слотов)","€15 000"],["Crypto Payment Gateway","1.2% / tx"],["CPA Affiliate Network","CPA €35+"],["Curaçao лицензия","от €18 000"]];
+let cart=[];
+
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2600);}
+const onlineTeam=()=>team.filter(m=>m.online);
+function assign(){const on=onlineTeam();if(!on.length)return null;const m=on[rr%on.length];rr++;return m;}
+function now(){return new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});}
+function createLead(source,contact,interest){
+  const m=assign();
+  const l={id:seq++,source,contact:contact||"Аноним",interest:interest||"—",stage:0,mgr:m?m.name:"— (нет online)",mgrId:m?m.id:null,created:now()};
+  leads.push(l);renderAll();
+  toast(`Лид #${l.id} создан → ${l.mgr}`);
+  return l;
+}
+
+/* AI (Gemini stub per Notion 10.2) */
+function runAI(){
+  const q=document.getElementById('aiInput').value.trim();
+  if(!q){toast('Опиши интерес');return;}
+  const geo=/latam|латам|brazil|бразил|mexic|мекси/i.test(q)?'LATAM':/africa|африк/i.test(q)?'Африка':/asia|азия/i.test(q)?'Азия':'Tier-1 / EU';
+  const crypto=/крипт|crypto|usdt|btc/i.test(q), slots=/слот|slot|казино|casino/i.test(q);
+  const rows=[
+    ['ti-map-pin',`<b>Регион:</b> ${geo} — локальные платёжки и гео-таргетинг.`],
+    ['ti-dice-5', slots?'<b>Продукт:</b> Casino Suite + агрегатор слотов.':'<b>Продукт:</b> Sportsbook + live.'],
+    ['ti-credit-card', crypto?'<b>Платежи:</b> Crypto Gateway (USDT/BTC) + фиат.':'<b>Платежи:</b> локальные карты + e-wallets.'],
+    ['ti-certificate','<b>Лицензия:</b> Curaçao — быстрый старт.'],
+    ['ti-speakerphone','<b>Маркетинг:</b> CPA-сеть под гео.']
+  ];
+  document.getElementById('aiOut').innerHTML=`<div class="ai-out">
+    <div style="font-weight:700;color:#534ab7;margin-bottom:6px">Вариант развития идеи</div>
+    ${rows.map(r=>`<div class="rec-item"><i class="ti ${r[0]}"></i><span>${r[1]}</span></div>`).join('')}
+    <div class="disc">✦ Совет сформирован Google Gemini на основе каталога BetConstruct. Предварительная рекомендация, не юридическая консультация — финал с менеджером.</div>
+    <label>Контакт для менеджера</label><input id="aiContact" placeholder="email / telegram">
+    <button class="btn" style="margin-top:9px" onclick="submitAI()"><i class="ti ti-message-2"></i> Обсудить с менеджером</button>
+  </div>`;
+}
+function submitAI(){
+  const c=document.getElementById('aiContact').value.trim();
+  const q=document.getElementById('aiInput').value.trim();
+  createLead('ai',c,q.slice(0,60));
+  document.getElementById('aiOut').innerHTML='<div class="ai-out muted">✅ Заявка ушла в отдел продаж.</div>';
+  document.getElementById('aiInput').value='';
+}
+
+/* Shop */
+function renderCatalog(){document.getElementById('catalog').innerHTML=PRODUCTS.map((p,i)=>`<div class="prod"><div><div>${p[0]}</div><small>${p[1]}</small></div><button class="btn sec sm" onclick="addCart(${i})">+</button></div>`).join('');}
+function addCart(i){if(!cart.includes(i))cart.push(i);renderCart();}
+function rmCart(i){cart=cart.filter(x=>x!==i);renderCart();}
+function renderCart(){const el=document.getElementById('cart');if(!cart.length){el.innerHTML='<span class="muted">Корзина пуста</span>';return;}el.innerHTML=cart.map(i=>`<div class="row" style="justify-content:space-between"><span>${PRODUCTS[i][0]}</span><button class="btn sec sm" onclick="rmCart(${i})">✕</button></div>`).join('');}
+function submitShop(){if(!cart.length){toast('Добавь услуги');return;}const c=document.getElementById('shopContact').value.trim();createLead('shop',c,cart.map(i=>PRODUCTS[i][0]).join(', '));cart=[];renderCart();document.getElementById('shopContact').value='';}
+
+/* Chat */
+let cStep=0,cInt='';
+function chatPush(t,w){const b=document.getElementById('chatBox');const d=document.createElement('div');d.className='msg '+w;d.innerHTML=t;b.appendChild(d);b.scrollTop=b.scrollHeight;}
+function initChat(){document.getElementById('chatBox').innerHTML='';cStep=0;cInt='';chatPush('Здравствуйте! Подскажу по продуктам и лицензиям BetConstruct. Что интересует?','b');}
+function sendChat(){const inp=document.getElementById('chatMsg');const t=inp.value.trim();if(!t)return;chatPush(t,'c');inp.value='';cInt+=(cInt?'; ':'')+t;cStep++;
+  setTimeout(()=>{if(cStep===1)chatPush('Понял. Регион и продукт (спорт/казино)?','b');
+    else if(cStep===2)chatPush('Отлично. Оставьте email или telegram — передам менеджеру.','b');
+    else{const c=(t.includes('@')||t.length<40)?t:'чат-контакт';createLead('chat',c,cInt.slice(0,60));chatPush('✅ Спасибо! Заявка передана менеджеру.','b');cStep=0;cInt='';}},450);}
+
+/* Sales */
+function renderPresence(){document.getElementById('presence').innerHTML=`<i class="ti ti-users"></i> В сети сейчас: ${onlineTeam().length} из ${team.length}`;}
+function renderTeam(){document.getElementById('team').innerHTML=team.map(m=>`<div class="mgr" onclick="toggle(${m.id})"><span class="${m.online?'dotg':'doto'}"></span><span>${m.name}</span><small>${m.online?'в сети':'не в сети'} · ${leads.filter(l=>l.mgrId===m.id).length} лид.</small></div>`).join('');}
+function toggle(id){const m=team.find(x=>x.id===id);m.online=!m.online;toast(`${m.name}: ${m.online?'в сети':'не в сети'}`);if(!onlineTeam().length)toast('⚠ Никого в сети — новые лиды повиснут');renderAll();}
+function renderPipe(){document.getElementById('pipe').innerHTML=STAGES.map((s,i)=>{const it=leads.filter(l=>l.stage===i);return `<div class="col"><h4>${s}<span class="cnt">${it.length}</span></h4>${it.map(leadCard).join('')}</div>`;}).join('');}
+function leadCard(l){const s=SRC[l.source];return `<div class="lead"><div class="name">#${l.id} ${l.contact}</div><div class="meta"><span class="badge ${s.cls}"><i class="ti ${s.icon}"></i> ${s.label}</span></div><div class="meta">${l.interest}</div><div class="who muted">👤 ${l.mgr} · ${l.created}</div><div class="row" style="margin-top:6px;gap:4px">${l.stage>0?`<button class="btn sec sm" onclick="move(${l.id},-1)">◀</button>`:''}${l.stage<STAGES.length-1?`<button class="btn sm" onclick="move(${l.id},1)">▶</button>`:''}</div></div>`;}
+function move(id,d){const l=leads.find(x=>x.id===id);l.stage=Math.max(0,Math.min(STAGES.length-1,l.stage+d));renderAll();}
+
+/* CRM */
+function renderCRM(){
+  const total=leads.length, byStage=STAGES.map((s,i)=>leads.filter(l=>l.stage===i).length), bought=byStage[STAGES.length-1];
+  const conv=total?Math.round(bought/total*100):0;
+  const bySrc=Object.keys(SRC).map(k=>({k,n:leads.filter(l=>l.source===k).length}));
+  document.getElementById('kpi').innerHTML=`
+    <div class="kpi"><div class="n">${total}</div><div class="l">Всего лидов</div></div>
+    <div class="kpi"><div class="n">${byStage[0]}</div><div class="l">Новые</div></div>
+    <div class="kpi"><div class="n">${total-byStage[0]-bought}</div><div class="l">В работе</div></div>
+    <div class="kpi"><div class="n">${bought}</div><div class="l">Покупка</div></div>
+    <div class="kpi"><div class="n">${conv}%</div><div class="l">Конверсия</div></div>
+    ${bySrc.map(x=>`<div class="kpi"><div class="n">${x.n}</div><div class="l">${SRC[x.k].label}</div></div>`).join('')}`;
+  const max=Math.max(1,...byStage);
+  document.getElementById('funnel').innerHTML=STAGES.map((s,i)=>`<div class="fbar"><span style="width:90px">${s}</span><span class="track"><span class="fill" style="width:${byStage[i]/max*100}%"></span></span><b>${byStage[i]}</b></div>`).join('');
+  document.getElementById('crmRows').innerHTML=leads.slice().reverse().map(l=>{const s=SRC[l.source];return `<tr><td>#${l.id}</td><td>${l.contact}</td><td><span class="badge ${s.cls}"><i class="ti ${s.icon}"></i> ${s.label}</span></td><td>${l.interest}</td><td><span class="pill">${STAGES[l.stage]}</span></td><td>${l.mgr}</td><td class="muted">${l.created}</td></tr>`;}).join('')||`<tr><td colspan="7" class="muted" style="padding:18px;text-align:center">Пока нет лидов — создай их во вкладке «Клиент»</td></tr>`;
+}
+
+function renderAll(){renderPresence();renderTeam();renderPipe();renderCRM();}
+document.querySelectorAll('.role').forEach(t=>t.onclick=()=>{document.querySelectorAll('.role').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById('v-'+t.dataset.v).classList.add('active');});
+renderCatalog();renderCart();initChat();renderAll();
+</script>
+</body>
+</html>
