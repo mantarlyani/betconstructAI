@@ -293,6 +293,31 @@ const SEC_IC=['diamond','puzzle','box','gear','globe','card','bulb','news','stor
 const NAV_IC=['home','box','broadcast','users','dots'];
 const NAV_KEY=['home','products','live','partners','more'];
 const MATCHES=[['Club Friendlies','1 : 1','2.20'],['Club Friendlies','0 : 0','2.25'],['World Cup','—','1.85']];
+const QUICK=[
+  ['code','Partner API','https://www.betconstruct.com/products'],
+  ['broadcast','Live','https://sport.vbet.am/en/sports/live/event-view/Soccer/World/573/club-friendlies/30257052/fc-zlin-fk-dukla-banska-bystrica'],
+  ['ball','Sports','https://sport.vbet.am/en/sports/pre-match/event-view/Soccer/World/2969/world-cup/30235556/spain-belgium'],
+  ['cherry','Casino','https://www.vbet.am/en/casino/slots/-1/all'],
+  ['cards','Live Casino','https://www.vbet.am/en/live-casino/home'],
+  ['book','Eventbook','https://www.vbet.am/en/casino/game-view/555579000/eventbook'],
+  ['target','PredictStreet','https://www.vbet.am/en/casino/game-view/555588000/adi-predictstreet-fifa'],
+  ['wheel','WonderWheel','https://www.vbet.am/en/wonderwheel'],
+  ['trophy','Goallywood','https://www.vbet.am/en/wonder-wheel-harmony'],
+  ['store','Betshops','https://promo.vbet.am/betshops'],
+  ['clock','Tik-tak','https://www.vbet.am/en/win-wheel'],
+  ['cash','Cashback','https://www.vbet.am/en/'],
+  ['cards','Belote','https://www.vbet.am/en/casino/game-view/10/belote'],
+  ['spade','Poker','https://www.vbet.am/en/page/casino/poker/28'],
+  ['dice','Backgammon','https://skillgames-web.vbet.am/backgammon/1/#/product/2/2/cash-cat/2'],
+  ['gamepad','Esports','https://sport.vbet.am/en/esports'],
+  ['gamepad','Games','https://www.vbet.am/en/games/home'],
+  ['tv','TV-games','https://www.vbet.am/en/tv-games/home'],
+  ['activity','Virtual','https://www.vbet.am/en/virtual-sports/home'],
+  ['chart','Dataspot','https://www.betconstruct.com/products/dataspot'],
+  ['robot','CRM-AI','https://www.betconstruct.com/products/crm'],
+  ['umbrella','Umbrella','https://www.betconstruct.com/products/umbrella'],
+  ['news','Blog','https://www.betconstruct.com/product-blog']
+];
 
 function header(){
   return `<div class="top"><div class="wm"><span class="b">Bet</span>Construct<span class="a">AI</span></div>
@@ -314,7 +339,7 @@ function home(){
     <div class="aicard" onclick="advise()"><div><div class="t">${ic('sparkles')} ${t('aiTitle')}</div><div class="d" style="font-size:14px;opacity:.9;margin-top:3px">${t('aiDesc')}</div></div><div class="chev">›</div></div>
   </div>
   <div class="h2"><span class="lft">${t('quick')}</span></div>
-  <div class="qa">${t('qa').map((n,i)=>`<div class="qtile" onclick="go('${QA_ROUTE[i]}')">${ic(QA_IC[i])}<p>${n}</p></div>`).join('')}</div>
+  <div class="qa">${QUICK.map(q=>`<div class="qtile" onclick="openURL('${q[2]}')">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
   <div class="h2"><span class="lft">${ic('dot')} ${t('liveNow')}</span><a onclick="go('live')">${t('all')} ›</a></div>
   <div class="lscroll">${MATCHES.map(m=>`<div class="lmatch" onclick="go('live')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}</div>
   <div class="promo" onclick="openURL('https://www.vbet.am/en/wonderwheel')"><div><div class="t">${ic('wheel')} WonderWheel</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
