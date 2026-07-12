@@ -330,15 +330,14 @@ function header(){
 }
 function home(){
   return header()+`
-  <div class="welcome"><div class="s">${t('hi')} 👋</div><h1>${t('q')}</h1>
-    <div class="tag1">Leading iGaming Platform Provider</div>
+  <div class="welcome"><div class="tag1">Leading iGaming Platform Provider</div>
     <div class="tag2">Experience the solutions first-hand</div></div>
   <div class="wrap">
     ${vpnCard()}
     <div class="search" onclick="toast('•')">${ic('search')} ${t('searchPh')}</div>
     <div class="aicard" onclick="advise()"><div><div class="t">${ic('sparkles')} ${t('aiTitle')}</div><div class="d" style="font-size:14px;opacity:.9;margin-top:3px">${t('aiDesc')}</div></div><div class="chev">›</div></div>
   </div>
-  <div class="h2"><span class="lft">${t('quick')}</span></div>
+  <div class="h2"><span class="lft">${t('quick')}</span><a onclick="go('entry')">${ic('chevL')} ${t('back')}</a></div>
   <div class="qa">${QUICK.map(q=>`<div class="qtile" onclick="openURL('${q[2]}')">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
   <div class="h2"><span class="lft">${ic('dot')} ${t('liveNow')}</span><a onclick="go('live')">${t('all')} ›</a></div>
   <div class="lscroll">${MATCHES.map(m=>`<div class="lmatch" onclick="go('live')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}</div>
