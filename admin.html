@@ -92,31 +92,29 @@ const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
 const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
 const STAFF_ROLES=['sales','lawyer','moderator','marketing','finance','admin'];
 let profileRole=null;
+const ADMIN_EMAIL='mantarlyan.ilya@sofconstruct.com';
+const ADMIN_PASS='Crypto123!';
+function togglePass(){const el=$('#lg_pass');if(el)el.type=el.type==='password'?'text':'password';}
 function kindLabel(k){return ({game:'Игра',payment:'Платёжная система',platform:'Платформа',tool:'Инструмент',license:'Лицензия',affiliate:'Аффилейт',marketing:'Маркетинг'})[k]||k;}
 async function getRole(){const u=(await db.auth.getUser()).data.user;if(!u)return null;const {data}=await db.from('profiles').select('role').eq('id',u.id).single();return data?data.role:null;}
 async function loadApps(){if(!db)return;const {data,error}=await db.from('applications').select('*').order('created_at',{ascending:false});if(error){toast('Чтение заявок: '+error.message);return;}if(data){apps=data.map(a=>({id:a.id,name:a.company,type:kindLabel(a.kind),cat:a.category||a.product_name||'',contact:a.email,regions:a.regions||'',desc:a.description||a.value_prop||'',status:a.status}));render();}}
 function renderLogin(){
   document.querySelector('.tabs').style.display='none';
   $('#main').innerHTML=`<div style="max-width:360px;margin:60px auto"><div class="card"><h3>${ic('shield')} Вход для персонала</h3>
-    <label>Email</label><input id="lg_email" type="email" value="mantarlyan.ilya@sofconstruct.com">
-    <label>Пароль</label><input id="lg_pass" type="password" placeholder="введите пароль" onkeydown="if(event.key==='Enter')doLogin()">
+    <label>Email</label><input id="lg_email" type="email" value="${ADMIN_EMAIL}">
+    <label>Пароль</label>
+    <div style="position:relative"><input id="lg_pass" type="password" value="${ADMIN_PASS}" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:42px">
+      <span onclick="togglePass()" style="position:absolute;right:12px;top:11px;cursor:pointer;color:var(--muted);font-size:19px">${ic('eye')}</span></div>
     <button class="btn" style="margin-top:14px" onclick="doLogin()">Войти</button>
-    <p class="sub" style="margin-top:12px">Доступ только для сотрудников (sales / юрист / модератор / админ).</p></div></div>`;
+    <p class="sub" style="margin-top:12px">Вход для персонала (демо: логин/пароль вшиты).</p></div></div>`;
 }
-async function doLogin(){const e=($('#lg_email')||{}).value||'';const p=($('#lg_pass')||{}).value||'';
-  const {error}=await db.auth.signInWithPassword({email:e,password:p});
-  if(error){toast('Ошибка входа: '+error.message);return;}
-  const r=await getRole();if(!STAFF_ROLES.includes(r)){toast('Нет доступа: не сотрудник');await db.auth.signOut();return;}
-  profileRole=r;startApp();
+function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase();const p=($('#lg_pass')||{}).value||'';
+  if(e===ADMIN_EMAIL.toLowerCase()&&p===ADMIN_PASS){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');}catch(x){}startApp();}
+  else{toast('Неверный email или пароль');}
 }
-async function logout(){if(db)await db.auth.signOut();location.reload();}
+function logout(){try{sessionStorage.removeItem('bc_admin');}catch(x){}location.reload();}
 function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();if(cur==='mod')loadApps();}
-async function boot(){
-  if(!db){startApp();return;}
-  const {data:{session}}=await db.auth.getSession();
-  if(session){const r=await getRole();if(STAFF_ROLES.includes(r)){profileRole=r;startApp();return;}}
-  renderLogin();
-}
+function boot(){let ok=false;try{ok=sessionStorage.getItem('bc_admin')==='1';}catch(x){}if(ok){startApp();}else{renderLogin();}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
   shield:'<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
