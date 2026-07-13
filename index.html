@@ -853,13 +853,21 @@ const PCAT=[
    ['Okey','Tile-based игра','€5K']
  ]}
 ];
+const PACKS=[
+ ['One Product','€5.000 – 10.000','Любой один продукт на выбор.'],
+ ['Casino Suite','€15.000','Включает: Games, Live Casino, Poker, Slots.'],
+ ['Sports Betting','€19.900','Включает всё из Casino Suite + Sportsbook, Virtual Sports, Esport.'],
+ ['Полный пакет · Multi-Wallet','€25.000','Все продукты BetConstruct в одном пакете (крипто + фиат).']
+];
 function catalog(){
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
-    <h2>${ic('box')} Products</h2><p class="sub">50+ продуктов беттинг-софта — от Sportsbook до операционных инструментов.</p>
-    <div class="disc">${ic('check')} Multi-Wallet — весь пакет продуктов за €25 000.</div>
+    <h2>${ic('box')} Products</h2><p class="sub">Выберите пакет под вашу задачу — цена за пакет, продукты внутри.</p>
+    <div class="h2" style="margin:4px 0 10px;padding:0"><span class="lft">Пакеты и цены</span></div>
+    ${PACKS.map(p=>`<div class="pcat" style="padding:14px 16px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b style="font-size:15px">${p[0]}</b><span style="color:var(--mag);font-weight:800;font-size:15px;white-space:nowrap">${p[1]}</span></div><div style="font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5">${p[2]}</div></div>`).join('')}
+    <div class="h2" style="margin:16px 0 10px;padding:0"><span class="lft">Продукты по категориям</span></div>
     ${PCAT.map((c,i)=>`<div class="pcat" id="cat${i}"><div class="hd" onclick="togglePc('cat${i}')"><span class="l">${ic(c.ic)} ${c.cat}</span><span class="more">${c.items.length} · ${ic('chevD')}</span></div>
       <div class="body">
-        ${c.items.map(it=>`<div style="padding:11px 16px;border-top:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:10px"><b style="font-size:14px">${it[0]}</b><span style="color:var(--mag);font-weight:700;white-space:nowrap;font-size:13px">${it[2]}</span></div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${it[1]}</div></div>`).join('')}
+        ${c.items.map(it=>`<div style="padding:11px 16px;border-top:1px solid var(--line)"><b style="font-size:14px">${it[0]}</b><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${it[1]}</div></div>`).join('')}
       </div></div>`).join('')}
     <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать продукты с AI-советником</button>
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
