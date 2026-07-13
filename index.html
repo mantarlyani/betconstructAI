@@ -343,6 +343,14 @@ const SEC_IC=['diamond','puzzle','box','gear','globe','card','bulb','news','stor
 const NAV_IC=['home','box','broadcast','store','users','dots'];
 const NAV_KEY=['home','products','live','market','partners','more'];
 const MATCHES=[['Club Friendlies','1 : 1','2.20'],['Club Friendlies','0 : 0','2.25'],['World Cup','—','1.85']];
+const MENU_TOP=[
+  ['diamond','iGaming Solutions','igaming',1],
+  ['puzzle','Platforms','https://betconstruct.ucraft.site/platforms'],
+  ['box','Products','https://betconstruct.ucraft.site/products'],
+  ['gear','Backoffice / BME','https://betconstruct.ucraft.site/backoffice-bme'],
+  ['globe','Regional / Jurisdiction','https://betconstruct.ucraft.site/regional-offers-jurisdiction'],
+  ['card','Payment methods','https://betconstruct.ucraft.site/payment-methots']
+];
 const QUICK=[
   ['code','Partner API','https://www.betconstruct.com/products'],
   ['broadcast','Live','https://sport.vbet.am/en/sports/live/event-view/Soccer/World/573/club-friendlies/30257052/fc-zlin-fk-dukla-banska-bystrica'],
@@ -383,6 +391,8 @@ function home(){
   <div class="welcome"><div class="s">${t('hi')}${window.USER?', <b style="color:var(--text)">'+window.USER+'</b>':''} 👋</div>
     <div class="tag1">Leading iGaming Platform Provider</div>
     <div class="tag2">Experience the solutions first-hand</div></div>
+  <div class="h2"><span class="lft">Разделы</span></div>
+  <div class="list2">${MENU_TOP.map(m=>`<div class="lcard" onclick="${m[3]?`go('${m[2]}')`:`openURL('${m[2]}')`}">${ic(m[0])} ${m[1]}</div>`).join('')}</div>
   <div class="wrap">
     ${vpnCard()}
     <div class="search" onclick="toast('•')">${ic('search')} ${t('searchPh')}</div>
@@ -393,8 +403,6 @@ function home(){
   <div class="h2"><span class="lft">${ic('dot')} ${t('liveNow')}</span><a onclick="go('live')">${t('all')} ›</a></div>
   <div class="lscroll">${MATCHES.map(m=>`<div class="lmatch" onclick="go('live')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}</div>
   <div class="promo" onclick="openURL('https://www.vbet.am/en/wonderwheel')"><div><div class="t">${ic('wheel')} WonderWheel</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
-  <div class="h2"><span class="lft">${t('allSections')}</span></div>
-  <div class="list2">${t('sec').map((n,i)=>`<div class="lcard" onclick="sectionTap('${i}')">${ic(SEC_IC[i])} ${n}</div>`).join('')}</div>
   <div style="height:16px"></div>`;
 }
 function vpnCard(){
@@ -682,7 +690,59 @@ function submitEntry(){
   render('home');
 }
 
-const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat};
+const SOL=[
+ {ic:'box',name:'Turnkey iGaming',tag:'Для партнёров со своей лицензией и кошельком',
+  intro:'Готовый, беспроблемный пакет ПО под задачи бизнеса: большой выбор web- и mobile-игр, обширный каталог спортивных событий, выделенный бэкофис — всё в одном решении под ключ.',
+  blocks:[
+   ['Turnkey Sportsbook','Полноценная Betting Management System: pre-match и live ставки по множеству видов спорта и лиг, типы ставок и коэффициенты; регистрация и управление аккаунтами игроков, безопасные транзакции.'],
+   ['Turnkey Casino','Каталог игр от 350+ ведущих провайдеров; Remote Gaming Server (RGS) для интеграции сторонних систем; промо-инструменты — бонусы и джекпоты.'],
+   ['Почему Turnkey','Полный BackOffice (аккаунты, транзакции, депозиты, ставки, выводы); платёжные интеграции; промо-инструменты и лояльность; риск-менеджмент и защита от фрода.'],
+   ['Multi-Wallet','Один игровой аккаунт — любая валюта (EUR, USD, BTC, DOGE и др.); крипто и фиат в одной платформе, без обмена валют между площадками.'],
+   ['Плюсы','Быстрый запуск с первого дня; поддержка 24/7; BME-консоль; гибкая трейдинг-система; встроенные CRM и Affiliate; кастомные лимиты и маржа; риск-менеджмент.']
+  ]},
+ {ic:'cash',name:'Crypto iGaming',tag:'Классическая платформа + крипто-интеграция',
+  intro:'Всё как в награждённой классической платформе BetConstruct, но с крипто-интеграцией и крипто-коллекциями игр. Доступ ко всем продуктам: Sportsbook, Casino Suite, Live Casino, Skill games и др.',
+  blocks:[
+   ['Crypto Sportsbook','70K+ live-матчей и 140K+ pre-match событий ежемесячно; работа в двух отдельных кошельках.'],
+   ['Crypto Casino','100+ ведущих провайдеров, широкий каталог игр в крипто; мульти-депозит.'],
+   ['Почему Crypto','Множество криптовалют для основного кошелька (BTC, ETH, USDT, LTC и др.); выход на новые аудитории, предпочитающие крипто; live-дилеры, ставки, турниры.'],
+   ['Крипто-продукты','BetChain — крипто-платформа с удобной навигацией и лояльностью; Custom Token — собственный токен на блокчейне для роста экосистемы.'],
+   ['Плюсы','Multi-Wallet (крипто + фиат в одной платформе); шире аудитория; поддержка BTC/ETH/USDT/LTC; кастомные крипто-игры под бренд (Crash, Blackjack, Roulette).']
+  ]},
+ {ic:'badge',name:'White Label iGaming',tag:'Под лицензиями BetConstruct, быстрый старт',
+  intro:'Самый экономичный и быстрый способ: полный пакет продуктов, полностью регулируемый под лицензиями BetConstruct (Curaçao, Malta, France, UK). BetConstruct берёт на себя юридические, финансовые и административные операции.',
+  blocks:[
+   ['White Label Sportsbook','Максимум автономии; pre-match и live события под лицензиями BC; историческая статистика, риск-менеджмент и wallet-менеджмент.'],
+   ['White Label Casino','Игры от 350+ топ-провайдеров под лицензиями BC; RGS; отчётность и мониторинг в BackOffice; запуск в кратчайшие сроки.'],
+   ['Почему White Label','Работа под лицензиями Curaçao, Malta, France, UK; полный BackOffice; 500+ платёжных шлюзов; промо-инструменты.'],
+   ['Плюсы','500+ платёжных шлюзов; промо-инструменты; BME-консоль; поддержка 24/7 (B2B и B2C); риск-менеджмент; нулевой стартовый взнос в джекпоты.'],
+   ['Запуск','До 1–3 недель после подписания контракта. Полностью легально в юрисдикциях UK, MGA и Curaçao.']
+  ]},
+ {ic:'code',name:'API iGaming',tag:'Для действующих операторов — интеграция по API',
+  intro:'Для существующих операторов: гладкая интеграция игр, ставок и Odds Feed в вашу платформу. Обширное покрытие спорта и игр, подробная документация и экспертная поддержка.',
+  blocks:[
+   ['Sportsbook API','Мост между вашей платформой и серверами беттинга; 70K+ live и 140K+ pre-match событий/мес; историческая статистика по 2 млн матчей в 3000 лигах.'],
+   ['Casino API','Слоты, настольные и live-дилеры через один API; 350+ провайдеров, 10 000 игр (web и mobile).'],
+   ['Типы интеграции','Swarm API — данные спорта/игр на ваш фронтенд; Partner API — продукты BC с фронтом от BC; Odds Feed API — коэффициенты.'],
+   ['Плюсы','Гибкая интеграция нужных продуктов; open-source библиотека на GitHub; разнообразные платёжные шлюзы; стратегический риск-менеджмент.']
+  ]}
+];
+function igaming(){
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('diamond')} iGaming Solutions</h2><p class="sub">Choose the solution that best meets your needs — и запускай бизнес с BetConstruct.</p>
+    ${SOL.map((s,i)=>`<div class="pcat" id="sol${i}"><div class="hd" onclick="togglePc('sol${i}')"><span class="l">${ic(s.ic)} ${s.name}</span><span class="more">Подробно ${ic('chevD')}</span></div>
+      <div class="body" style="padding:13px 16px">
+        <p style="font-size:12.5px;color:var(--mag);font-weight:700;margin:0 0 8px">${s.tag}</p>
+        <p style="font-size:13.5px;line-height:1.6;margin:0 0 12px">${s.intro}</p>
+        ${s.blocks.map(b=>`<div style="margin-bottom:11px"><div style="font-weight:700;font-size:13.5px;margin-bottom:3px">${b[0]}</div><div style="font-size:13px;color:var(--muted);line-height:1.6">${b[1]}</div></div>`).join('')}
+        <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
+      </div></div>`).join('')}
+    <div class="rec" style="margin-top:6px"><div class="row" style="align-items:flex-start;gap:11px;font-size:13.5px">${ic('sparkles')}<div>Не уверены, что выбрать? Опишите задачу — AI-советник подберёт решение, платежи и лицензию, дальше подключится менеджер.</div></div></div>
+    <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
+    <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
+  </div>`;
+}
+const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
   const fab=$('#fab');
