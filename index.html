@@ -348,7 +348,7 @@ const MENU_TOP=[
   ['puzzle','Platforms','platforms',1],
   ['box','Products','catalog',1],
   ['gear','Backoffice / BME','bme',1],
-  ['globe','Regional / Jurisdiction','https://betconstruct.ucraft.site/regional-offers-jurisdiction'],
+  ['globe','Regional / Jurisdiction','regional',1],
   ['card','Payment methods','https://betconstruct.ucraft.site/payment-methots']
 ];
 const QUICK=[
@@ -888,7 +888,37 @@ function bme(){
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
   </div>`;
 }
-const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms,catalog,bme};
+const REGIONS=[
+ ['ti','United Kingdom','Предложение под рынок UK — регулируется UK Gambling Commission.'],
+ ['ti','Latin America','Растущие рынки LATAM.'],
+ ['ti','South Africa','Рынки ЮАР и Африки.'],
+ ['ti','Asia','Азиатские рынки с локальными платёжными методами.'],
+ ['ti','France','Рынок Франции.'],
+ ['ti','Cyprus','Кипр — юрисдикция ЕС.'],
+ ['ti','Malta','Мальта — лицензия MGA.'],
+ ['ti','Ukraine','Рынок Украины.']
+];
+const LICENSES=[
+ ['Malta Gaming Authority (MGA)','Gaming Service Licence MGA/B2B/286/2014 (с 1 августа 2018).'],
+ ['UK Gambling Commission (UKGC)','Account № 40767 — услуги для рынка Великобритании.'],
+ ['Оператор','Soft Construct (Malta) Ltd, рег. № C45929, Мальта.']
+];
+function regional(){
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('globe')} Regional / Jurisdiction</h2><p class="sub">Регион-специфичные предложения — подберём решение под ваш рынок и юрисдикцию (USA, Asia, Africa, Europe и др.).</p>
+    <div class="h2" style="margin:4px 0 10px;padding:0"><span class="lft">Регионы</span></div>
+    <div class="pcat"><div class="body" style="display:block;border:none">
+      ${REGIONS.map(r=>`<div style="padding:12px 16px;border-top:1px solid var(--line)"><div style="display:flex;align-items:center;gap:9px"><i class="ti ti-map-pin" style="display:none"></i>${ic('pin')}<b style="font-size:14px">${r[1]}</b></div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${r[2]}</div></div>`).join('')}
+    </div></div>
+    <div class="h2" style="margin:16px 0 10px;padding:0"><span class="lft">Лицензии и сертификаты</span></div>
+    <div class="pcat"><div class="body" style="display:block;border:none">
+      ${LICENSES.map(l=>`<div style="padding:12px 16px;border-top:1px solid var(--line)"><div style="display:flex;align-items:center;gap:9px">${ic('badge')}<b style="font-size:14px">${l[0]}</b></div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${l[1]}</div></div>`).join('')}
+    </div></div>
+    <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать регион с AI-советником</button>
+    <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
+  </div>`;
+}
+const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms,catalog,bme,regional};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
   const fab=$('#fab');
