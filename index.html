@@ -345,7 +345,7 @@ const NAV_KEY=['home','products','live','market','partners','more'];
 const MATCHES=[['Club Friendlies','1 : 1','2.20'],['Club Friendlies','0 : 0','2.25'],['World Cup','—','1.85']];
 const MENU_TOP=[
   ['diamond','iGaming Solutions','igaming',1],
-  ['puzzle','Platforms','https://betconstruct.ucraft.site/platforms'],
+  ['puzzle','Platforms','platforms',1],
   ['box','Products','https://betconstruct.ucraft.site/products'],
   ['gear','Backoffice / BME','https://betconstruct.ucraft.site/backoffice-bme'],
   ['globe','Regional / Jurisdiction','https://betconstruct.ucraft.site/regional-offers-jurisdiction'],
@@ -742,7 +742,31 @@ function igaming(){
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
   </div>`;
 }
-const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming};
+const PLAT=[
+ {ic:'desktop',name:'CMS Pro',desc:'Мощная система управления контентом — простое, гибкое и масштабируемое решение для вашего сайта.',
+  price:[['White Label','Curaçao — €19 900'],['Turnkey','Single Wallet — €19 900 · Multi Wallet — €25 000']]},
+ {ic:'code',name:'SpringBuilderX',desc:'Создавайте и управляйте mobile-first беттинг/гейминг-сайтом: удобный интерфейс и продвинутые настройки.',
+  price:[['White Label','MGA (Malta) — €34 900 · Curaçao — €44 900 · UK — €54 900 · France — €125 000'],['Turnkey','Platform Setup — €44 900']]},
+ {ic:'cash',name:'BetChain',desc:'Продвинутая крипто-ориентированная платформа для усиления вашего iGaming-предложения.',
+  price:[['Multi Wallet','€25 000']]},
+ {ic:'building',name:'Land Based Solutions',desc:'Запуск бизнеса с нуля или рост существующего в рынках с минимальной конкуренцией — наземные (retail) решения.',
+  price:[['По запросу','Обсуждается с менеджером']]}
+];
+function platforms(){
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('puzzle')} Platforms</h2><p class="sub">Управляй и развивай бизнес на удобной платформе.</p>
+    <div class="disc">${ic('check')} Цена платформы включает ВСЕ продукты BetConstruct.</div>
+    ${PLAT.map((p,i)=>`<div class="pcat" id="plat${i}"><div class="hd" onclick="togglePc('plat${i}')"><span class="l">${ic(p.ic)} ${p.name}</span><span class="more">Подробно ${ic('chevD')}</span></div>
+      <div class="body" style="padding:13px 16px">
+        <p style="font-size:13.5px;line-height:1.6;margin:0 0 12px">${p.desc}</p>
+        ${p.price.map(pr=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="color:var(--muted);white-space:nowrap">${pr[0]}</span><b style="text-align:right">${pr[1]}</b></div>`).join('')}
+        <button class="btn" style="margin-top:12px" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
+      </div></div>`).join('')}
+    <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
+    <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
+  </div>`;
+}
+const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
   const fab=$('#fab');
