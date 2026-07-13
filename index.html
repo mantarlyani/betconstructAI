@@ -735,7 +735,6 @@ function igaming(){
         <p style="font-size:12.5px;color:var(--mag);font-weight:700;margin:0 0 8px">${s.tag}</p>
         <p style="font-size:13.5px;line-height:1.6;margin:0 0 12px">${s.intro}</p>
         ${s.blocks.map(b=>`<div style="margin-bottom:11px"><div style="font-weight:700;font-size:13.5px;margin-bottom:3px">${b[0]}</div><div style="font-size:13px;color:var(--muted);line-height:1.6">${b[1]}</div></div>`).join('')}
-        <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
       </div></div>`).join('')}
     <div class="rec" style="margin-top:6px"><div class="row" style="align-items:flex-start;gap:11px;font-size:13.5px">${ic('sparkles')}<div>Не уверены, что выбрать? Опишите задачу — AI-советник подберёт решение, платежи и лицензию, дальше подключится менеджер.</div></div></div>
     <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
@@ -791,7 +790,6 @@ function platforms(){
         ${p.blocks.map(b=>`<div style="margin-bottom:11px"><div style="font-weight:700;font-size:13.5px;margin-bottom:3px">${b[0]}</div><div style="font-size:13px;color:var(--muted);line-height:1.6">${b[1]}</div></div>`).join('')}
         <div style="font-weight:700;font-size:12px;color:var(--mag);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px">Цены</div>
         ${p.price.map(pr=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="color:var(--muted);white-space:nowrap">${pr[0]}</span><b style="text-align:right">${pr[1]}</b></div>`).join('')}
-        <button class="btn" style="margin-top:12px" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
       </div></div>`).join('')}
     <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
