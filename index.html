@@ -94,6 +94,24 @@
   .pcat .body{display:none;border-top:1px solid var(--line)}
   .pcat.open .body{display:block}
   .pcat.open .more svg{transform:rotate(180deg)}
+  .loycard{background:linear-gradient(135deg,var(--mag),var(--mag-dk));color:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 8px 22px rgba(166,0,99,.28)}
+  .loytop{display:flex;align-items:center;gap:12px}
+  .loybadge{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:none}
+  .loybadge svg{color:#fff;width:26px;height:26px}
+  .loylv{font-size:18px;font-weight:800;letter-spacing:.5px}
+  .loypts{font-size:12.5px;opacity:.92;margin-top:2px}
+  .loyxp{margin-left:auto;font-size:14px;font-weight:800;background:rgba(255,255,255,.2);padding:7px 11px;border-radius:11px;white-space:nowrap}
+  .loybar{height:9px;border-radius:6px;background:rgba(255,255,255,.25);margin:14px 0 7px;overflow:hidden}
+  .loybar i{display:block;height:100%;background:#fff;border-radius:6px;transition:width .4s}
+  .loynext{display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.96}
+  .loycard .btn{background:#fff;color:var(--mag);border:none;font-weight:800}
+  .loyhdr,.loyrow{display:grid;grid-template-columns:.7fr 1.3fr 1.3fr;padding:11px 16px;font-size:13.5px;align-items:center}
+  .loyhdr{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .loyrow{border-top:1px solid var(--line)}
+  .loyrow span:first-child{font-weight:700}
+  .loyrow span:last-child{color:var(--mag);font-weight:700}
+  .loyrow.on{background:rgba(166,0,99,.09)}
+  .loyrow.on span:first-child::after{content:' ●';color:var(--mag);font-size:10px;vertical-align:middle}
   .lnk{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-top:1px solid var(--line);
     text-decoration:none;color:var(--text);font-size:14.5px}
   .lnk:first-child{border-top:none}
@@ -221,6 +239,8 @@ const IC={
   gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2.3M12 18.2v2.3M4.4 7.5l2 1.1M17.6 15.4l2 1.1M4.4 16.5l2-1.1M17.6 8.6l2-1.1"/>',
   globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
   card:'<rect x="3" y="6" width="18" height="12" rx="2.4"/><path d="M3 10h18M7 15h3.5"/>',
+  coin:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.6 9.4a2.4 2.4 0 0 1 2.4-1.9c1.3 0 2.4.9 2.4 2s-1.1 1.7-2.4 1.7-2.4.7-2.4 1.7.9 1.9 2.4 1.9a2.4 2.4 0 0 0 2.4-1.9"/>',
+  wallet:'<rect x="3" y="6" width="18" height="13" rx="2.4"/><path d="M3 10h13a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H3"/><circle cx="16" cy="12" r="1"/>',
   bulb:'<path d="M9 18.5h6M10 21.5h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1.3-1 2.2H9c0-.9-.3-1.6-1-2.2A6 6 0 0 1 12 3z"/>',
   news:'<rect x="4" y="5" width="16" height="14" rx="2.2"/><path d="M8 9h8M8 12.5h8M8 16h5"/>',
   store:'<path d="M4 9.5L5 5h14l1 4.5"/><path d="M4 9.5a2.4 2.4 0 0 0 4.7 0 2.4 2.4 0 0 0 4.6 0 2.4 2.4 0 0 0 4.7 0"/><path d="M5.2 11.5V19h13.6v-7.5"/><path d="M9.5 19v-4h5v4"/>',
@@ -274,7 +294,7 @@ const T={
     fModel:'Модель (CPA / RevShare / Hybrid)',fGeo:'Гео-фокус',fTraffic:'Источники трафика',
     submitReg:'Отправить заявку',regDone:'Заявка отправлена. Статус: на проверке (KYB). Менеджер свяжется с вами.',
     haveAcc:'Уже есть аккаунт? Войти',kyb:'Вендоры проходят KYB-верификацию перед публикацией.',
-    entryName:'Как к вам обращаться',entryContact:'Email или телефон',entryBtn:'Войти в систему',entrySub:'Укажите имя и контакт, чтобы продолжить',
+    entryName:'Как к вам обращаться',entryContact:'Email или телефон',entryBtn:'Войти как гость',entrySub:'Укажите имя и контакт, чтобы продолжить',
     chatTitle:'Чат с менеджером',chatSub:'Ани · на связи',chatPh:'Напишите сообщение…',
     qa:['Live','Слоты','Спорт','Live Casino','Игры','Колесо','Киберспорт','Партнёры'],
     sec:['iGaming решения','Платформы','Продукты','Backoffice / BME','Регионы','Платежи','Prediction','Новости','Marketplace'],
@@ -300,7 +320,7 @@ const T={
     fModel:'Model (CPA / RevShare / Hybrid)',fGeo:'Geo focus',fTraffic:'Traffic sources',
     submitReg:'Submit application',regDone:'Application submitted. Status: under review (KYB). A manager will contact you.',
     haveAcc:'Already have an account? Log in',kyb:'Vendors pass KYB verification before publishing.',
-    entryName:'How should we address you',entryContact:'Email or phone',entryBtn:'Enter',entrySub:'Enter your name and contact to continue',
+    entryName:'How should we address you',entryContact:'Email or phone',entryBtn:'Enter as guest',entrySub:'Enter your name and contact to continue',
     chatTitle:'Chat with a manager',chatSub:'Ani · online',chatPh:'Type a message…',
     qa:['Live','Slots','Sport','Live Casino','Games','Wheel','Esports','Partners'],
     sec:['iGaming Solutions','Platforms','Products','Backoffice / BME','Regional','Payments','Prediction','News','Marketplace'],
@@ -326,7 +346,7 @@ const T={
     fModel:'Մոդել (CPA / RevShare / Hybrid)',fGeo:'Գեո ֆոկուս',fTraffic:'Տրաֆիկի աղբյուրներ',
     submitReg:'Ուղարկել հայտը',regDone:'Հայտն ուղարկված է։ Կարգավիճակ՝ ստուգման մեջ (KYB)։ Մենեջերը կկապվի ձեզ հետ։',
     haveAcc:'Արդեն ունե՞ք հաշիվ։ Մուտք',kyb:'Վենդորները անցնում են KYB ստուգում հրապարակումից առաջ։',
-    entryName:'Ինչպես դիմել ձեզ',entryContact:'Email կամ հեռախոս',entryBtn:'Մուտք գործել',entrySub:'Մուտքագրեք անունը և կոնտակտը շարունակելու համար',
+    entryName:'Ինչպես դիմել ձեզ',entryContact:'Email կամ հեռախոս',entryBtn:'Մուտք որպես հյուր',entrySub:'Մուտքագրեք անունը և կոնտակտը շարունակելու համար',
     chatTitle:'Չաթ մենեջերի հետ',chatSub:'Անի · կապի մեջ',chatPh:'Գրեք հաղորդագրություն…',
     qa:['Live','Սլոտներ','Սպորտ','Live Casino','Խաղեր','Անիվ','Կիբերսպորտ','Գործընկերներ'],
     sec:['iGaming լուծումներ','Հարթակներ','Ապրանքներ','Backoffice / BME','Տարածաշրջան','Վճարումներ','Prediction','Նորություններ','Marketplace'],
@@ -349,7 +369,7 @@ const MENU_TOP=[
   ['box','Products','catalog',1],
   ['gear','Backoffice / BME','bme',1],
   ['globe','Regional / Jurisdiction','regional',1],
-  ['card','Payment methods','https://betconstruct.ucraft.site/payment-methots']
+  ['card','Payment methods','payment',1]
 ];
 const QUICK=[
   ['code','Partner API','https://www.betconstruct.com/products'],
@@ -397,6 +417,7 @@ function home(){
     ${vpnCard()}
     <div class="search" onclick="toast('•')">${ic('search')} ${t('searchPh')}</div>
     <div class="aicard" onclick="advise()"><div><div class="t">${ic('sparkles')} ${t('aiTitle')}</div><div class="d" style="font-size:14px;opacity:.9;margin-top:3px">${t('aiDesc')}</div></div><div class="chev">›</div></div>
+    ${loyHomeCard()}
   </div>
   <div class="h2"><span class="lft">${t('quick')}</span><a onclick="go('entry')">${ic('chevL')} ${t('back')}</a></div>
   <div class="qa">${QUICK.map(q=>`<div class="qtile" onclick="openURL('${q[2]}')">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
@@ -677,7 +698,7 @@ function entry(){
       <label>${t('entryContact')}</label><input id="en_contact" autocomplete="off" placeholder="name@mail.com / +374…">
       <button class="btn" onclick="submitEntry()">${ic('check')} ${t('entryBtn')}</button>
     </div>
-    <div style="margin-top:18px"><span onclick="location.href='admin.html'" style="color:var(--blue);font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">${ic('shield')} Войти как админ / сотрудник →</span></div>
+    <div style="margin-top:18px"><span onclick="location.href='admin.html'" style="color:var(--blue);font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">${ic('shield')} Войти в систему · у меня есть аккаунт →</span></div>
     </div>`;
 }
 function submitEntry(){
@@ -918,7 +939,63 @@ function regional(){
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
   </div>`;
 }
-const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms,catalog,bme,regional};
+const PAY=[
+ ['card','500+ платёжных шлюзов','Мультивалютная поддержка и широкий охват локальных и международных платёжных систем. Быстрые и безопасные депозиты и выводы под любой рынок.'],
+ ['coin','Крипто-платежи','Приём и вывод в криптовалюте: BTC, ETH, USDT, LTC и другие. Крипто-депозиты, крипто-выводы и мульти-депозит для крипто-ориентированных операторов.'],
+ ['wallet','Multi-Wallet','Один игровой аккаунт — любая валюта. Крипто и фиат в единой платформе, без ручного обмена валют между площадками.'],
+ ['globe','Локальные методы','Под каждый регион — предпочтительные локальные способы оплаты: банковские карты, e-wallets, банковские переводы, ваучеры и мобильные платежи.'],
+ ['shield','Безопасность и комплаенс','Обработка платежей в соответствии с требованиями лицензий (MGA, UKGC и др.), защита транзакций, верификация KYC/AML и анти-фрод контроль.']
+];
+function payment(){
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('card')} Payment methods</h2><p class="sub">Гибкая платёжная инфраструктура под ваш рынок и игроков: 500+ шлюзов, крипто и фиат, локальные методы — всё в одной платформе.</p>
+    <div class="pcat"><div class="body" style="display:block;border:none">
+      ${PAY.map(p=>`<div style="padding:14px 16px;border-top:1px solid var(--line)"><div style="display:flex;align-items:center;gap:9px">${ic(p[0])}<b style="font-size:14px">${p[1]}</b></div><div style="font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.55">${p[2]}</div></div>`).join('')}
+    </div></div>
+    <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать платёжное решение с AI-советником</button>
+    <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
+  </div>`;
+}
+/* ---------- LOYALTY PROGRAM ---------- */
+const LTIERS=[
+ {name:'BEGINNER',vip:'VIP 1–6',  lv:[[1,0,0],[2,20,20],[3,100,50],[4,250,75],[5,500,100],[6,750,150]]},
+ {name:'EXPERT',  vip:'VIP 7–12', lv:[[1,1000,200],[2,1500,250],[3,2000,300],[4,2500,350],[5,3000,500],[6,5000,750]]},
+ {name:'MASTER',  vip:'VIP 13–18',lv:[[1,10000,1000],[2,20000,1500],[3,30000,2000],[4,40000,3000],[5,50000,5000],[6,100000,10000]]},
+ {name:'LEGEND',  vip:'VIP 19–24',lv:[[1,150000,12500],[2,200000,15000],[3,250000,20000],[4,300000,25000],[5,400000,30000],[6,500000,35000]]},
+ {name:'GOD',     vip:'VIP 25–30',lv:[[1,1000000,50000],[2,2000000,60000],[3,3000000,70000],[4,4000000,80000],[5,5000000,90000],[6,10000000,100000]]}
+];
+let userXP=(function(){try{const v=parseFloat(localStorage.getItem('bc_xp'));return isNaN(v)?10.6:v;}catch(e){return 10.6;}})();
+function loyFlat(){const f=[];LTIERS.forEach((tr,ti)=>tr.lv.forEach(l=>f.push({tier:tr.name,ti:ti,lvl:l[0],xp:l[1],bonus:l[2]})));return f;}
+function loyStatus(){const f=loyFlat();let cur=f[0],idx=0;for(let i=0;i<f.length;i++){if(userXP>=f[i].xp){cur=f[i];idx=i;}}const next=f[idx+1]||null;return{xp:userXP,cur:cur,next:next,idx:idx,left:next?(next.xp-userXP):0};}
+function fmtN(n){return Number(n).toLocaleString('en-US');}
+function fmtXP(n){return (Math.round(n*100)/100).toLocaleString('en-US',{maximumFractionDigits:2});}
+function addXP(n){userXP=Math.round((userXP+n)*100)/100;try{localStorage.setItem('bc_xp',userXP);}catch(e){}render('loyalty');toast('+'+n+' XP');}
+function loyHomeCard(){const s=loyStatus();return `<div class="aicard" style="background:linear-gradient(135deg,#7a0049,#A60063)" onclick="go('loyalty')"><div><div class="t">${ic('trophy')} Loyalty · ${s.cur.tier} ${s.cur.lvl}</div><div class="d" style="font-size:13px;opacity:.92;margin-top:3px">${fmtXP(s.xp)} XP${s.next?` · до ${s.next.tier} ${s.next.lvl}: ${fmtXP(s.left)} XP`:' · MAX 🏆'}</div></div><div class="chev">›</div></div>`;}
+function loyalty(){
+  const s=loyStatus();
+  const pct=s.next?Math.max(2,Math.min(100,Math.round((s.xp-s.cur.xp)/(s.next.xp-s.cur.xp)*100))):100;
+  const cti=LTIERS.findIndex(x=>x.name===s.cur.tier);
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('trophy')} Loyalty Program</h2>
+    <p class="sub">Копи XP за игру — повышай VIP-уровень и получай Level Up бонусы (CIC).</p>
+    <div class="loycard">
+      <div class="loytop"><div class="loybadge">${ic('trophy')}</div>
+        <div><div class="loylv">${s.cur.tier} ${s.cur.lvl}</div>
+        <div class="loypts">Bonus balance: <b>${fmtXP(s.xp)}</b> Points</div></div>
+        <div class="loyxp">${fmtXP(s.xp)} XP</div></div>
+      ${s.next?`<div class="loybar"><i style="width:${pct}%"></i></div>
+        <div class="loynext"><span>From ${fmtN(s.cur.xp)}</span><span>Left <b>${fmtXP(s.left)}</b> XP until ${s.next.tier} ${s.next.lvl}</span></div>`
+        :`<div class="loynext" style="margin-top:12px"><span>🏆 Максимальный уровень достигнут</span></div>`}
+      <button class="btn" style="margin-top:12px" onclick="addXP(50)">${ic('sparkles')} +50 XP (демо)</button>
+    </div>
+    ${LTIERS.map((tr,ti)=>`<div class="pcat${ti===cti?' open':''}" id="loy${ti}"><div class="hd" onclick="togglePc('loy${ti}')"><span class="l">${ic('badge')} ${tr.name}</span><span class="more">${tr.vip} ${ic('chevD')}</span></div>
+      <div class="body">
+        <div class="loyhdr"><span>Level</span><span>Required XP</span><span>Level Up (CIC)</span></div>
+        ${tr.lv.map(l=>{const on=(s.cur.tier===tr.name&&s.cur.lvl===l[0]);return `<div class="loyrow${on?' on':''}"><span>${l[0]}</span><span>${fmtN(l[1])}</span><span>+${fmtN(l[2])}</span></div>`;}).join('')}
+      </div></div>`).join('')}
+    <div style="height:16px"></div></div>`;
+}
+const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms,catalog,bme,regional,payment,loyalty};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
   const fab=$('#fab');
