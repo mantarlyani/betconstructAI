@@ -347,7 +347,7 @@ const MENU_TOP=[
   ['diamond','iGaming Solutions','igaming',1],
   ['puzzle','Platforms','platforms',1],
   ['box','Products','catalog',1],
-  ['gear','Backoffice / BME','https://betconstruct.ucraft.site/backoffice-bme'],
+  ['gear','Backoffice / BME','bme',1],
   ['globe','Regional / Jurisdiction','https://betconstruct.ucraft.site/regional-offers-jurisdiction'],
   ['card','Payment methods','https://betconstruct.ucraft.site/payment-methots']
 ];
@@ -871,7 +871,24 @@ function catalog(){
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
   </div>`;
 }
-const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms,catalog};
+const BME=[
+ ['Что такое Spring BME','Платформа со всем необходимым для гейминг/беттинг-бизнеса: создаёшь проект за минуты, добавляешь iGaming-продукты, включаешь/выключаешь инструменты (CMS, бэкофис и др.). White Label — заявка прямо из консоли. Всё управление из одного места — экономит время, силы и ресурсы.'],
+ ['26+ продуктов','Награждённые Sportsbook и Casino, poker, live casino, sports betting, а также собственные игры (Talisman, Blast и др.) — легко интегрируются в бизнес.'],
+ ['Инструменты','Конструкторы сайта (SpringBuilder, Classic CMS) без технических навыков; маркетинг: Affiliate-маркетинг и CRM — продвижение и управление данными клиентов.'],
+ ['Услуги','Для старта и для действующих партнёров: поддержка, маркетинг, трейдинг, риск-менеджмент — от экспертов индустрии.'],
+ ['True iGaming Diversity','Продукты BetConstruct + сторонние (3rd party) продукты, инструменты и услуги — соберите полноценный iGaming-сайт. Внутри: iGaming Solutions, Request Demo, Become Partner.']
+];
+function bme(){
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('gear')} Backoffice / BME</h2><p class="sub">Spring BME — создавай, управляй и развивай iGaming-бизнес из единой облачной консоли.</p>
+    ${BME.map((b,i)=>`<div class="pcat" id="bme${i}"><div class="hd" onclick="togglePc('bme${i}')"><span class="l">${b[0]}</span><span class="more">${ic('chevD')}</span></div>
+      <div class="body" style="padding:13px 16px"><div style="font-size:13.5px;color:var(--muted);line-height:1.6">${b[1]}</div></div></div>`).join('')}
+    <a class="btn" href="https://console.betconstruct.com/" target="_blank" rel="noopener" style="text-decoration:none;margin-top:6px">${ic('external')} Открыть BME-консоль</a>
+    <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
+    <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
+  </div>`;
+}
+const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms,catalog,bme};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
   const fab=$('#fab');
