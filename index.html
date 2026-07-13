@@ -346,7 +346,7 @@ const MATCHES=[['Club Friendlies','1 : 1','2.20'],['Club Friendlies','0 : 0','2.
 const MENU_TOP=[
   ['diamond','iGaming Solutions','igaming',1],
   ['puzzle','Platforms','platforms',1],
-  ['box','Products','https://betconstruct.ucraft.site/products'],
+  ['box','Products','catalog',1],
   ['gear','Backoffice / BME','https://betconstruct.ucraft.site/backoffice-bme'],
   ['globe','Regional / Jurisdiction','https://betconstruct.ucraft.site/regional-offers-jurisdiction'],
   ['card','Payment methods','https://betconstruct.ucraft.site/payment-methots']
@@ -797,7 +797,75 @@ function platforms(){
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
   </div>`;
 }
-const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms};
+const PCAT=[
+ {cat:'Ставки и казино',ic:'ball',items:[
+   ['Sportsbook','90 000+ live-матчей, доступно на 20+ языках','от €19.9K'],
+   ['Esport','Ставки на LoL, CS:GO, DOTA2, Overwatch, Starcraft и др.','от €10K'],
+   ['Virtual Sports','9 виртуальных видов спорта, нон-стоп, здоровая маржа','€10K'],
+   ['Casino Platform','45 000+ игр от BetConstruct и топ-провайдеров','€10K'],
+   ['Live Casino','Живые дилеры + возможности роста бизнеса','€10K']
+ ]},
+ {cat:'Data Feed',ic:'chart',items:[
+   ['Odds Feed','700+ профессиональных трейдеров, отзывчивый odds-фид','от €5K'],
+   ['Live Scouting Data','Быстрые и защищённые live-данные для котировок','€6.5 / матч'],
+   ['Stats Widgets','Все спорт-данные на одной странице','€1.75K / мес'],
+   ['Live Streaming','Эксклюзивный HD live-видеоконтент','от €5'],
+   ['BetGuard','Защита трейдинга от рисков и финансовых потерь','от €15K + RevShare'],
+   ['Dataspot','Аналитика поведения и предпочтений игроков','по запросу']
+ ]},
+ {cat:'Платформы',ic:'puzzle',items:[
+   ['CMS Pro','Гибкая масштабируемая система управления контентом','по запросу'],
+   ['SpringBuilder X','No-code конструктор mobile-first сайта','по запросу'],
+   ['Native Apps','Нативные приложения iOS/Android для продуктов BC','по запросу'],
+   ['Land Based Solutions','Retail-решения для наземного бизнеса','депозит'],
+   ['Bet on League','Sportsbook + статистика (iframe)','депозит'],
+   ['BetChain','Крипто-ориентированная фронт-платформа','депозит'],
+   ['LOYA','Платформа клиентской лояльности','по запросу'],
+   ['Bet Easy','Кросс-платформенные мобильные приложения (iOS/Android)','по запросу']
+ ]},
+ {cat:'Операционные инструменты',ic:'gear',items:[
+   ['Last Battle','Лояльность нового уровня с кастомными журналами','по запросу'],
+   ['Last Battle Universe (B2B)','Первая B2B-система лояльности, до 100% cashback на setup','по запросу'],
+   ['Affiliate Ecosystem','ПО + управление + сеть: мост между аффилейтами и операторами','по запросу'],
+   ['Agent System','Рост через отношения агент↔игрок','€1K / мес'],
+   ['Umbrella','AI risk management — выявление и управление рисками','€1K / мес'],
+   ['Betcloud','Приём ставок сверх лимитов, разделение риска в сети','депозит'],
+   ['Hoory AI','AI-ассистент поддержки клиентов','от $9.99 / мес'],
+   ['Business Dashboard','Дашборд метрик эффективности бизнеса','по запросу'],
+   ['Bet-Insights','Realtime-аналитика ставок и in-match подсказки','по запросу'],
+   ['iGaming BOT','Перенос iGaming-бизнеса в Telegram','по запросу'],
+   ['BetNetwork','Соцфичи: чаты, комьюнити, друзья','по запросу'],
+   ['CRM AI','Таргетированные маркетинг-кампании','€1.5K / мес'],
+   ['AI Game Recommendation','Гипер-релевантные рекомендации игр','по запросу']
+ ]},
+ {cat:'Games Suite (игры)',ic:'dice',items:[
+   ['Pool Masters','Прогнозы исходов и общий призовой фонд','€2K'],
+   ['Poker','Богатый онлайн-функционал, для новичков и про','€10K'],
+   ['Social Gaming','Кастомные социальные казино-игры под ваш бренд','€25K'],
+   ['Skill Games','Нарды и Belote','€10K'],
+   ['Keno','Онлайн-лотерея','€5K'],
+   ['Farkle','Кости: развлечение + расчёт','€5K'],
+   ['Ogwil','Онлайн scratch card','Free'],
+   ['Penality','Футбольная лотерея-игра с горячими коэффициентами','€5K'],
+   ['Hokm','Trick-taking карточная игра','€5K'],
+   ['Pasoor','Популярная карточная игра','€5K'],
+   ['Talisman','Культурная bet-on лотерея','€5K'],
+   ['Okey','Tile-based игра','€5K']
+ ]}
+];
+function catalog(){
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
+    <h2>${ic('box')} Products</h2><p class="sub">50+ продуктов беттинг-софта — от Sportsbook до операционных инструментов.</p>
+    <div class="disc">${ic('check')} Multi-Wallet — весь пакет продуктов за €25 000.</div>
+    ${PCAT.map((c,i)=>`<div class="pcat" id="cat${i}"><div class="hd" onclick="togglePc('cat${i}')"><span class="l">${ic(c.ic)} ${c.cat}</span><span class="more">${c.items.length} · ${ic('chevD')}</span></div>
+      <div class="body">
+        ${c.items.map(it=>`<div style="padding:11px 16px;border-top:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:10px"><b style="font-size:14px">${it[0]}</b><span style="color:var(--mag);font-weight:700;white-space:nowrap;font-size:13px">${it[2]}</span></div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${it[1]}</div></div>`).join('')}
+      </div></div>`).join('')}
+    <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать продукты с AI-советником</button>
+    <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
+  </div>`;
+}
+const PAGES={home,products,live,market,partner,affiliate,partners,more,register,chat,igaming,platforms,catalog};
 function renderNav(){$('#nav').innerHTML=NAV_KEY.map((k,i)=>`<div class="${cur===k?'on':''}" data-t="${k}">${ic(NAV_IC[i])}${t('nav')[i]}</div>`).join('');}
 function render(pg){cur=pg;
   const fab=$('#fab');
