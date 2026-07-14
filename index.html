@@ -178,7 +178,7 @@
   .gate{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 22px;text-align:center;position:relative}
   .glang{position:absolute;top:16px;right:16px;display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .gwm{font-size:30px;font-weight:800;margin-bottom:8px}.gwm .b{color:var(--mag)}.gwm .a{color:var(--blue)}
-  .gtag{font-size:16px;font-weight:700}.gtag2{font-size:13.5px;color:var(--muted);margin-bottom:24px}
+  .gtag{font-size:13px;font-weight:600;color:var(--muted)}.gtag2{font-size:12px;color:var(--muted);margin-bottom:24px}
   .gcard{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;text-align:left}
   .gcard h2{font-size:20px;margin:0 0 3px}.gsub{color:var(--muted);font-size:13px;margin:0 0 4px}
   .gcard label{display:block;font-size:12px;color:var(--muted);margin:13px 0 5px;font-weight:600}
@@ -245,6 +245,15 @@
   .fab{box-shadow:0 8px 22px rgba(166,0,99,.42), 0 2px 6px rgba(166,0,99,.3)}
   /* brand logo badge subtle depth */
   .blogo{box-shadow:0 3px 8px rgba(166,0,99,.28);border-radius:8px}
+
+  /* ===== Refined lighter typography ===== */
+  body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-weight:400;letter-spacing:.1px}
+  b,strong{font-weight:600}
+  h2,.h2,.pcat .hd .l{font-weight:600}
+  .btn,.btn2,.pbtn,.chip,.lg,.langbtn,.nav div,.qtile p,.vname,.rowcard .lft,.vstat,.tag1,.cmgr b,.fsec,.lcard{font-weight:600}
+  .wm,.gwm,.welcome h1,.loylv{font-weight:700}
+  .sub,.page .sub,.tag2,.gtag,.gtag2,.d,.vsub,.vst2,.vcat,.welcome .s,.gsub{font-weight:400}
+  .loyxp,.loyrow span:first-child{font-weight:600}
 </style>
 </head>
 <body>
@@ -559,14 +568,14 @@ const BCPRODUCTS=[
 ];
 function linkRows(a){return a.map(l=>`<a class="lnk" href="${l[2]}" target="_blank" rel="noopener"><span class="nm">${ic(l[0])} ${l[1]}</span><span class="go">${ic('external')}</span></a>`).join('');}
 function products(){
-  return header()+`<div class="page"><h2>${ic('box')} ${t('nav')[1]}</h2><p class="sub">${t('productsSub')}</p>
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('box')} ${t('nav')[1]}</h2><p class="sub">${t('productsSub')}</p>
     <div class="pcat" id="pc1"><div class="hd" onclick="togglePc('pc1')"><span class="l">${ic('desktop')} ${t('feCat')}</span><span class="more">${t('details')} ${ic('chevD')}</span></div><div class="body">${linkRows(FRONTEND)}</div></div>
     <div class="pcat" id="pc2"><div class="hd" onclick="togglePc('pc2')"><span class="l">${ic('building')} ${t('bcCat')}</span><span class="more">${t('details')} ${ic('chevD')}</span></div><div class="body">${linkRows(BCPRODUCTS)}</div></div>
     <button class="btn" onclick="advise()">${ic('sparkles')} ${t('askAI')}</button></div>`;
 }
 function togglePc(id){document.getElementById(id).classList.toggle('open');}
 function live(){
-  return header()+`<div class="page"><h2>${ic('broadcast')} ${t('liveNow')}</h2><p class="sub">${t('liveSub')}</p>
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('broadcast')} ${t('liveNow')}</h2><p class="sub">${t('liveSub')}</p>
     ${MATCHES.map((m,i)=>`<div class="lmatch" style="min-width:auto;margin-bottom:10px" onclick="openURL('${i===2?'https://sport.vbet.am/en/sports/pre-match/event-view/Soccer/World/2969/world-cup/30235556/spain-belgium':'https://sport.vbet.am/en/sports/live/event-view/Soccer/World/573/club-friendlies/30257052/fc-zlin-fk-dukla-banska-bystrica'}')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}
     <button class="btn" onclick="openURL('https://sport.vbet.am/en/sports/live/list')">${t('openAllLive')} ${ic('external')}</button></div>`;
 }
@@ -598,7 +607,7 @@ function marketRows(){
 }
 function market(){
   const list=marketRows().filter(v=>mktCat==='Все'||v[1]===mktCat);
-  return header()+`<div class="page"><h2>${ic('store')} Marketplace</h2><p class="sub">${t('mktSub')}</p>
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('store')} Marketplace</h2><p class="sub">${t('mktSub')}</p>
     <div class="list2" style="padding:0;margin-bottom:13px">
       <div class="lcard" onclick="go('partner')">${ic('plus')} Разместить продукт</div>
       <div class="lcard" onclick="go('affiliate')">${ic('megaphone')} Аффилейт / Маркетинг</div>
@@ -716,7 +725,7 @@ function submitPartner(){
 }
 function partners(){
   const ps=_plist();
-  return header()+`<div class="page"><h2>${ic('users')} ${t('nav')[4]}</h2><p class="sub">${t('partnersSub')}</p>
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('users')} ${t('nav')[4]}</h2><p class="sub">${t('partnersSub')}</p>
     <div class="lcard" style="width:100%;margin-bottom:10px" onclick="go('market')">${ic('store')} ${t('buy')}</div>
     <div class="lcard" style="width:100%;margin-bottom:14px" onclick="go('partner')">${ic('briefcase')} ${t('provide')}</div>
     ${ps.map(p=>`<div class="pcat"><div class="hd"><span class="l">${ic('building')} ${esc(p.company)}</span><span class="more">${(p.status==='approved')?ic('star')+' Approved':'на проверке'}</span></div>
@@ -725,7 +734,7 @@ function partners(){
 function more(){
   const items=[['globe',t('sec')[4],'https://www.betconstruct.com/products'],['card',t('sec')[5],'https://www.betconstruct.com/products'],['bulb','Prediction','https://www.vbet.am/en/casino/game-view/555588000/adi-predictstreet-fifa'],['chart','Dataspot','https://www.betconstruct.com/products/dataspot'],['umbrella','Umbrella','https://www.betconstruct.com/products/umbrella'],['news',t('sec')[7],'https://www.betconstruct.com/product-blog']];
   const iRow=(ico,label,fn)=>`<div style="padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:11px;cursor:pointer" onclick="${fn}"><span style="color:var(--mag);display:inline-flex">${ic(ico)}</span><b style="font-size:14px">${label}</b><span style="margin-left:auto;color:var(--muted)">›</span></div>`;
-  return header()+`<div class="page"><h2>${ic('dots')} ${t('nav')[5]}</h2><p class="sub">${t('moreSub')}</p>
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('dots')} ${t('nav')[5]}</h2><p class="sub">${t('moreSub')}</p>
     <div class="pcat"><div class="body" style="display:block;border:none">
       ${iRow('trophy','Loyalty Program',"go('loyalty')")}
       ${linkRows(items)}
@@ -887,7 +896,6 @@ function entry(){
     <div class="gtag">Leading iGaming Platform Provider</div>
     <div class="gtag2">Experience the solutions first-hand</div>
     <div class="gcard">
-      <h2>${t('regTitle')}</h2><p class="gsub">${t('entrySub')}</p>
       <label>${t('entryName')}</label><input id="en_name" autocomplete="off">
       <label>${t('entryContact')}</label><input id="en_contact" autocomplete="off" placeholder="name@mail.com / +374…">
       <button class="btn" onclick="submitEntry()">${ic('check')} ${t('entryBtn')}</button>
