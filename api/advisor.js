@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       })
     });
     const data = await r.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Не удалось получить ответ.';
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || ('⚠ ' + (data?.error?.message || JSON.stringify(data)).slice(0,400));
     return res.status(200).json({ text });
   } catch (e) {
     return res.status(500).json({ error: String(e) });
