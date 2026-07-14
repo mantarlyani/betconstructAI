@@ -1,5 +1,8 @@
 // Serverless-функция для Vercel: защищённый прокси к Google Gemini.
 // Ключ живёт на сервере (env GEMINI_API_KEY), в браузер не попадает.
+// Фронт вызывает: fetch('/api/advisor', {method:'POST',
+//   body: JSON.stringify({ prompt, context, lang })})
+//   context — база знаний платформы (BetConstruct + Marketplace + Партнёры).
 
 function systemPrompt(lang, context) {
   const langName = lang === 'en' ? 'English' : lang === 'hy' ? 'Armenian (Հայերեն)' : 'Russian';
@@ -45,7 +48,7 @@ export default async function handler(req, res) {
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
   try {
-   const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + key;
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + key;
     const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -56,8 +59,7 @@ export default async function handler(req, res) {
       })
     });
     const data = await r.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return res.status(502).json({ error: (data && data.error && data.error.message) || 'gemini_no_response' });
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Не удалось получить ответ.';
     return res.status(200).json({ text });
   } catch (e) {
     return res.status(500).json({ error: String(e) });
