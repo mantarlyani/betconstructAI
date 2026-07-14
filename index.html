@@ -12,9 +12,9 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;background:#d9dce3;display:flex;justify-content:center;min-height:100vh;min-height:100dvh;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text)}
-  .phone{width:412px;max-width:100vw;background:var(--bg);height:100vh;height:100dvh;position:relative;display:flex;flex-direction:column;overflow:hidden}
-  .scroll{flex:1;overflow-y:auto;min-height:0}
-  .topbar{flex-shrink:0;background:#fff;border-bottom:1px solid var(--line);z-index:6;padding-top:env(safe-area-inset-top)}
+  .phone{width:412px;max-width:100vw;background:var(--bg);min-height:100dvh;position:relative}
+  .scroll{min-height:55vh}
+  .topbar{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);z-index:20;padding-top:env(safe-area-inset-top)}
   .vpnbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 16px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#fbf1f7,#fff)}
   .vpnbar .vpL{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;cursor:pointer}
   .vpnbar .vpL svg{color:var(--mag);font-size:17px}
@@ -25,11 +25,19 @@
   .botbar .pbtn svg{font-size:18px}
   svg.i{width:1em;height:1em;display:inline-block;vertical-align:-0.14em;flex-shrink:0}
   .top{display:flex;align-items:center;justify-content:space-between;padding:15px 16px 6px;gap:8px}
-  .wm{font-size:19px;font-weight:800;white-space:nowrap}.wm .b{color:var(--mag)}.wm .a{color:var(--blue)}
+  .wm{font-size:19px;font-weight:800;white-space:nowrap;display:flex;align-items:center;gap:8px}.wm .b{color:var(--mag)}.wm .a{color:var(--blue)}
+  .blogo{width:27px;height:27px;display:block;flex:none}
   .hright{display:flex;align-items:center;gap:8px}
   .langseg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .lg{padding:7px 9px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
   .lg.active{background:var(--mag);color:#fff}
+  .langdd{position:relative}
+  .langbtn{display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;white-space:nowrap}
+  .langbtn .fl{font-size:15px;line-height:1}.langbtn svg{font-size:14px;color:var(--muted)}
+  .langlist{position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.16);overflow:hidden;z-index:40;min-width:158px}
+  .langopt{display:flex;align-items:center;gap:9px;padding:11px 13px;font-size:14px;font-weight:600;cursor:pointer;border-top:1px solid var(--line)}
+  .langopt:first-child{border-top:none}.langopt .fl{font-size:18px;line-height:1}
+  .langopt.on{color:var(--mag);background:#faf2f6}.langopt:active{background:#f2f4f8}
   .hbtn{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:var(--card);
     display:flex;align-items:center;justify-content:center;font-size:20px;color:#555;cursor:pointer}
   .welcome{padding:10px 18px 4px}
@@ -176,14 +184,14 @@
   .gcard label{display:block;font-size:12px;color:var(--muted);margin:13px 0 5px;font-weight:600}
   .gcard input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:15px;font-family:inherit;color:var(--text);background:var(--bg)}
   .gcard input:focus{outline:none;border-color:var(--mag)}
-  .nav{flex-shrink:0;background:#fff;border-top:1px solid var(--line);display:flex;
-    justify-content:space-around;padding:9px 0 calc(9px + env(safe-area-inset-bottom))}
+  .nav{background:#fff;border-top:1px solid var(--line);display:flex;
+    justify-content:space-around;padding:11px 0 calc(16px + env(safe-area-inset-bottom))}
   .nav div{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-size:10.5px;font-weight:600;cursor:pointer;white-space:nowrap}
   .nav div svg{font-size:21px}.nav div.on{color:var(--mag)}
-  .toast{position:absolute;bottom:120px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:11px 18px;
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:11px 18px;
     border-radius:12px;font-size:13.5px;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;z-index:9;max-width:88%}
   .toast.show{opacity:1}
-  .fab{position:absolute;right:16px;bottom:120px;width:54px;height:54px;border-radius:50%;background:var(--mag);color:#fff;
+  .fab{position:fixed;right:max(16px,calc(50vw - 190px));bottom:calc(78px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:50%;background:var(--mag);color:#fff;
     display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(166,0,99,.4);cursor:pointer;z-index:8}
   .fab svg{font-size:26px}
   .chatbox{height:calc(100vh - 320px);min-height:240px;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:9px}
@@ -210,6 +218,9 @@ const $=s=>document.querySelector(s);
 let lang='ru', cur='home';
 let vpn={on:false,connecting:false,server:0}, vpnIP='';
 let regRole='buyer';
+let langMenu=false, quickOpen=false;
+const LANGF={ru:'🇷🇺',en:'🇬🇧',hy:'🇦🇲'};
+const LANGN={ru:'Русский',en:'English',hy:'Հայերեն'};
 const cap=s=>s[0].toUpperCase()+s.slice(1);
 let chatMsgs=[{who:'b',text:'Здравствуйте! Я Ани, менеджер BetConstruct. Чем помочь?'}];
 /* ---------- Supabase ---------- */
@@ -366,7 +377,9 @@ const T={
     mktCats:'Կատեգորիաներ',mktFeatured:'Ստուգված վենդորներ',catGames:'Խաղեր',catPay:'Վճարումներ',catAff:'Աֆիլիատներ',catLic:'Լիցենզիաներ'}
 };
 const t=k=>T[lang][k];
-function setLang(l){lang=l;document.documentElement.lang=l;render(cur);}
+function setLang(l){lang=l;langMenu=false;document.documentElement.lang=l;render(cur);}
+function toggleLangMenu(e){if(e)e.stopPropagation();langMenu=!langMenu;renderTop();}
+function toggleQuick(){quickOpen=!quickOpen;render('home');}
 
 const QA_IC=['broadcast','cherry','ball','cards','gamepad','wheel','gamepad','users'];
 const QA_ROUTE=['live','products','live','products','products','products','products','partners'];
@@ -421,10 +434,13 @@ function renderTop(){
       <div class="tgl ${vpn.on?'on':''} ${vpn.connecting?'busy':''}" onclick="toggleVpn()"><b></b></div>
     </div>
     <div class="top"><div class="wm" onclick="go('home')" style="cursor:pointer">
-        <img class="blogo" src="https://www.betconstruct.com/fs/userFiles-v2/bcv2/images/20317-bet-ai-17633768970956.svg" alt="BetConstructAI" onerror="this.style.display='none';var w=document.getElementById('wmt');if(w)w.style.display='inline'">
-        <span id="wmt" class="wmtext" style="display:none"><span class="b">Bet</span>Construct<span class="a">AI</span></span></div>
+        <svg class="blogo" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg" aria-label="BetConstructAI"><rect x="1" y="1" width="28" height="28" rx="8" fill="#A60063"/><path d="M10.3 8.2h5.1c2.2 0 3.6 1.1 3.6 2.9 0 1.2-.7 2.1-1.8 2.5 1.4.3 2.3 1.3 2.3 2.8 0 2-1.6 3.2-4 3.2h-5.2V8.2Zm4.7 4.7c.9 0 1.5-.5 1.5-1.3 0-.8-.6-1.2-1.5-1.2h-2v2.5h2Zm.3 4.8c1 0 1.6-.5 1.6-1.3 0-.9-.6-1.4-1.7-1.4h-2.2v2.7h2.3Z" fill="#fff"/></svg>
+        <span class="wmtext"><span class="b">Bet</span>Construct<span class="a">AI</span></span></div>
       <div class="hright">
-        <div class="langseg">${['ru','en','hy'].map(l=>`<span class="lg ${lang===l?'active':''}" onclick="setLang('${l}')">${l==='ru'?'РУ':l==='en'?'EN':'ՀՅ'}</span>`).join('')}</div>
+        <div class="langdd">
+          <div class="langbtn" onclick="toggleLangMenu(event)"><span class="fl">${LANGF[lang]}</span> ${lang==='ru'?'РУ':lang==='en'?'EN':'ՀՅ'} ${ic('chevD')}</div>
+          ${langMenu?`<div class="langlist">${['ru','en','hy'].map(l=>`<div class="langopt ${l===lang?'on':''}" onclick="setLang('${l}')"><span class="fl">${LANGF[l]}</span> <span>${LANGN[l]}</span></div>`).join('')}</div>`:''}
+        </div>
         <div class="hbtn" onclick="go('register')">${ic('user')}</div>
       </div></div>`;
 }
@@ -439,10 +455,9 @@ function home(){
   <div class="wrap">
     <div class="search" onclick="toast('•')">${ic('search')} ${t('searchPh')}</div>
     <div class="aicard" onclick="advise()"><div><div class="t">${ic('sparkles')} ${t('aiTitle')}</div><div class="d" style="font-size:14px;opacity:.9;margin-top:3px">${t('aiDesc')}</div></div><div class="chev">›</div></div>
-    ${loyHomeCard()}
   </div>
-  <div class="h2"><span class="lft">${t('quick')}</span><a onclick="go('entry')">${ic('chevL')} ${t('back')}</a></div>
-  <div class="qa">${QUICK.map(q=>`<div class="qtile" onclick="openURL('${q[2]}')">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
+  <div class="h2"><span class="lft">${t('quick')}</span><a onclick="toggleQuick()">${quickOpen?(lang==='ru'?'Свернуть':lang==='en'?'Collapse':'Փակել'):(lang==='ru'?'Ещё':lang==='en'?'More':'Ավելին')} ${quickOpen?'▴':'▾'}</a></div>
+  <div class="qa">${(quickOpen?QUICK:QUICK.slice(0,8)).map(q=>`<div class="qtile" onclick="openURL('${q[2]}')">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
   <div class="h2"><span class="lft">${ic('dot')} ${t('liveNow')}</span><a onclick="go('live')">${t('all')} ›</a></div>
   <div class="lscroll">${MATCHES.map(m=>`<div class="lmatch" onclick="go('live')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}</div>
   <div class="promo" onclick="openURL('https://www.vbet.am/en/wonderwheel')"><div><div class="t">${ic('wheel')} WonderWheel</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
@@ -635,7 +650,7 @@ function submitAff(){
     <div class="rec"><div class="row">${ic('check')}<div><b>${c}</b><br>Заявка на аффилейт/маркетинг отправлена в админ-панель.</div></div>
       <div class="row">${ic('shield')}<div>Статус: <b>на проверке (KYB)</b>. После одобрения — листинг и бейдж в Marketplace.</div></div></div>
     <button class="btn" onclick="go('market')">${ic('store')} В Marketplace</button></div>`);
-  $('#scroll').scrollTop=0;
+  try{window.scrollTo(0,0);}catch(e){}
 }
 function submitPartner(){
   const c=val('pf_company');
@@ -649,7 +664,7 @@ function submitPartner(){
     <div class="rec"><div class="row">${ic('check')}<div><b>${c}</b><br>Заявка отправлена в админ-панель на модерацию.</div></div>
       <div class="row">${ic('shield')}<div>Статус: <b>на проверке (KYB)</b>. После одобрения — бейдж «Approved / Partner by BetConstruct» и листинг в Marketplace.</div></div></div>
     <button class="btn" onclick="go('market')">${ic('store')} В Marketplace</button></div>`);
-  $('#scroll').scrollTop=0;
+  try{window.scrollTo(0,0);}catch(e){}
 }
 function partners(){
   return header()+`<div class="page"><h2>${ic('users')} ${t('nav')[3]}</h2><p class="sub">${t('partnersSub')}</p>
@@ -674,7 +689,7 @@ function advise(){
     <h2>${ic('sparkles')} ${t('aiTitle')}</h2><p class="sub">${t('aiPageSub')}</p>
     <textarea id="aiq" rows="3" placeholder="${t('aiPh')}"></textarea>
     <button class="btn" onclick="runAI()">${t('getRec')}</button><div id="aiOut"></div></div>`);
-  $('#scroll').scrollTop=0;
+  try{window.scrollTo(0,0);}catch(e){}
 }
 function runAI(){
   const q=($('#aiq')&&$('#aiq').value.trim())||'';if(!q){toast('•');return;}
@@ -1032,13 +1047,14 @@ const NAV=[['live','broadcast',2],['market','store',3],['partners','users',4],['
 function renderNav(){$('#nav').innerHTML=NAV.map(n=>`<div class="${cur===n[0]?'on':''}" data-t="${n[0]}">${ic(n[1])}${t('nav')[n[2]]}</div>`).join('');}
 function render(pg){cur=pg;
   const fab=$('#fab'),tb=$('#topbar'),bb=$('#botbar');
-  if(pg==='entry'){$('#nav').style.display='none';tb.style.display='none';bb.style.display='none';fab.style.display='none';$('#scroll').innerHTML=trHTML(entry());$('#scroll').scrollTop=0;return;}
+  if(pg==='entry'){$('#nav').style.display='none';tb.style.display='none';bb.style.display='none';fab.style.display='none';$('#scroll').innerHTML=trHTML(entry());try{window.scrollTo(0,0);}catch(e){}return;}
   tb.style.display='block';bb.style.display='flex';$('#nav').style.display='flex';fab.style.display=pg==='chat'?'none':'flex';
   renderTop();renderBot();
-  if(pg==='advise'){advise();$('#scroll').scrollTop=0;return;}
-  $('#scroll').innerHTML=trHTML(PAGES[pg]());$('#scroll').scrollTop=0;renderNav();}
+  if(pg==='advise'){advise();try{window.scrollTo(0,0);}catch(e){}return;}
+  $('#scroll').innerHTML=trHTML(PAGES[pg]());try{window.scrollTo(0,0);}catch(e){}renderNav();}
 function go(pg){track('page',pg);render(pg);}
 $('#nav').addEventListener('click',e=>{const d=e.target.closest('[data-t]');if(d)go(d.dataset.t);});
+document.addEventListener('click',e=>{if(langMenu&&!e.target.closest('.langdd')){langMenu=false;renderTop();}});
 $('#fab').innerHTML=ic('message');
 (function(){try{const g=JSON.parse(localStorage.getItem('bc_guest')||'null');if(g&&g.name){window.USER=g.name;render('home');return;}}catch(e){}render('entry');})();
 </script>
