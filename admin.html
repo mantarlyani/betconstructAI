@@ -113,7 +113,7 @@ function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase()
   else{toast('Неверный email или пароль');}
 }
 function logout(){try{sessionStorage.removeItem('bc_admin');}catch(x){}location.reload();}
-function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();if(cur==='mod'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();}}
+function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();}}
 function boot(){let ok=false;try{ok=sessionStorage.getItem('bc_admin')==='1';}catch(x){}if(ok){startApp();}else{renderLogin();}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -177,10 +177,10 @@ let banners=[{title:'Запусти казино за 2 недели',sub:'Turnk
 let idxToggles={quick:true,live:true,promo:true,sections:true};
 
 /* ---------- TABS ---------- */
-const TABS=[['dash','Дашборд','dash'],['mod','Модерация','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['chat','Чат','megaphone'],['crm','CRM','crm'],['stats','Аналитика','chart'],['content','Контент','layout']];
+const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['chat','Чат','megaphone'],['crm','CRM','crm'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();if(t==='mod'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}}
+function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}}
 
 /* ---------- VIEWS ---------- */
 function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
@@ -206,8 +206,13 @@ function vDash(){
 function sectionsBars(){const max=Math.max(...analytics.sections.map(s=>s[1]));return analytics.sections.map(s=>`<div class="fbar"><span style="width:120px">${s[0]}</span><span class="bar"><span style="width:${s[1]/max*100}%"></span></span><b>${s[1]}%</b></div>`).join('');}
 
 function vMod(){
-  return `<h2>Модерация заявок</h2><p class="sub">Партнёры и аффилейты, ожидающие проверки (KYB). Одобрите и присвойте бейдж.</p>
-  ${apps.map(a=>appCard(a)).join('')}`;
+  const isAff=a=>a.raw&&(a.raw.kind==='affiliate'||a.raw.kind==='marketing');
+  const prod=apps.filter(a=>!isAff(a));
+  const aff=apps.filter(isAff);
+  return `<h2>Заявки на продукт</h2><p class="sub">Партнёры-производители, ожидающие проверки (KYB). Одобрите и присвойте бейдж.</p>
+  ${prod.length?prod.map(a=>appCard(a)).join(''):'<p class="sub">Нет заявок на продукт.</p>'}
+  <h2 style="margin-top:26px">Аффилейт / Маркетинг</h2><p class="sub">Заявки аффилейтов и маркетинг-агентств.</p>
+  ${aff.length?aff.map(a=>appCard(a)).join(''):'<p class="sub">Нет заявок.</p>'}`;
 }
 function appFull(raw){
   if(!raw)return '';

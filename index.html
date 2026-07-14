@@ -722,6 +722,7 @@ function affiliate(){
     <div class="disc">${ic('shield')} Заявка попадает в админ-панель на модерацию. Проверенным — бейдж «Approved / Partner by BetConstruct».</div>
     <button class="btn" onclick="submitAff()">${ic('check')} Отправить на модерацию</button></div>`;
 }
+function notifyApp(payload){try{fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(()=>{},()=>{});}catch(e){}}
 function submitAff(){
   const c=val('pf_afcompany');
   const e=val('pf_afemail');
@@ -729,6 +730,7 @@ function submitAff(){
   if(!e.trim()){toast('Укажите email');return;}
   const payload={kind:'affiliate',company:c,contact_name:val('pf_afperson'),email:e,phone:val('pf_afphone'),site:val('pf_afsite'),category:val('pf_aftype'),model:val('pf_afmodel'),regions:val('pf_afgeo'),value_prop:val('pf_afvert'),features:val('pf_aftraffic')+' | Объёмы: '+val('pf_afvol'),description:val('pf_afcases'),compliance:val('pf_afmin'),ai_tags:{type:val('pf_aftype'),model:val('pf_afmodel'),geo:val('pf_afgeo'),vertical:val('pf_afvert'),kyb_ready:chk('pf_afkyb')}};
   if(db){db.from('applications').insert(payload).then(({error})=>{if(error)toast('Ошибка сохранения: '+error.message);});track('submit','affiliate_application',{company:c});}
+  notifyApp(payload);
   $('#scroll').innerHTML=trHTML(header()+`<div class="page">
     <div class="rec"><div class="row">${ic('check')}<div><b>${c}</b><br>Заявка на аффилейт/маркетинг отправлена в админ-панель.</div></div>
       <div class="row">${ic('shield')}<div>Статус: <b>на проверке (KYB)</b>. После одобрения — листинг и бейдж в Marketplace.</div></div></div>
@@ -743,6 +745,7 @@ function submitPartner(){
   const typeMap={'Игра':'game','Платёжная система':'payment','Платформа':'platform','Инструмент / Софт':'tool','Лицензионный сервис':'license','Маркетинг / Affiliate':'marketing'};
   const payload={kind:typeMap[val('pf_ptype')]||'game',company:c,country:val('pf_country'),reg_no:val('pf_reg'),contact_name:val('pf_person'),email:e,phone:val('pf_phone'),site:val('pf_site'),licenses:val('pf_lic'),product_name:val('pf_pname'),category:val('pf_pcat'),description:val('pf_pdesc'),value_prop:val('pf_pvalue'),features:val('pf_pfeat'),demo_url:val('pf_pdemo'),regions:val('pf_pregions'),forbidden_markets:val('pf_pforbidden'),languages:val('pf_plang'),currencies:val('pf_pcur'),crypto:chk('pf_pcrypto'),compliance:val('pf_pcompliance'),model:val('pf_pmodel'),price:val('pf_pprice'),platform_share:val('pf_pshare'),ai_tags:{vertical:val('pf_tvert'),geo:val('pf_tgeo'),segment:val('pf_tseg'),kyb_ready:chk('pf_pkyb')}};
   if(db){db.from('applications').insert(payload).then(({error})=>{if(error)toast('Ошибка сохранения: '+error.message);});track('submit','partner_application',{company:c});}
+  notifyApp(payload);
   $('#scroll').innerHTML=trHTML(header()+`<div class="page">
     <div class="rec"><div class="row">${ic('check')}<div><b>${c}</b><br>Заявка отправлена в админ-панель на модерацию.</div></div>
       <div class="row">${ic('shield')}<div>Статус: <b>на проверке (KYB)</b>. После одобрения — бейдж «Approved / Partner by BetConstruct» и листинг в Marketplace.</div></div></div>
