@@ -97,7 +97,7 @@ const ADMIN_PASS='Crypto123!';
 function togglePass(){const el=$('#lg_pass');if(el)el.type=el.type==='password'?'text':'password';}
 function kindLabel(k){return ({game:'Игра',payment:'Платёжная система',platform:'Платформа',tool:'Инструмент',license:'Лицензия',affiliate:'Аффилейт',marketing:'Маркетинг'})[k]||k;}
 async function getRole(){const u=(await db.auth.getUser()).data.user;if(!u)return null;const {data}=await db.from('profiles').select('role').eq('id',u.id).single();return data?data.role:null;}
-async function loadApps(){if(!db)return;const {data,error}=await db.from('applications').select('*').order('created_at',{ascending:false});if(error){toast('Чтение заявок: '+error.message);return;}if(data){apps=data.map(a=>({id:a.id,name:a.company,type:kindLabel(a.kind),cat:a.category||a.product_name||'',contact:a.email,regions:a.regions||'',desc:a.description||a.value_prop||'',status:a.status}));render();}}
+async function loadApps(){if(!db)return;const {data,error}=await db.from('applications').select('*').order('created_at',{ascending:false});if(error){toast('Чтение заявок: '+error.message);return;}if(data){apps=data.map(a=>({id:a.id,name:a.company,type:kindLabel(a.kind),cat:a.category||a.product_name||'',contact:a.email,regions:a.regions||'',desc:a.description||a.value_prop||'',raw:a,status:a.status}));render();}}
 function renderLogin(){
   document.querySelector('.tabs').style.display='none';
   $('#main').innerHTML=`<div style="max-width:360px;margin:60px auto"><div class="card"><h3>${ic('shield')} Вход для персонала</h3>
@@ -209,6 +209,12 @@ function vMod(){
   return `<h2>Модерация заявок</h2><p class="sub">Партнёры и аффилейты, ожидающие проверки (KYB). Одобрите и присвойте бейдж.</p>
   ${apps.map(a=>appCard(a)).join('')}`;
 }
+function appFull(raw){
+  if(!raw)return '';
+  const F=[['product_name','Продукт'],['value_prop','Ценность'],['features','Функции'],['model','Модель'],['price','Цена'],['languages','Языки'],['currencies','Валюты'],['compliance','Комплаенс'],['site','Сайт'],['phone','Телефон'],['contact_name','Контактное лицо']];
+  const rows=F.filter(f=>raw[f[0]]).map(f=>`<div style="padding:5px 0;border-top:1px solid var(--line)"><b>${f[1]}:</b> ${String(raw[f[0]])}</div>`).join('');
+  return `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--mag);font-weight:600;font-size:13px">Подробнее</summary><div class="det" style="margin-top:6px">${rows||'Доп. полей нет.'}</div></details>`;
+}
 function appCard(a){
   const st=a.status==='pending'?`<span class="st pend">${ic('clock')} На проверке</span>`
     :a.status==='approved'?`<span class="st ap">${ic('check')} Approved by BetConstruct</span>`
@@ -225,7 +231,7 @@ function appCard(a){
   const stats=vd?`<div class="det" style="margin-top:6px;color:var(--mag)"><b>Marketplace:</b> ${vd.impressions||0} показов · ${vd.clicks||0} кликов</div>`:'';
   return `<div class="appc"><div class="h"><div class="lg">${ic('building')}</div>
     <div style="flex:1"><div class="nm">${a.name}</div><div class="mt">${a.type} · ${a.cat}</div></div>${st}</div>
-    <div class="det">${a.desc}<br><b>Регионы:</b> ${a.regions} · <b>Контакт:</b> ${a.contact}</div>${stats}${actions}</div>`;
+    <div class="det">${a.desc}<br><b>Регионы:</b> ${a.regions} · <b>Контакт:</b> ${a.contact}</div>${appFull(a.raw)}${stats}${actions}</div>`;
 }
 async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
   if(db){const {error}=await db.from('applications').update({status:s,reviewed_at:new Date().toISOString()}).eq('id',id);
