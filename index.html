@@ -548,8 +548,12 @@ function vendorCard(v){
     <div class="vbot"><span class="vstat">${ic('target')} match ${v[5]}%</span><span class="vstat">${ic('chart')} ${v[4]} показов</span>
       <button class="btn2" onclick="toast('Запрос демо → менеджеру')">Запросить демо</button></div></div>`;
 }
+function marketRows(){
+  const real=(MKT_DATA.vendors||[]).map(v=>[v.name,v.category||'Игры',v.desc||'',(v.status==='approved'?'approved':v.status==='partner'?'partner':'new'),v.impr||100,v.match||82,v.regions||'—']);
+  return real.concat(VENDORS);
+}
 function market(){
-  const list=VENDORS.filter(v=>mktCat==='Все'||v[1]===mktCat);
+  const list=marketRows().filter(v=>mktCat==='Все'||v[1]===mktCat);
   return header()+`<div class="page"><h2>${ic('store')} Marketplace</h2><p class="sub">${t('mktSub')}</p>
     <div class="list2" style="padding:0;margin-bottom:13px">
       <div class="lcard" onclick="go('partner')">${ic('plus')} Разместить продукт</div>
@@ -667,10 +671,12 @@ function submitPartner(){
   try{window.scrollTo(0,0);}catch(e){}
 }
 function partners(){
-  return header()+`<div class="page"><h2>${ic('users')} ${t('nav')[3]}</h2><p class="sub">${t('partnersSub')}</p>
-    <div class="lcard" style="width:100%;margin-bottom:10px" onclick="go('products')">${ic('cart')} ${t('buy')}</div>
-    <div class="lcard" style="width:100%;margin-bottom:14px" onclick="toast('•')">${ic('briefcase')} ${t('provide')}</div>
-    ${[['SoftGaming',1],['CoinsPaid',1],['TrafficLab',0]].map(p=>`<div class="pcat"><div class="hd"><span class="l">${p[0]}</span><span class="more">${p[1]?ic('star')+' Approved':'на проверке'}</span></div></div>`).join('')}</div>`;
+  const ps=_plist();
+  return header()+`<div class="page"><h2>${ic('users')} ${t('nav')[4]}</h2><p class="sub">${t('partnersSub')}</p>
+    <div class="lcard" style="width:100%;margin-bottom:10px" onclick="go('market')">${ic('store')} ${t('buy')}</div>
+    <div class="lcard" style="width:100%;margin-bottom:14px" onclick="go('partner')">${ic('briefcase')} ${t('provide')}</div>
+    ${ps.map(p=>`<div class="pcat"><div class="hd"><span class="l">${ic('building')} ${esc(p.company)}</span><span class="more">${(p.status==='approved')?ic('star')+' Approved':'на проверке'}</span></div>
+      <div class="body" style="display:block;border-top:1px solid var(--line)"><div style="padding:10px 16px;font-size:12.5px;color:var(--muted);line-height:1.5">${esc(p.category||'')}${p.regions?(' · '+esc(p.regions)):''}${p.contact?(' · '+esc(p.contact)):''}</div></div></div>`).join('')}</div>`;
 }
 function more(){
   const items=[['globe',t('sec')[4],'https://www.betconstruct.com/products'],['card',t('sec')[5],'https://www.betconstruct.com/products'],['bulb','Prediction','https://www.vbet.am/en/casino/game-view/555588000/adi-predictstreet-fifa'],['chart','Dataspot','https://www.betconstruct.com/products/dataspot'],['umbrella','Umbrella','https://www.betconstruct.com/products/umbrella'],['news',t('sec')[7],'https://www.betconstruct.com/product-blog']];
@@ -691,14 +697,79 @@ function advise(){
     <button class="btn" onclick="runAI()">${t('getRec')}</button><div id="aiOut"></div></div>`);
   try{window.scrollTo(0,0);}catch(e){}
 }
+/* ---------- База знаний платформы (для AI) ---------- */
+let MKT_DATA={vendors:null,partners:null};
+async function loadMarketData(){
+  if(!db)return;
+  try{
+    const v=await db.from('vendors').select('*').limit(300);
+    if(v&&v.data&&v.data.length){MKT_DATA.vendors=v.data.map(x=>({name:x.name||x.product_name||x.company,category:x.category||x.type||'',desc:x.description||x.value_prop||'',regions:x.regions||'',status:x.status||(x.active?'approved':'')}));}
+    const a=await db.from('applications').select('*').limit(300);
+    if(a&&a.data&&a.data.length){
+      MKT_DATA.partners=a.data.map(x=>({company:x.company,contact:x.contact_name,category:x.category||x.kind||'',regions:x.regions||'',status:x.status||'pending'}));
+      const prods=a.data.filter(x=>x.product_name||x.description).map(x=>({name:x.product_name||x.company,category:x.category||x.kind||'',desc:x.description||x.value_prop||'',regions:x.regions||'',status:x.status||'pending',company:x.company}));
+      if(prods.length)MKT_DATA.vendors=(MKT_DATA.vendors||[]).concat(prods);
+    }
+    if(cur==='market'||cur==='partners'){try{render(cur);}catch(e){}}
+  }catch(e){}
+}
+function _vlist(){return (MKT_DATA.vendors&&MKT_DATA.vendors.length)?MKT_DATA.vendors:VENDORS.map(v=>({name:v[0],category:v[1],desc:v[2],regions:v[6],status:v[3]}));}
+function _plist(){return (MKT_DATA.partners&&MKT_DATA.partners.length)?MKT_DATA.partners:VENDORS.map(v=>({company:v[0],category:v[1],status:v[3]==='new'?'pending':'approved'}));}
+function bcKB(){
+  const L=['BETCONSTRUCT — что это (наша платформа):'];
+  L.push('iGaming-решения: '+SOL.map(s=>s.name+' ('+s.tag+')').join('; ')+'.');
+  L.push('Платформы: '+PLAT.map(p=>p.name+(p.price&&p.price[0]?(' — '+p.price[0][1]):'')).join('; ')+'.');
+  L.push('Пакеты и цены: '+PACKS.map(p=>p[0]+' '+p[1]+' ('+p[2]+')').join('; ')+'.');
+  PCAT.forEach(c=>L.push('Продукты — '+c.cat+': '+c.items.map(it=>it[0]+(it[2]?(' '+it[2]):'')).join(', ')+'.'));
+  L.push('Backoffice/BME: '+BME.map(b=>b[0]).join(', ')+'.');
+  L.push('Регионы: '+REGIONS.map(r=>r[1]).join(', ')+'.');
+  L.push('Лицензии: '+LICENSES.map(l=>l[0]).join(', ')+'.');
+  L.push('Платежи: '+PAY.map(p=>p[1]).join(', ')+'.');
+  return L.join('\n');
+}
+function buildKB(){
+  const v='MARKETPLACE — продукты вендоров:\n'+_vlist().map(v=>`• ${v.name} [${v.category||'—'}] — ${v.desc||''}; регионы: ${v.regions||'—'}; статус: ${v.status||'—'}`).join('\n');
+  const p='ПАРТНЁРЫ — производители:\n'+_plist().map(x=>`• ${x.company} — ${x.category||''}; статус: ${x.status||''}`).join('\n');
+  return bcKB()+'\n\n'+v+'\n\n'+p;
+}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function runAI(){
   const q=($('#aiq')&&$('#aiq').value.trim())||'';if(!q){toast('•');return;}
-  const geo=/latam|латам|brazil|бразил|mexic|мекси/i.test(q)?'LATAM':/africa|африк/i.test(q)?'Africa':/asia|азия/i.test(q)?'Asia':'Tier-1 / EU';
-  const crypto=/крипт|crypto|usdt|btc/i.test(q),slots=/слот|slot|казино|casino/i.test(q);
-  const rows=[['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${slots?'Casino Suite + slots':'Sportsbook + live'}`],
-    ['card',`<b>${t('rPay')}:</b> ${crypto?'Crypto Gateway (USDT/BTC) + fiat':'cards + e-wallets'}`],['badge',`<b>${t('rLic')}:</b> Curaçao`],['megaphone',`<b>${t('rMkt')}:</b> CPA`]];
-  $('#aiOut').innerHTML=`<div class="rec" style="margin-top:14px">${rows.map(r=>`<div class="row">${ic(r[0])}<div>${r[1]}</div></div>`).join('')}</div>
-    <div class="disc">${t('disc')}</div><button class="btn" onclick="toast('✓')">${ic('message')} ${t('discuss')}</button>`;
+  const out=$('#aiOut');
+  out.innerHTML=`<div class="rec" style="margin-top:14px"><div class="row">${ic('sparkles')}<div>${lang==='ru'?'Анализирую по данным платформы…':lang==='en'?'Analyzing platform data…':'Վերլուծում եմ հարթակի տվյալները…'}</div></div></div>`;
+  track('ai','query',{q:q});
+  const ctx=buildKB();
+  aiRemote(q,ctx).then(txt=>{out.innerHTML=txt?aiWrap(txt):aiLocal(q);}).catch(()=>{out.innerHTML=aiLocal(q);});
+}
+async function aiRemote(q,ctx){
+  try{
+    const r=await fetch('/api/advisor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:q,context:ctx,lang:lang})});
+    if(!r.ok)return null;const d=await r.json();return (d&&d.text)?d.text:null;
+  }catch(e){return null;}
+}
+function aiWrap(txt){
+  const src=lang==='ru'?'Источник — платформа BetConstructAI (BetConstruct + Marketplace + Партнёры).':lang==='en'?'Source — BetConstructAI platform (BetConstruct + Marketplace + Partners).':'Աղբյուր՝ BetConstructAI հարթակ (BetConstruct + Marketplace + Գործընկերներ)։';
+  return `<div class="rec" style="margin-top:14px;white-space:pre-wrap;line-height:1.6;font-size:13.5px">${esc(txt)}</div>
+    <div class="disc">${ic('shield')} ${src} ${t('disc')}</div>
+    <button class="btn" onclick="go('chat')">${ic('message')} ${t('discuss')}</button>`;
+}
+function aiLocal(q){
+  const s=q.toLowerCase();
+  const geo=/(latam|латам|brazil|бразил|mexic|мекси)/.test(s)?'LATAM':/(africa|африк)/.test(s)?'Africa':/(asia|азия)/.test(s)?'Asia':/(uk|британ|europe|европ)/.test(s)?'EU / Tier-1':'Tier-1 / EU';
+  const crypto=/(крипт|crypto|usdt|btc|eth)/.test(s), slots=/(слот|slot|казино|casino)/.test(s), sport=/(спорт|sport|беттинг|betting|ставк)/.test(s);
+  const product=slots?'Casino Suite (€15.000)':sport?'Sports Betting (€19.900)':'One Product (€5.000–10.000)';
+  const pay=crypto?'Multi-Wallet + Crypto Gateway (BTC/ETH/USDT)':'Карты + e-wallets + локальные методы';
+  const kw=[];if(slots)kw.push('игр','casino','слот','game');if(crypto)kw.push('crypto','usdt','btc','крипт','платёж','pay','coin');if(sport)kw.push('спорт','sport','odds','betting');
+  const match=_vlist().filter(v=>{const hay=(v.name+' '+(v.category||'')+' '+(v.desc||'')).toLowerCase();return kw.some(k=>hay.includes(k));}).slice(0,4);
+  const rows=[['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${product}`],['card',`<b>${t('rPay')}:</b> ${pay}`],['badge',`<b>${t('rLic')}:</b> Curaçao / MGA`]];
+  let html=`<div class="rec" style="margin-top:14px">${rows.map(r=>`<div class="row">${ic(r[0])}<div>${r[1]}</div></div>`).join('')}</div>`;
+  if(match.length){
+    const ttl=lang==='ru'?'Из нашего Marketplace':lang==='en'?'From our Marketplace':'Մեր Marketplace-ից';
+    html+=`<div class="h2" style="margin:14px 0 8px;padding:0"><span class="lft">${ttl}</span></div>`+match.map(v=>`<div class="pcat" style="padding:12px 16px"><b style="font-size:14px">${esc(v.name)}</b> <span style="color:var(--muted);font-size:12px">· ${esc(v.category)}</span><div style="font-size:12.5px;color:var(--muted);margin-top:2px">${esc(v.desc)}</div></div>`).join('');
+  }
+  const note=lang==='ru'?'Подобрано по данным платформы (демо-режим без Gemini).':lang==='en'?'Matched from platform data (demo mode without Gemini).':'Ընտրված է հարթակի տվյալներով (դեմո՝ առանց Gemini)։';
+  html+=`<div class="disc">${ic('shield')} ${note} ${t('disc')}</div><button class="btn" onclick="go('chat')">${ic('message')} ${t('discuss')}</button>`;
+  return html;
 }
 /* ---------- РЕГИСТРАЦИЯ ---------- */
 const REG_ROLES=[['buyer','briefcase'],['game','gamepad'],['pay','card'],['aff','megaphone']];
@@ -1056,6 +1127,7 @@ function go(pg){track('page',pg);render(pg);}
 $('#nav').addEventListener('click',e=>{const d=e.target.closest('[data-t]');if(d)go(d.dataset.t);});
 document.addEventListener('click',e=>{if(langMenu&&!e.target.closest('.langdd')){langMenu=false;renderTop();}});
 $('#fab').innerHTML=ic('message');
+try{loadMarketData();}catch(e){}
 (function(){try{const g=JSON.parse(localStorage.getItem('bc_guest')||'null');if(g&&g.name){window.USER=g.name;render('home');return;}}catch(e){}render('entry');})();
 </script>
 </body>
