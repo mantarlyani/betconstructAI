@@ -113,7 +113,7 @@ function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase()
   else{toast('Неверный email или пароль');}
 }
 function logout(){try{sessionStorage.removeItem('bc_admin');}catch(x){}location.reload();}
-function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();}}
+function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();}}
 function boot(){let ok=false;try{ok=sessionStorage.getItem('bc_admin')==='1';}catch(x){}if(ok){startApp();}else{renderLogin();}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -133,8 +133,9 @@ function translit(s){const m={а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',�
 function genPass(){const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';let p='';for(let i=0;i<8;i++)p+=c[Math.floor(Math.random()*c.length)];return p;}
 
 /* ---------- DATA (демо) ---------- */
-let vendorsData=[], searchQueries=[];
+let vendorsData=[], searchQueries=[], leadsData=[];
 async function loadVendors(){if(!db)return;const {data}=await db.from('vendors').select('*');if(data){vendorsData=data;render();}}
+async function loadLeads(){if(!db)return;const {data}=await db.from('leads').select('*').order('created_at',{ascending:false}).limit(100);if(data){leadsData=data;render();}}
 async function loadStats(){if(!db)return;const {data}=await db.from('events').select('type,target,meta,created_at').eq('type','search').order('created_at',{ascending:false}).limit(300);if(data){const c={};data.forEach(e=>{const q=(e.meta&&e.meta.q)||e.target;if(q){c[q]=(c[q]||0)+1;}});searchQueries=Object.keys(c).map(k=>[k,c[k]]).sort((a,b)=>b[1]-a[1]).slice(0,15);render();}}
 let apps=[
   {id:1,name:'NovaSpin',type:'Игра',cat:'Crash & instant',contact:'sales@novaspin.io',regions:'EU · Азия',desc:'Провайдер crash/instant игр, RTP 97%, сертификат iTech Labs.',status:'pending'},
@@ -180,7 +181,7 @@ let idxToggles={quick:true,live:true,promo:true,sections:true};
 const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['chat','Чат','megaphone'],['crm','CRM','crm'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}}
+function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();}}
 
 /* ---------- VIEWS ---------- */
 function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
@@ -313,6 +314,8 @@ function vSales(){
     <div class="kpi"><div class="ic">${ic('crm')}</div><div class="n">${totalDeals}</div><div class="l">Сделок всего</div></div>
     <div class="kpi"><div class="ic">${ic('star')}</div><div class="n">€${totalPay.toLocaleString('ru-RU')}</div><div class="l">К выплате (система должна)</div></div>
   </div>
+  <div class="card"><h3>${ic('crm')} Входящие лиды (запросы демо)</h3>
+    ${leadsData.length?leadsData.map(l=>`<div class="fbar"><div style="flex:1"><b>${l.vendor||'—'}</b> <span style="color:var(--muted)">· ${l.product||''}</span><br><span style="color:var(--muted);font-size:12px">${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><span class="tm">${l.created_at?new Date(l.created_at).toLocaleString('ru-RU'):''}</span></div>`).join(''):'<p class="sub">Пока нет запросов демо.</p>'}</div>
   ${sales.map(s=>salesCard(s)).join('')}`;
 }
 function salesCard(s){

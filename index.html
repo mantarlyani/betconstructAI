@@ -600,9 +600,19 @@ function vendorCard(v,i){
       <div class="vbadges">${badgeHTML(v[3])}<span class="vb geo">${ic('pin')} ${v[6]}</span></div></div></div>
     ${v[2]?`<div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${v[2]}</div>`:''}
     <div class="vbot"><span class="vstat">${ic('chart')} ${v[4]} показов</span>
-      <button class="btn2" onclick="event.stopPropagation();vendorDemo('${v[7]||''}')">Запросить демо</button></div></div>`;
+      <button class="btn2" onclick="event.stopPropagation();reqDemo(${i})">Запросить демо</button></div></div>`;
 }
-function vendorDemo(id){if(id&&db){try{db.rpc('bump_click',{vid:id}).then(()=>{},()=>{});}catch(e){}}track('click','vendor_demo',{id:id||null});toast('Запрос демо → менеджеру');
+function reqDemo(i){vendorSel=(window.MKT_LIST||[])[i];doDemo();}
+function doDemo(){
+  const v=vendorSel;if(!v){toast('•');return;}
+  let contact='';try{const g=JSON.parse(localStorage.getItem('bc_guest')||'null');if(g)contact=g.contact||'';}catch(e){}
+  if(v[7]&&db){try{db.rpc('bump_click',{vid:v[7]}).then(()=>{},()=>{});}catch(e){}}
+  const lead={vendor:v[0],vendor_id:v[7]||null,product:v[1]||'',visitor_name:window.USER||'',contact:contact,message:'Запрос демо',source:'demo_request',status:'new'};
+  if(db){db.from('leads').insert(lead).then(()=>{},()=>{});}
+  track('lead','demo_request',{vendor:v[0]});
+  notifyApp({kind:'demo_request',company:v[0],category:v[1]||'',contact_name:window.USER||'',email:contact,description:'Запрос демо на продукт «'+v[0]+'»'});
+  toast('Запрос демо отправлен');
+  go('chat');
 }
 let vendorSel=null;
 function goVendor(i){vendorSel=(window.MKT_LIST||[])[i];track('click','vendor_open',{name:vendorSel&&vendorSel[0]});render('vendor');}
@@ -618,7 +628,7 @@ function vendor(){
       <div style="padding:11px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px"><span style="color:var(--muted)">Регионы</span><b>${v[6]||'—'}</b></div>
       <div style="padding:11px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px"><span style="color:var(--muted)">Показы</span><b>${v[4]||0}</b></div>
     </div></div>
-    <button class="btn" onclick="vendorDemo('${v[7]||''}')">${ic('message')} Запросить демо</button>
+    <button class="btn" onclick="doDemo()">${ic('message')} Запросить демо</button>
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
   </div>`;
 }
