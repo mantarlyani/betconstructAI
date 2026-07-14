@@ -44,7 +44,7 @@
   .appc .det{font-size:12.5px;color:var(--muted);margin-top:9px;line-height:1.6}
   .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
   .st svg{font-size:13px}
-  .st.pend{background:#fdf3dc;color:var(--amber)}.st.ap{background:#e3f6ee;color:#0f7a52}.st.pt{background:#eef0ff;color:#4a44b8}.st.rej{background:#fdecea;color:var(--red)}
+  .st.pend{background:#fdf3dc;color:var(--amber)}.st.ap{background:#e3f6ee;color:#0f7a52}.st.pt{background:#eef0ff;color:#4a44b8}.st.rej{background:#fdecea;color:var(--red)}.st.nw{background:#fff0e0;color:#b5700d}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
   th{color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:600}
@@ -210,10 +210,12 @@ function appCard(a){
   const st=a.status==='pending'?`<span class="st pend">${ic('clock')} На проверке</span>`
     :a.status==='approved'?`<span class="st ap">${ic('check')} Approved by BetConstruct</span>`
     :a.status==='partner'?`<span class="st pt">${ic('star')} Partner by BetConstruct</span>`
+    :a.status==='new'?`<span class="st nw">${ic('sparkles')} New offer</span>`
     :`<span class="st rej">${ic('x')} Отклонён</span>`;
-  const actions=a.status==='pending'?`<div class="row" style="margin-top:11px">
+  const actions=a.status==='pending'?`<div class="row" style="margin-top:11px;flex-wrap:wrap;gap:7px">
       <button class="btn g sm" onclick="setStatus('${a.id}','approved')">${ic('check')} Approved</button>
       <button class="btn b sm" onclick="setStatus('${a.id}','partner')">${ic('star')} Partner</button>
+      <button class="btn sec sm" onclick="setStatus('${a.id}','new')">${ic('sparkles')} New offer</button>
       <button class="btn r sm" onclick="setStatus('${a.id}','rejected')">${ic('x')} Отклонить</button></div>`
     :`<div class="row" style="margin-top:11px"><button class="btn sec sm" onclick="setStatus('${a.id}','pending')">Вернуть на проверку</button></div>`;
   return `<div class="appc"><div class="h"><div class="lg">${ic('building')}</div>
@@ -225,9 +227,9 @@ async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
     if(error){toast('Ошибка: '+error.message);}
     else if(a){
       await db.from('vendors').delete().eq('application_id',id);
-      if(s==='approved'||s==='partner'){const {error:ve}=await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,description:a.desc,badge:s,active:true,regions:a.regions,match_score:80});if(ve)toast('Вендор: '+ve.message);}
+      if(s==='approved'||s==='partner'||s==='new'){const {error:ve}=await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,description:a.desc,badge:s,active:true,regions:a.regions,match_score:s==='new'?65:80});if(ve)toast('Вендор: '+ve.message);}
     }}
-  toast(s==='approved'?'✓ Approved by BetConstruct':s==='partner'?'★ Partner by BetConstruct':s==='rejected'?'Отклонён':'Возвращён на проверку');render();}
+  toast(s==='approved'?'✓ Approved by BetConstruct':s==='partner'?'★ Partner by BetConstruct':s==='new'?'✦ New offer':s==='rejected'?'Отклонён':'Возвращён на проверку');render();}
 
 function vStaff(){
   return `<h2>Сотрудники и доступы</h2><p class="sub">Создавайте sales, юристов, модераторов — с выдачей логина и пароля.</p>
