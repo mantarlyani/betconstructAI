@@ -599,7 +599,9 @@ function vendorCard(v){
     <div class="vmain"><div class="vname">${v[0]}</div><div class="vcat">${v[1]} · ${v[2]}</div>
       <div class="vbadges">${badgeHTML(v[3])}<span class="vb geo">${ic('pin')} ${v[6]}</span></div></div></div>
     <div class="vbot"><span class="vstat">${ic('chart')} ${v[4]} показов</span>
-      <button class="btn2" onclick="toast('Запрос демо → менеджеру')">Запросить демо</button></div></div>`;
+      <button class="btn2" onclick="vendorDemo('${v[7]||''}')">Запросить демо</button></div></div>`;
+}
+function vendorDemo(id){if(id&&db){try{db.rpc('bump_click',{vid:id}).then(()=>{},()=>{});}catch(e){}}track('click','vendor_demo',{id:id||null});toast('Запрос демо → менеджеру');
 }
 function marketRows(){
   const real=(MKT_DATA.vendors||[]).map(v=>[v.name,v.category||'Игры',v.desc||'',(v.status==='approved'?'approved':v.status==='partner'?'partner':'new'),v.impr||0,0,v.regions||'—',v.id]);
@@ -769,6 +771,7 @@ function doSearch(q){
   const el=$('#searchRes');if(!el)return;
   q=(q||'').trim().toLowerCase();
   if(!q){el.innerHTML='';return;}
+  if(q.length>=2){clearTimeout(window._sqT);const _q=q;window._sqT=setTimeout(()=>{try{track('search','query',{q:_q});}catch(e){}},1200);}
   const res=searchIndex().filter(r=>((r.t+' '+r.s).toLowerCase().indexOf(q)>=0)).slice(0,40);
   if(!res.length){el.innerHTML=`<p class="sub" style="margin-top:16px">${lang==='ru'?'Ничего не найдено':lang==='en'?'Nothing found':'Ոչինչ չգտնվեց'}</p>`;return;}
   const html=res.map(r=>`<div class="pcat" style="padding:12px 16px;cursor:pointer;margin-bottom:8px" onclick="${r.a}"><div style="display:flex;align-items:center;gap:10px"><span style="color:var(--mag);display:inline-flex">${ic('search')}</span><div style="flex:1"><b style="font-size:14px">${r.t}</b><div style="font-size:12px;color:var(--muted);margin-top:1px">${r.s}</div></div><span style="color:var(--muted)">›</span></div></div>`).join('');
