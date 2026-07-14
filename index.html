@@ -791,7 +791,7 @@ async function loadMarketData(){
   if(!db)return;
   try{
     const v=await db.from('vendors').select('*').limit(300);
-    if(v&&v.data&&v.data.length){MKT_DATA.vendors=v.data.map(x=>({name:x.name||x.product_name||x.company,category:x.category||x.type||'',desc:x.description||x.value_prop||'',regions:x.regions||'',status:x.status||(x.active?'approved':'')}));}
+    if(v&&v.data&&v.data.length){MKT_DATA.vendors=v.data.filter(x=>x.active!==false).map(x=>({name:x.name||x.product_name||x.company,category:x.category||x.type||'',desc:x.description||x.value_prop||'',regions:x.regions||'',status:x.badge||x.status||(x.active?'approved':'')}));}
     const a=await db.from('applications').select('*').limit(300);
     if(a&&a.data&&a.data.length){
       MKT_DATA.partners=a.data.map(x=>({company:x.company,contact:x.contact_name,category:x.category||x.kind||'',regions:x.regions||'',status:x.status||'pending'}));

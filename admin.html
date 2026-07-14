@@ -223,7 +223,10 @@ function appCard(a){
 async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
   if(db){const {error}=await db.from('applications').update({status:s,reviewed_at:new Date().toISOString()}).eq('id',id);
     if(error){toast('Ошибка: '+error.message);}
-    else if((s==='approved'||s==='partner')&&a){await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,badge:s,active:true,regions:a.regions});}}
+    else if(a){
+      await db.from('vendors').delete().eq('application_id',id);
+      if(s==='approved'||s==='partner'){const {error:ve}=await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,description:a.desc,badge:s,active:true,regions:a.regions,match_score:80});if(ve)toast('Вендор: '+ve.message);}
+    }}
   toast(s==='approved'?'✓ Approved by BetConstruct':s==='partner'?'★ Partner by BetConstruct':s==='rejected'?'Отклонён':'Возвращён на проверку');render();}
 
 function vStaff(){
