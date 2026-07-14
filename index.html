@@ -598,15 +598,20 @@ function vendorCard(v){
   return `<div class="vcard"><div class="vtop"><div class="vlogo">${ic('building')}</div>
     <div class="vmain"><div class="vname">${v[0]}</div><div class="vcat">${v[1]} · ${v[2]}</div>
       <div class="vbadges">${badgeHTML(v[3])}<span class="vb geo">${ic('pin')} ${v[6]}</span></div></div></div>
-    <div class="vbot"><span class="vstat">${ic('target')} match ${v[5]}%</span><span class="vstat">${ic('chart')} ${v[4]} показов</span>
+    <div class="vbot"><span class="vstat">${ic('chart')} ${v[4]} показов</span>
       <button class="btn2" onclick="toast('Запрос демо → менеджеру')">Запросить демо</button></div></div>`;
 }
 function marketRows(){
-  const real=(MKT_DATA.vendors||[]).map(v=>[v.name,v.category||'Игры',v.desc||'',(v.status==='approved'?'approved':v.status==='partner'?'partner':'new'),v.impr||100,v.match||82,v.regions||'—']);
+  const real=(MKT_DATA.vendors||[]).map(v=>[v.name,v.category||'Игры',v.desc||'',(v.status==='approved'?'approved':v.status==='partner'?'partner':'new'),v.impr||0,0,v.regions||'—',v.id]);
   return real.concat(VENDORS);
+}
+function bumpImpr(list){
+  if(!db)return;window._impr=window._impr||{};
+  list.forEach(v=>{const id=v[7];if(id&&!window._impr[id]){window._impr[id]=1;try{db.rpc('bump_impression',{vid:id}).then(()=>{},()=>{});}catch(e){}}});
 }
 function market(){
   const list=marketRows().filter(v=>mktCat==='Все'||v[1]===mktCat);
+  bumpImpr(list);
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('store')} Marketplace</h2><p class="sub">${t('mktSub')}</p>
     <div class="list2" style="padding:0;margin-bottom:13px">
       <div class="lcard" onclick="go('partner')">${ic('plus')} Разместить продукт</div>
@@ -791,7 +796,7 @@ async function loadMarketData(){
   if(!db)return;
   try{
     const v=await db.from('vendors').select('*').limit(300);
-    if(v&&v.data&&v.data.length){MKT_DATA.vendors=v.data.filter(x=>x.active!==false).map(x=>({name:x.name||x.product_name||x.company,category:x.category||x.type||'',desc:x.description||x.value_prop||'',regions:x.regions||'',status:x.badge||x.status||(x.active?'approved':'')}));}
+    if(v&&v.data&&v.data.length){MKT_DATA.vendors=v.data.filter(x=>x.active!==false).map(x=>({id:x.id,name:x.name||x.product_name||x.company,category:x.category||x.type||'',desc:x.description||x.value_prop||'',regions:x.regions||'',status:x.badge||x.status||(x.active?'approved':''),impr:x.impressions||0}));}
     const a=await db.from('applications').select('*').limit(300);
     if(a&&a.data&&a.data.length){
       MKT_DATA.partners=a.data.map(x=>({company:x.company,contact:x.contact_name,category:x.category||x.kind||'',regions:x.regions||'',status:x.status||'pending'}));
@@ -848,12 +853,13 @@ function aiLocal(q){
   const product=slots?'Casino Suite (€15.000)':sport?'Sports Betting (€19.900)':'One Product (€5.000–10.000)';
   const pay=crypto?'Multi-Wallet + Crypto Gateway (BTC/ETH/USDT)':'Карты + e-wallets + локальные методы';
   const kw=[];if(slots)kw.push('игр','casino','слот','game');if(crypto)kw.push('crypto','usdt','btc','крипт','платёж','pay','coin');if(sport)kw.push('спорт','sport','odds','betting');
-  const match=_vlist().filter(v=>{const hay=(v.name+' '+(v.category||'')+' '+(v.desc||'')).toLowerCase();return kw.some(k=>hay.includes(k));}).slice(0,4);
+  const denom=kw.length||1;
+  const match=_vlist().map(v=>{const hay=(v.name+' '+(v.category||'')+' '+(v.desc||'')).toLowerCase();const hits=kw.filter(k=>hay.includes(k)).length;return {v:v,pct:hits?Math.min(98,Math.round(55+hits/denom*43)):0};}).filter(x=>x.pct>0).sort((a,b)=>b.pct-a.pct).slice(0,4);
   const rows=[['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${product}`],['card',`<b>${t('rPay')}:</b> ${pay}`],['badge',`<b>${t('rLic')}:</b> Curaçao / MGA`]];
   let html=`<div class="rec" style="margin-top:14px">${rows.map(r=>`<div class="row">${ic(r[0])}<div>${r[1]}</div></div>`).join('')}</div>`;
   if(match.length){
     const ttl=lang==='ru'?'Из нашего Marketplace':lang==='en'?'From our Marketplace':'Մեր Marketplace-ից';
-    html+=`<div class="h2" style="margin:14px 0 8px;padding:0"><span class="lft">${ttl}</span></div>`+match.map(v=>`<div class="pcat" style="padding:12px 16px"><b style="font-size:14px">${esc(v.name)}</b> <span style="color:var(--muted);font-size:12px">· ${esc(v.category)}</span><div style="font-size:12.5px;color:var(--muted);margin-top:2px">${esc(v.desc)}</div></div>`).join('');
+    html+=`<div class="h2" style="margin:14px 0 8px;padding:0"><span class="lft">${ttl}</span></div>`+match.map(m=>`<div class="pcat" style="padding:12px 16px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b style="font-size:14px">${esc(m.v.name)}</b><span style="color:var(--mag);font-weight:600;font-size:12px;white-space:nowrap">${ic('target')} match ${m.pct}%</span></div><div style="color:var(--muted);font-size:12px;margin-top:1px">${esc(m.v.category)}</div><div style="font-size:12.5px;color:var(--muted);margin-top:3px">${esc(m.v.desc)}</div></div>`).join('');
   }
   const note=lang==='ru'?'Подобрано по данным платформы (демо-режим без Gemini).':lang==='en'?'Matched from platform data (demo mode without Gemini).':'Ընտրված է հարթակի տվյալներով (դեմո՝ առանց Gemini)։';
   html+=`<div class="disc">${ic('shield')} ${note} ${t('disc')}</div><button class="btn" onclick="go('chat')">${ic('message')} ${t('discuss')}</button>`;
