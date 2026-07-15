@@ -180,7 +180,21 @@ async function loadVendors(){if(!db)return;const {data}=await db.from('vendors')
 async function loadLeads(){if(!db)return;const {data}=await db.from('leads').select('*').order('created_at',{ascending:false}).limit(200);if(data){leadsData=data;render();}}
 let shiftsData=[], presDate=new Date().toISOString().slice(0,10);
 async function loadShifts(){if(!db)return;const {data}=await db.from('shifts').select('*').order('online_at',{ascending:false}).limit(500);if(data){shiftsData=data;render();}}
-async function loadStaff(){if(!db)return;const {data}=await db.from('staff').select('*').order('created_at',{ascending:true});if(data&&data.length){staff=data.map(r=>({id:r.id,name:r.name,role:r.role,login:r.login,pass:r.pass,active:r.active!==false,status:'offline',shifts_total:r.shifts_total||0,shifts_weekend:r.shifts_weekend||0}));render();}}
+async function loadStaff(){if(!db)return;const {data}=await db.from('staff').select('*').order('created_at',{ascending:true});if(data&&data.length){staff=data.map(r=>({id:r.id,name:r.name,role:r.role,login:r.login,pass:r.pass,active:r.active!==false,status:'offline',shifts_total:r.shifts_total||0,shifts_weekend:r.shifts_weekend||0,email:r.email||'',phone:r.phone||'',whatsapp:r.whatsapp||'',telegram:r.telegram||'',gmail_connected:!!r.gmail_connected}));render();}}
+async function sendClientMail(){const g=id=>($('#'+id)&&$('#'+id).value)||'';const a=acctData.find(x=>x.id===activeAcct)||{};
+  const own=staff.find(s=>s.name===a.owner);
+  if(!own||!own.id){toast('У аккаунта нет владельца-сотрудника');return;}
+  if(!own.gmail_connected){toast('У '+(a.owner||'владельца')+' не подключён Gmail');return;}
+  const to=g('ml_to'),subj=g('ml_subj'),body=g('ml_body');
+  if(!to||!body.trim()){toast('Укажите получателя и текст');return;}
+  toast('Отправка…');
+  try{const r=await fetch('/api/gmail-send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({staff_id:own.id,to,subject:subj,body,account_id:activeAcct})});
+    const j=await r.json();if(j.ok){toast('Письмо отправлено');openAcct(activeAcct);}else{toast('Ошибка: '+(j.error||'send failed'));}
+  }catch(e){toast('Ошибка сети');}}
+async function setStaffField(id,field,val){if(db)await db.from('staff').update({[field]:val}).eq('id',id);const s=staff.find(x=>x.id===id);if(s)s[field]=val;toast('Обновлено');}
+let activeStaff=null, staffComms=[], staffFilter='';
+async function openStaff(id){activeStaff=id;staffComms=[];render();loadLeads();loadDeals();if(db){const s=staff.find(x=>x.id===id);if(s){const {data}=await db.from('comm_messages').select('*').eq('staff_name',s.name).order('created_at',{ascending:false}).limit(200);staffComms=data||[];render();}}}
+function closeStaff(){activeStaff=null;render();}
 async function setStaffRole(id,role){if(db)await db.from('staff').update({role}).eq('id',id);toast('Роль обновлена');loadStaff();}
 async function resetStaffPass(id){const p=genPass();if(db)await db.from('staff').update({pass:p}).eq('id',id);toast('Новый пароль: '+p);loadStaff();}
 async function toggleStaffActive(id,curActive){if(db)await db.from('staff').update({active:!curActive}).eq('id',id);toast(curActive?'Доступ отключён':'Доступ включён');loadStaff();}
@@ -341,40 +355,74 @@ async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
 
 const ROLE_LIST=['Sales','Service Sales','PM','Account Manager','Юрист','Модератор','Маркетинг','Финансы','Админ'];
 function vStaff(){
-  const sales=staff.filter(s=>s.role==='Sales');
+  if(activeStaff)return vStaffDetail();
   const onlineCnt=staff.filter(s=>isOnlineNow(s.name)).length;
-  return `<h2>Сотрудники и доступы</h2><p class="sub">Управляйте командой прямо в приложении — роли, пароли, доступ в кабинет betconstructai.com/staff.html. Всё сохраняется в базе.</p>
+  const online=staff.filter(s=>isOnlineNow(s.name));
+  const flt=staffFilter?staff.filter(s=>s.role===staffFilter):staff;
+  return `<h2>Сотрудники</h2><p class="sub">Вся команда, кто онлайн, каналы связи. Нажмите на имя — откроется личный кабинет сотрудника с его лидами, сделками и перепиской по сделкам.</p>
   <div class="kpis">
     <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${staff.length}</div><div class="l">Всего в команде</div></div>
-    <div class="kpi"><div class="ic">${ic('crm')}</div><div class="n">${sales.length}</div><div class="l">Отдел Sales</div></div>
     <div class="kpi"><div class="ic">${ic('eye')}</div><div class="n">${onlineCnt}</div><div class="l">Сейчас в сети</div></div>
+    <div class="kpi"><div class="ic">${ic('crm')}</div><div class="n">${staff.filter(s=>s.role==='Sales').length}</div><div class="l">Sales</div></div>
     <div class="kpi"><div class="ic">${ic('shield')}</div><div class="n">${staff.filter(s=>s.active===false).length}</div><div class="l">Доступ отключён</div></div>
   </div>
+  <div class="card"><h3>${ic('eye')} Кто сейчас в сети (${online.length})</h3>
+    ${online.length?online.map(s=>`<div class="fbar"><span style="flex:1"><b style="color:var(--mag);cursor:pointer" onclick="openStaff('${s.id}')">${s.name}</b> <span class="pill">${s.role}</span></span><span style="color:var(--green);font-weight:700">● в сети</span></div>`).join(''):'<p class="sub">Сейчас никого нет в сети.</p>'}</div>
   <div class="card"><h3>${ic('plus')} Новый сотрудник</h3>
     <div class="grid2"><div><label>Имя и фамилия</label><input id="s_name" placeholder="Гор Казарян"></div>
-      <div><label>Роль</label><select id="s_role">${ROLE_LIST.map(r=>`<option>${r}</option>`).join('')}</select></div></div>
+      <div><label>Роль</label><select id="s_role">${ROLE_LIST.map(r=>`<option>${r}</option>`).join('')}</select></div>
+      <div><label>Email (корпоративный)</label><input id="s_email" placeholder="name@betconstruct.com"></div></div>
     <button class="btn" style="margin-top:13px" onclick="addStaff()">${ic('key')} Создать и выдать доступ</button></div>
-  <div class="card"><h3>${ic('crm')} Отдел Sales (${sales.length})</h3>
-    ${sales.length?sales.map(s=>`<div class="fbar"><span style="flex:1"><b>${s.name}</b> <span class="mono" style="color:var(--muted);font-size:12px">${s.login}</span>${s.active===false?' <span class="st rej" style="font-size:10px">откл.</span>':''}</span><span style="color:${isOnlineNow(s.name)?'var(--green)':'var(--muted)'};font-weight:700;font-size:13px">${isOnlineNow(s.name)?'● в сети':'○ офлайн'}</span></div>`).join(''):'<p class="sub">Пока нет сотрудников с ролью Sales.</p>'}</div>
-  <div class="card"><h3>${ic('users')} Вся команда (${staff.length})</h3>
-    <div style="overflow-x:auto"><table class="mtab"><tr><th>Имя</th><th>Роль</th><th>Логин</th><th>Пароль</th><th>Доступ</th><th></th></tr>
-    ${staff.map(s=>`<tr>
-      <td><b>${s.name}</b></td>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <h3 style="margin:0">${ic('users')} Команда (${flt.length})</h3>
+    <select onchange="staffFilter=this.value;render()" style="max-width:200px"><option value="">Все отделы</option>${ROLE_LIST.map(r=>`<option ${r===staffFilter?'selected':''}>${r}</option>`).join('')}</select></div>
+    <div style="overflow-x:auto"><table class="mtab"><tr><th>Имя</th><th>Роль</th><th>Email</th><th>Сеть</th><th>Логин / пароль</th><th>Доступ</th><th></th></tr>
+    ${flt.map(s=>`<tr>
+      <td><b style="color:var(--mag);cursor:pointer" onclick="openStaff('${s.id}')">${s.name}</b></td>
       <td>${s.id?`<select onchange="setStaffRole('${s.id}',this.value)">${ROLE_LIST.map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>`:`<span class="pill">${s.role}</span>`}</td>
-      <td class="mono" style="font-size:11px">${s.login} <span style="cursor:pointer;color:var(--blue)" onclick="copyv('${s.login}')">${ic('copy')}</span></td>
-      <td class="mono" style="font-size:11px">${s.pass||''} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Новый пароль">↻</button>`:''}</td>
+      <td>${s.id?`<input value="${s.email||''}" placeholder="email" style="min-width:150px;font-size:12px" onchange="setStaffField('${s.id}','email',this.value)">`:''}</td>
+      <td>${isOnlineNow(s.name)?'<span style="color:var(--green);font-weight:700">●</span>':'<span style="color:var(--muted)">○</span>'}</td>
+      <td class="mono" style="font-size:11px">${s.login} · ${s.pass||''} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Новый пароль">↻</button>`:''}</td>
       <td>${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
       <td>${s.id?`<button class="btn r sm" onclick="delStaff('${s.id}')">${ic('x')}</button>`:''}</td></tr>`).join('')}
-    </table></div>
-    <p class="sub" style="margin-top:8px">Роль и пароль меняются на месте; переключатель «Доступ» включает/выключает вход в кабинет. Если строки не редактируются — выполните <b>add_staff.sql</b> в Supabase (загрузка из базы).</p></div>`;
+    </table></div></div>`;
 }
-function addStaff(){const n=($('#s_name')||{}).value||'';const r=($('#s_role')||{}).value||'Sales';
+function vStaffDetail(){
+  const s=staff.find(x=>x.id===activeStaff)||{};
+  const myLeads=leadsData.filter(l=>l.owner===s.name);
+  const myDeals=deals.filter(d=>[d.resp,d.ssales,d.pm,d.am].includes(s.name));
+  const emails=staffComms.filter(m=>m.channel==='email');
+  return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeStaff()">‹ Вся команда</button></div>
+  <div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><h3 style="margin:0">${s.name||'—'}</h3><span class="sub">${s.role||''} · ${s.login||''}</span></div>
+    <span style="color:${isOnlineNow(s.name)?'var(--green)':'var(--muted)'};font-weight:700">${isOnlineNow(s.name)?'● в сети':'○ офлайн'}</span></div>
+    <div class="grid2" style="margin-top:10px">
+      <div><label>Email</label><input value="${s.email||''}" onchange="setStaffField('${s.id}','email',this.value)"></div>
+      <div><label>Телефон</label><input value="${s.phone||''}" onchange="setStaffField('${s.id}','phone',this.value)"></div>
+      <div><label>WhatsApp</label><input value="${s.whatsapp||''}" onchange="setStaffField('${s.id}','whatsapp',this.value)"></div>
+      <div><label>Telegram</label><input value="${s.telegram||''}" onchange="setStaffField('${s.id}','telegram',this.value)"></div>
+    </div>
+    <div class="row" style="margin-top:12px;align-items:center;gap:10px">
+      ${s.gmail_connected?`<span class="st ap">✓ Gmail подключён</span> <span class="sub">${s.email||''}</span> <a class="btn sec sm" href="/api/gmail-auth-start?staff=${s.id}" target="_blank">Переподключить</a>`:`<a class="btn sm" href="/api/gmail-auth-start?staff=${s.id}" target="_blank">✉ Подключить Gmail</a> <span class="sub">двусторонняя синхронизация почты</span>`}</div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="n">${myLeads.length}</div><div class="l">Лиды</div></div>
+    <div class="kpi"><div class="n">${myDeals.length}</div><div class="l">Сделки</div></div>
+    <div class="kpi"><div class="n">${myDeals.filter(d=>d.stage==='won').length}</div><div class="l">Closed Won</div></div>
+    <div class="kpi"><div class="n">${emails.length}</div><div class="l">Письма</div></div>
+    <div class="kpi"><div class="n">${s.shifts_total||0}</div><div class="l">Смен</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>${ic('crm')} Лиды (${myLeads.length})</h3>${myLeads.length?myLeads.slice(0,12).map(l=>`<div class="fbar"><span style="flex:1"><b>${l.product||l.vendor||'—'}</b><br><span class="sub" style="font-size:11.5px">${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></span><span class="st ${l.source==='cart'?'pt':'nw'}" style="font-size:10px">${l.source==='cart'?'корзина':'демо'}</span></div>`).join(''):'<p class="sub">Нет лидов.</p>'}</div>
+    <div class="card"><h3>${ic('crm')} Сделки (${myDeals.length})</h3>${myDeals.length?myDeals.map(d=>`<div class="fbar" style="cursor:pointer" onclick="go('crm');openDeal('${d.id}')"><span style="flex:1"><b>${d.client}</b> <span class="sub">${d.id}</span></span><span class="pill">${stageName(d.stage)}</span></div>`).join(''):'<p class="sub">Нет сделок.</p>'}</div>
+  </div>
+  <div class="card"><h3>${ic('megaphone')} Почтовая переписка по сделкам (${emails.length})</h3>
+    ${emails.length?emails.map(m=>`<div class="fbar" style="align-items:flex-start"><span style="width:22px">✉</span><div style="flex:1"><span class="st ${m.direction==='in'?'ap':'pt'}" style="font-size:10px">${m.direction==='in'?'входящее':'исходящее'}</span>${m.subject?` <b>${m.subject}</b>`:''}<br><span style="font-size:13px">${(m.body||'').slice(0,180).replace(/</g,'&lt;')}</span></div><span class="sub" style="white-space:nowrap">${(m.created_at||'').slice(0,16).replace('T',' ')}</span></div>`).join(''):'<p class="sub">Переписки пока нет. Появится после подключения почты (пересылка/BCC на /api/email-inbound).</p>'}</div>`;
+}
+function addStaff(){const n=($('#s_name')||{}).value||'';const r=($('#s_role')||{}).value||'Sales';const em=($('#s_email')||{}).value||'';
   if(!n.trim()){toast('Укажите имя');return;}
   const login=translit(n.trim());const pass=genPass();
-  staff.unshift({name:n.trim(),role:r,login,pass,status:'offline'});
-  if(db){db.from('staff').insert({name:n.trim(),role:r,login,pass,active:true}).then(({error})=>{if(error)toast('БД: '+error.message);else loadStaff();});}
-  else{staff.unshift({name:n.trim(),role:r,login,pass,status:'offline',active:true});render();}
-  const nm=$('#s_name');if(nm)nm.value='';toast('Создан: '+login+' / '+pass+' · вход в кабинете активен');}
+  if(db){db.from('staff').insert({name:n.trim(),role:r,login,pass,active:true,email:em.trim()||null}).then(({error})=>{if(error)toast('БД: '+error.message);else loadStaff();});}
+  else{staff.unshift({name:n.trim(),role:r,login,pass,status:'offline',active:true,email:em});render();}
+  const nm=$('#s_name');if(nm)nm.value='';const ne=$('#s_email');if(ne)ne.value='';toast('Создан: '+login+' / '+pass+' · вход в кабинете активен');}
 function copyv(v){navigator.clipboard&&navigator.clipboard.writeText(v);toast('Скопировано: '+v);}
 
 function stageIdx(k){return STAGES.findIndex(s=>s.k===k);}
@@ -438,10 +486,18 @@ function dealDetail(d){
     <div class="banner"><b>Договор подписан (DocuSign)</b><div class="sw ${d.agr.signed?'on':''}" onclick="toggleAgr('${d.id}','signed')"><b></b></div></div>
     <div class="banner"><b>Setup fee оплачен</b><div class="sw ${d.agr.paid?'on':''}" onclick="toggleAgr('${d.id}','paid')"><b></b></div></div>
     <p class="sub" style="margin-top:8px">Полноценный модуль соглашений (замена DocuSign) — следующий блок.</p></div>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">${ic('megaphone')} Переписка по клиенту</h3>${dealAcctId?`<button class="btn sec sm" onclick="gotoAcct('${dealAcctId}')">Открыть инбокс →</button>`:''}</div>
+    ${dealComms.length?dealComms.map(m=>`<div class="fbar" style="align-items:flex-start"><span style="width:22px">${chIcon(m.channel)}</span><div style="flex:1"><span class="pill" style="font-size:10px">${chLabel(m.channel)}</span>${m.staff_name?(' · '+m.staff_name):''}<br><span style="font-size:13px">${(m.body||'').slice(0,140).replace(/</g,'&lt;')}</span></div><span class="sub" style="white-space:nowrap">${(m.created_at||'').slice(5,16).replace('T',' ')}</span></div>`).join(''):(dealAcctId?'<p class="sub">Переписки пока нет.</p>':'<p class="sub">Клиент не найден в реестре аккаунтов — заведите аккаунт с таким же названием, чтобы связать переписку.</p>')}</div>
   <div class="card"><h3>${ic('chart')} История сделки</h3>${d.steps.slice().reverse().map(s=>`<div class="fbar"><span style="flex:1">${s.n}</span><span class="sub">${s.by} · ${s.at}</span></div>`).join('')}</div>`;
 }
-function openDeal(id){activeDeal=id;render();}
+let dealComms=[], dealAcctId=null;
+async function openDeal(id){activeDeal=id;dealComms=[];dealAcctId=null;render();
+  if(!db)return;const d=deals.find(x=>x.id===id);if(!d||!d.client)return;
+  const {data:acc}=await db.from('accounts').select('id').ilike('name',d.client).limit(1);
+  if(acc&&acc.length){dealAcctId=acc[0].id;const {data:m}=await db.from('comm_messages').select('*').eq('account_id',dealAcctId).order('created_at',{ascending:false}).limit(8);dealComms=m||[];render();}
+}
 function closeDeal(){activeDeal=null;render();}
+function gotoAcct(id){go('accts');openAcct(id);}
 function dealActor(d){return (d.resp||'Система').split(' ')[0];}
 function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=stageIdx(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i].k;d.steps.push({n:'Стадия → '+STAGES[i].n,by:dealActor(d),at:now()});saveDeal(d);render();toast('Стадия: '+STAGES[i].n);}
 function setDealPerson(id,field,val){const d=deals.find(x=>x.id===id);d[field]=val;const lbl={resp:'Sales',ssales:'Service Sales',pm:'PM',am:'Account Manager'}[field];d.steps.push({n:lbl+': '+(val||'снят'),by:dealActor(d),at:now()});saveDeal(d);render();toast(lbl+': '+(val||'не назначен'));}
@@ -885,7 +941,60 @@ async function createAccount(){const n=($('#ac_name')&&$('#ac_name').value)||'';
 async function setAcctOwner(id,val){if(db)await db.from('accounts').update({owner:val}).eq('id',id);toast('Владелец: '+(val||'снят'));loadAccounts();}
 async function delAccount(id){if(!db)return;if(!confirm('Удалить аккаунт?'))return;await db.from('accounts').delete().eq('id',id);loadAccounts();}
 function acctOwnerSel(a){return `<select onchange="setAcctOwner('${a.id}',this.value)"><option value="">— не назначен —</option>${staff.map(s=>`<option ${a.owner===s.name?'selected':''}>${s.name}</option>`).join('')}</select>`;}
+// --- Переписка по аккаунту (омниканальный инбокс) ---
+let activeAcct=null, acctContacts=[], acctComms=[], commFilter='';
+async function openAcct(id){activeAcct=id;acctContacts=[];acctComms=[];render();if(!db)return;
+  const [c,m]=await Promise.all([
+    db.from('contacts').select('*').eq('account_id',id).order('created_at',{ascending:true}),
+    db.from('comm_messages').select('*').eq('account_id',id).order('created_at',{ascending:false}).limit(300)]);
+  acctContacts=c.data||[];acctComms=m.data||[];render();}
+function closeAcct(){activeAcct=null;commFilter='';render();}
+async function addContact(){const g=id=>($('#'+id)&&$('#'+id).value)||'';const n=g('ct_name');if(!n.trim()){toast('Имя контакта пусто');return;}
+  if(db)await db.from('contacts').insert({account_id:activeAcct,name:n.trim(),position:g('ct_pos'),email:g('ct_email'),phone:g('ct_phone'),whatsapp:g('ct_wa'),telegram:g('ct_tg')});
+  toast('Контакт добавлен');openAcct(activeAcct);}
+async function delContact(id){if(!db)return;await db.from('contacts').delete().eq('id',id);openAcct(activeAcct);}
+async function addComm(){const g=id=>($('#'+id)&&$('#'+id).value)||'';const b=g('cm_body');if(!b.trim()){toast('Текст пуст');return;}
+  if(db)await db.from('comm_messages').insert({account_id:activeAcct,channel:g('cm_channel')||'note',direction:g('cm_dir')||'note',staff_name:g('cm_staff'),subject:g('cm_subj'),body:b.trim()});
+  toast('Записано в переписку');openAcct(activeAcct);}
+function setCommFilter(v){commFilter=v;render();}
+function chIcon(ch){return ch==='email'?'✉':ch==='whatsapp'?'🟢':ch==='telegram'?'✈':ch==='chat'?'💬':ch==='call'?'📞':'📝';}
+function chLabel(ch){return ch==='email'?'Email':ch==='whatsapp'?'WhatsApp':ch==='telegram'?'Telegram':ch==='chat'?'Чат':ch==='call'?'Звонок':'Заметка';}
+function vAcctDetail(){
+  const a=acctData.find(x=>x.id===activeAcct)||{};
+  const list=commFilter?acctComms.filter(m=>m.channel===commFilter):acctComms;
+  const chans=['','email','whatsapp','telegram','chat','call','note'];
+  return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeAcct()">‹ Все аккаунты</button></div>
+  <div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><h3 style="margin:0">${a.name||'—'}</h3><span class="sub">${a.kind==='partner'?'Партнёр':a.kind==='prospect'?'Лид':'Клиент'}${a.owner?(' · ведёт '+a.owner):' · без владельца'}</span></div></div></div>
+  <div class="grid2">
+    <div class="card"><h3>${ic('users')} Контакты (${acctContacts.length})</h3>
+      ${acctContacts.map(c=>`<div class="fbar"><div style="flex:1"><b>${c.name}</b>${c.position?(' · '+c.position):''}<br><span class="sub" style="font-size:11.5px">${[c.email&&('✉ '+c.email),c.phone&&('📞 '+c.phone),c.whatsapp&&('🟢 '+c.whatsapp),c.telegram&&('✈ '+c.telegram)].filter(Boolean).join(' · ')||'—'}</span></div><button class="btn r sm" onclick="delContact('${c.id}')">${ic('x')}</button></div>`).join('')||'<p class="sub">Контактов нет.</p>'}
+      <div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"><div class="grid2">
+        <input id="ct_name" placeholder="Имя"><input id="ct_pos" placeholder="Должность">
+        <input id="ct_email" placeholder="Email"><input id="ct_phone" placeholder="Телефон">
+        <input id="ct_wa" placeholder="WhatsApp"><input id="ct_tg" placeholder="Telegram (@ник)"></div>
+        <button class="btn sm" style="margin-top:9px" onclick="addContact()">${ic('plus')} Добавить контакт</button></div></div>
+    <div class="card"><h3>${ic('plus')} Записать сообщение вручную</h3>
+      <div class="grid2"><div><label>Канал</label><select id="cm_channel"><option value="email">Email</option><option value="whatsapp">WhatsApp</option><option value="telegram">Telegram</option><option value="call">Звонок</option><option value="note">Заметка</option></select></div>
+        <div><label>Направление</label><select id="cm_dir"><option value="in">Входящее</option><option value="out">Исходящее</option><option value="note">Заметка</option></select></div>
+        <div><label>Сотрудник</label><select id="cm_staff"><option value="">—</option>${staff.map(s=>`<option ${a.owner===s.name?'selected':''}>${s.name}</option>`).join('')}</select></div>
+        <div><label>Тема (для email)</label><input id="cm_subj"></div></div>
+      <label style="margin-top:8px">Текст</label><textarea id="cm_body" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px"></textarea>
+      <button class="btn" style="margin-top:10px" onclick="addComm()">${ic('megaphone')} Добавить в переписку</button>
+      <p class="sub" style="margin-top:8px">Пока каналы не подключены — записываешь вручную. После интеграции сообщения будут падать сюда автоматически.</p></div>
+  </div>
+  <div class="card"><h3>${ic('megaphone')} Написать письмо клиенту (Gmail)</h3>
+    <p class="sub" style="margin-top:-4px">Отправляется от имени владельца аккаунта${a.owner?(' — '+a.owner):''} и попадает в переписку. Нужен подключённый Gmail у владельца.</p>
+    <div class="grid2"><div><label>Кому (email)</label><input id="ml_to" list="ml_contacts" placeholder="client@company.com"><datalist id="ml_contacts">${acctContacts.filter(c=>c.email).map(c=>`<option value="${c.email}">`).join('')}</datalist></div>
+      <div><label>Тема</label><input id="ml_subj"></div></div>
+    <label style="margin-top:8px">Текст</label><textarea id="ml_body" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px"></textarea>
+    <button class="btn" style="margin-top:10px" onclick="sendClientMail()">${ic('check')} Отправить</button></div>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <h3 style="margin:0">${ic('megaphone')} Переписка (${list.length})</h3>
+    <select onchange="setCommFilter(this.value)" style="max-width:180px">${chans.map(c=>`<option value="${c}" ${c===commFilter?'selected':''}>${c?chLabel(c):'Все каналы'}</option>`).join('')}</select></div>
+    ${list.length?list.map(m=>`<div class="fbar" style="align-items:flex-start"><div style="font-size:18px;width:26px">${chIcon(m.channel)}</div><div style="flex:1"><div><span class="pill">${chLabel(m.channel)}</span> <span class="st ${m.direction==='in'?'ap':m.direction==='out'?'pt':'pend'}" style="font-size:10px">${m.direction==='in'?'входящее':m.direction==='out'?'исходящее':'заметка'}</span>${m.staff_name?(' · '+m.staff_name):''}</div>${m.subject?`<b>${m.subject}</b><br>`:''}<span style="font-size:13.5px">${(m.body||'').replace(/</g,'&lt;')}</span></div><span class="sub" style="white-space:nowrap">${(m.created_at||'').slice(0,16).replace('T',' ')}</span></div>`).join(''):'<p class="sub">Переписки пока нет.</p>'}</div>`;
+}
 function vAccounts(){
+  if(activeAcct)return vAcctDetail();
   const cl=acctData.filter(a=>a.kind!=='partner'&&a.kind!=='prospect').length,pt=acctData.filter(a=>a.kind==='partner').length,noOwner=acctData.filter(a=>!a.owner).length;
   return `<h2>Аккаунты · чей клиент / партнёр</h2><p class="sub">Единый реестр клиентов и партнёров с закреплённым владельцем. Импортируйте выгрузку из Zoho / DocuSign / Pandayo / Hoory / Jira — и у sales не будет конфликтов «чей это клиент».</p>
   <div class="kpis">
@@ -912,7 +1021,7 @@ function vAccounts(){
     <button class="btn" style="margin-top:12px" onclick="createAccount()">${ic('check')} Добавить</button></div>
   <div class="card"><h3>${ic('users')} Реестр (${acctData.length})</h3>
     <div style="overflow-x:auto"><table class="mtab"><tr><th>Компания</th><th>Тип</th><th>Контакт</th><th>Email / тел</th><th>Владелец</th><th>Источник</th><th></th></tr>
-    ${acctData.length?acctData.map(a=>`<tr><td><b>${a.name||'—'}</b></td>
+    ${acctData.length?acctData.map(a=>`<tr><td><b style="color:var(--mag);cursor:pointer" onclick="openAcct('${a.id}')">${a.name||'—'}</b></td>
       <td>${a.kind==='partner'?'<span class="st pt">Партнёр</span>':a.kind==='prospect'?'<span class="st nw">Лид</span>':'<span class="st ap">Клиент</span>'}</td>
       <td>${a.contact_name||'—'}</td><td style="font-size:11px">${a.email||''}${a.phone?('<br>'+a.phone):''}</td>
       <td>${acctOwnerSel(a)}</td><td>${a.source||'—'}</td>
