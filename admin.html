@@ -155,7 +155,7 @@ function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase()
   else{toast('Неверный email или пароль');}
 }
 function logout(){try{sessionStorage.removeItem('bc_admin');}catch(x){}location.reload();}
-function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();}if(cur==='dash')loadEvents();}
+function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
 function boot(){let ok=false;try{ok=sessionStorage.getItem('bc_admin')==='1';}catch(x){}if(ok){startApp();}else{renderLogin();}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -180,6 +180,11 @@ async function loadVendors(){if(!db)return;const {data}=await db.from('vendors')
 async function loadLeads(){if(!db)return;const {data}=await db.from('leads').select('*').order('created_at',{ascending:false}).limit(200);if(data){leadsData=data;render();}}
 let shiftsData=[], presDate=new Date().toISOString().slice(0,10);
 async function loadShifts(){if(!db)return;const {data}=await db.from('shifts').select('*').order('online_at',{ascending:false}).limit(500);if(data){shiftsData=data;render();}}
+async function loadStaff(){if(!db)return;const {data}=await db.from('staff').select('*').order('created_at',{ascending:true});if(data&&data.length){staff=data.map(r=>({id:r.id,name:r.name,role:r.role,login:r.login,pass:r.pass,active:r.active!==false,status:'offline',shifts_total:r.shifts_total||0,shifts_weekend:r.shifts_weekend||0}));render();}}
+async function setStaffRole(id,role){if(db)await db.from('staff').update({role}).eq('id',id);toast('Роль обновлена');loadStaff();}
+async function resetStaffPass(id){const p=genPass();if(db)await db.from('staff').update({pass:p}).eq('id',id);toast('Новый пароль: '+p);loadStaff();}
+async function toggleStaffActive(id,curActive){if(db)await db.from('staff').update({active:!curActive}).eq('id',id);toast(curActive?'Доступ отключён':'Доступ включён');loadStaff();}
+async function delStaff(id){if(!db)return;if(!confirm('Удалить сотрудника? Он потеряет доступ в кабинет.'))return;await db.from('staff').delete().eq('id',id);toast('Сотрудник удалён');loadStaff();}
 async function toggleShift(name,role){
   if(!db){toast('Нет подключения к базе');return;}
   const open=shiftsData.find(s=>s.staff===name&&!s.offline_at);
@@ -270,7 +275,7 @@ let idxToggles={quick:true,live:true,promo:true,sections:true};
 const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['sales','Отдел Sales','crm'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();}
+function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();}
 
 /* ---------- VIEWS ---------- */
 function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
@@ -350,26 +355,42 @@ async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
     }}
   toast(portalActive?((s==='approved'?'✓ Approved':s==='partner'?'★ Partner':'✦ New offer')+' · кабинет партнёра активирован'):(s==='rejected'?'Отклонён':'Возвращён на проверку'));render();}
 
+const ROLE_LIST=['Sales','Service Sales','PM','Account Manager','Юрист','Модератор','Маркетинг','Финансы','Админ'];
 function vStaff(){
-  return `<h2>Сотрудники и доступы</h2><p class="sub">Создавайте sales, юристов, модераторов — с выдачей логина и пароля.</p>
+  const sales=staff.filter(s=>s.role==='Sales');
+  const onlineCnt=staff.filter(s=>isOnlineNow(s.name)).length;
+  return `<h2>Сотрудники и доступы</h2><p class="sub">Управляйте командой прямо в приложении — роли, пароли, доступ в кабинет betconstructai.com/staff.html. Всё сохраняется в базе.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${staff.length}</div><div class="l">Всего в команде</div></div>
+    <div class="kpi"><div class="ic">${ic('crm')}</div><div class="n">${sales.length}</div><div class="l">Отдел Sales</div></div>
+    <div class="kpi"><div class="ic">${ic('eye')}</div><div class="n">${onlineCnt}</div><div class="l">Сейчас в сети</div></div>
+    <div class="kpi"><div class="ic">${ic('shield')}</div><div class="n">${staff.filter(s=>s.active===false).length}</div><div class="l">Доступ отключён</div></div>
+  </div>
   <div class="card"><h3>${ic('plus')} Новый сотрудник</h3>
     <div class="grid2"><div><label>Имя и фамилия</label><input id="s_name" placeholder="Гор Казарян"></div>
-      <div><label>Роль</label><select id="s_role"><option>Sales</option><option>Юрист</option><option>Модератор</option><option>Маркетинг</option><option>Финансы</option><option>Админ</option></select></div></div>
+      <div><label>Роль</label><select id="s_role">${ROLE_LIST.map(r=>`<option>${r}</option>`).join('')}</select></div></div>
     <button class="btn" style="margin-top:13px" onclick="addStaff()">${ic('key')} Создать и выдать доступ</button></div>
-  <div class="card"><h3>${ic('users')} Команда (${staff.length})</h3>
-    <table><thead><tr><th>Имя</th><th>Роль</th><th>Логин</th><th>Пароль</th><th>Статус</th></tr></thead><tbody>
-    ${staff.map((s,i)=>`<tr><td><b>${s.name}</b></td><td><span class="pill">${s.role}</span></td>
-      <td class="mono">${s.login} <span style="cursor:pointer;color:var(--blue)" onclick="copyv('${s.login}')">${ic('copy')}</span></td>
-      <td class="mono">${s.pass}</td>
-      <td><span style="color:${s.status==='online'?'var(--green)':'var(--muted)'};font-weight:700">${s.status==='online'?'● в сети':'○ не в сети'}</span></td></tr>`).join('')}
-    </tbody></table></div>`;
+  <div class="card"><h3>${ic('crm')} Отдел Sales (${sales.length})</h3>
+    ${sales.length?sales.map(s=>`<div class="fbar"><span style="flex:1"><b>${s.name}</b> <span class="mono" style="color:var(--muted);font-size:12px">${s.login}</span>${s.active===false?' <span class="st rej" style="font-size:10px">откл.</span>':''}</span><span style="color:${isOnlineNow(s.name)?'var(--green)':'var(--muted)'};font-weight:700;font-size:13px">${isOnlineNow(s.name)?'● в сети':'○ офлайн'}</span></div>`).join(''):'<p class="sub">Пока нет сотрудников с ролью Sales.</p>'}</div>
+  <div class="card"><h3>${ic('users')} Вся команда (${staff.length})</h3>
+    <div style="overflow-x:auto"><table class="mtab"><tr><th>Имя</th><th>Роль</th><th>Логин</th><th>Пароль</th><th>Доступ</th><th></th></tr>
+    ${staff.map(s=>`<tr>
+      <td><b>${s.name}</b></td>
+      <td>${s.id?`<select onchange="setStaffRole('${s.id}',this.value)">${ROLE_LIST.map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>`:`<span class="pill">${s.role}</span>`}</td>
+      <td class="mono" style="font-size:11px">${s.login} <span style="cursor:pointer;color:var(--blue)" onclick="copyv('${s.login}')">${ic('copy')}</span></td>
+      <td class="mono" style="font-size:11px">${s.pass||''} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Новый пароль">↻</button>`:''}</td>
+      <td>${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
+      <td>${s.id?`<button class="btn r sm" onclick="delStaff('${s.id}')">${ic('x')}</button>`:''}</td></tr>`).join('')}
+    </table></div>
+    <p class="sub" style="margin-top:8px">Роль и пароль меняются на месте; переключатель «Доступ» включает/выключает вход в кабинет. Если строки не редактируются — выполните <b>add_staff.sql</b> в Supabase (загрузка из базы).</p></div>`;
 }
 function addStaff(){const n=($('#s_name')||{}).value||'';const r=($('#s_role')||{}).value||'Sales';
   if(!n.trim()){toast('Укажите имя');return;}
   const login=translit(n.trim());const pass=genPass();
   staff.unshift({name:n.trim(),role:r,login,pass,status:'offline'});
-  if(db){db.from('staff').insert({name:n.trim(),role:r,login,pass,active:true}).then(({error})=>{if(error)toast('БД: '+error.message);});}
-  render();toast('Создан: '+login+' / '+pass+' · вход в кабинете активен');}
+  if(db){db.from('staff').insert({name:n.trim(),role:r,login,pass,active:true}).then(({error})=>{if(error)toast('БД: '+error.message);else loadStaff();});}
+  else{staff.unshift({name:n.trim(),role:r,login,pass,status:'offline',active:true});render();}
+  const nm=$('#s_name');if(nm)nm.value='';toast('Создан: '+login+' / '+pass+' · вход в кабинете активен');}
 function copyv(v){navigator.clipboard&&navigator.clipboard.writeText(v);toast('Скопировано: '+v);}
 
 function stageIdx(k){return STAGES.findIndex(s=>s.k===k);}
@@ -518,6 +539,9 @@ function vSales(){
   </div>
   <div class="card"><h3>${ic('crm')} Входящие лиды</h3>
     ${leadsData.length?leadsData.slice(0,25).map(l=>{const ac=acctOwnerFor(l);const own=ac&&ac.owner?`<span class="st pt" style="margin-left:6px">ведёт ${ac.owner}</span>`:(ac?`<span class="st nw" style="margin-left:6px">клиент без владельца</span>`:'');return `<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b> <span class="st ${l.source==='cart'?'pt':'ap'}" style="margin-left:6px">${l.source==='cart'?'корзина':'демо'}</span>${own}<br><span style="color:var(--muted);font-size:12px">${l.vendor&&l.product?l.product+' · ':''}${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><span class="tm">${l.created_at?new Date(l.created_at).toLocaleString('ru-RU'):''}</span></div>`;}).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
+  <div class="card"><h3>${ic('star')} Рейтинг по сменам (график чат-смен)</h3>
+    <p class="sub" style="margin-top:-4px">Всего смен и смен по выходным. Day 09:00–18:00 · Evening 18:01–01:59 · Night 02:00–08:59.</p>
+    ${(function(){const rk=staff.filter(s=>(s.shifts_total||0)>0).sort((a,b)=>(b.shifts_total||0)-(a.shifts_total||0));const mx=Math.max(1,...rk.map(s=>s.shifts_total||0));return rk.length?`<div style="overflow-x:auto"><table class="mtab"><tr><th>#</th><th>Сотрудник</th><th>Всего смен</th><th>Выходные</th><th></th></tr>${rk.map((s,i)=>`<tr><td>${i+1}</td><td><b>${s.name}</b></td><td>${s.shifts_total}</td><td>${s.shifts_weekend||0}</td><td style="width:40%"><span class="bar"><span style="width:${(s.shifts_total/mx*100)}%"></span></span></td></tr>`).join('')}</table></div>`:'<p class="sub">Нет данных по сменам. Выполните <b>add_shift_ranks.sql</b> в Supabase.</p>';})()}</div>
   <div class="card"><h3>${ic('clock')} Присутствие сотрудников</h3>
     <label>Дата</label><input type="date" value="${presDate}" onchange="setPresDate(this.value)" style="max-width:190px">
     ${staff.map(s=>presenceCard(s)).join('')}</div>
