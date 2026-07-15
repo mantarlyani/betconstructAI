@@ -316,7 +316,7 @@ function vMod(){
 }
 function appFull(raw){
   if(!raw)return '';
-  const F=[['product_name','Продукт'],['value_prop','Ценность'],['features','Функции'],['model','Модель'],['price','Цена'],['languages','Языки'],['currencies','Валюты'],['compliance','Комплаенс'],['site','Сайт'],['phone','Телефон'],['contact_name','Контактное лицо']];
+  const F=[['product_name','Продукт'],['value_prop','Ценность'],['features','Функции'],['model','Модель'],['price','Цена'],['languages','Языки'],['currencies','Валюты'],['compliance','Комплаенс'],['site','Сайт'],['email','Email (логин кабинета)'],['phone','Телефон (логин кабинета)'],['contact_name','Контактное лицо']];
   const rows=F.filter(f=>raw[f[0]]).map(f=>`<div style="padding:5px 0;border-top:1px solid var(--line)"><b>${f[1]}:</b> ${String(raw[f[0]])}</div>`).join('');
   return `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--mag);font-weight:600;font-size:13px">Подробнее</summary><div class="det" style="margin-top:6px">${rows||'Доп. полей нет.'}</div></details>`;
 }
@@ -339,13 +339,14 @@ function appCard(a){
     <div class="det">${a.desc}<br><b>Регионы:</b> ${a.regions} · <b>Контакт:</b> ${a.contact}</div>${appFull(a.raw)}${stats}${actions}</div>`;
 }
 async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
-  if(db){const {error}=await db.from('applications').update({status:s,reviewed_at:new Date().toISOString()}).eq('id',id);
+  const portalActive=(s==='approved'||s==='partner'||s==='new');
+  if(db){const {error}=await db.from('applications').update({status:s,reviewed_at:new Date().toISOString(),portal_active:portalActive}).eq('id',id);
     if(error){toast('Ошибка: '+error.message);}
     else if(a){
       await db.from('vendors').delete().eq('application_id',id);
-      if(s==='approved'||s==='partner'||s==='new'){const {error:ve}=await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,description:a.desc,badge:s,active:true,regions:a.regions,match_score:s==='new'?65:80});if(ve)toast('Вендор: '+ve.message);}
+      if(portalActive){const {error:ve}=await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,description:a.desc,badge:s,active:true,regions:a.regions,match_score:s==='new'?65:80});if(ve)toast('Вендор: '+ve.message);}
     }}
-  toast(s==='approved'?'✓ Approved by BetConstruct':s==='partner'?'★ Partner by BetConstruct':s==='new'?'✦ New offer':s==='rejected'?'Отклонён':'Возвращён на проверку');render();}
+  toast(portalActive?((s==='approved'?'✓ Approved':s==='partner'?'★ Partner':'✦ New offer')+' · кабинет партнёра активирован'):(s==='rejected'?'Отклонён':'Возвращён на проверку'));render();}
 
 function vStaff(){
   return `<h2>Сотрудники и доступы</h2><p class="sub">Создавайте sales, юристов, модераторов — с выдачей логина и пароля.</p>

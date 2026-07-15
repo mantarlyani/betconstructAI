@@ -710,6 +710,7 @@ function partner(){
   return header()+`<div class="page"><div class="back" onclick="go('market')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('briefcase')} Стать партнёром</h2>
     <p class="sub">Разместите продукт или игру на BetConstructAI. После модерации он появится в Marketplace и в AI-рекомендациях оператору.</p>
+    <a href="/partner.html" style="display:inline-block;color:var(--mag);font-weight:600;font-size:13.5px;margin-bottom:8px">Уже партнёр? Войти в кабинет →</a>
     <div class="fsec">1 · Юридические данные (KYB)</div>
     ${pf('Юр. название компании','company','ООО «...» / Ltd')}
     ${pf('Страна регистрации','country')}
@@ -743,7 +744,10 @@ function partner(){
     ${pf('Вертикаль','tvert','Казино / Спорт / Платежи / Маркетинг')}
     ${pf('Гео-фокус','tgeo')}
     ${pfs('Сегмент клиента','tseg',['SMB','Mid-market','Enterprise'])}
-    <div class="disc">${ic('shield')} После отправки заявка попадает в админ-панель на модерацию. Проверенным партнёрам админ ставит бейдж «Approved by BetConstruct» или «Partner by BetConstruct».</div>
+    <div class="fsec">6 · Доступ в кабинет партнёра</div>
+    <p class="sub" style="margin-top:-4px">Логином для входа станут ваши <b>email или телефон</b>, указанные выше. Придумайте пароль — доступ активируется после одобрения заявки.</p>
+    ${pf('Пароль для кабинета','portalpass','минимум 6 символов','password')}
+    <div class="disc">${ic('shield')} После отправки заявка попадает в админ-панель на модерацию. Проверенным партнёрам админ ставит бейдж «Approved by BetConstruct» или «Partner by BetConstruct», и активирует вход в кабинет.</div>
     <button class="btn" onclick="submitPartner()">${ic('check')} Отправить на модерацию</button></div>`;
 }
 function chat(){
@@ -801,6 +805,7 @@ function affiliate(){
   return header()+`<div class="page"><div class="back" onclick="go('market')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('megaphone')} Аффилейт / Маркетинг</h2>
     <p class="sub">Зарегистрируйтесь как аффилейт или маркетинг-агентство и предлагайте операторам услуги продвижения. После модерации — листинг в Marketplace.</p>
+    <a href="/partner.html" style="display:inline-block;color:var(--mag);font-weight:600;font-size:13.5px;margin-bottom:8px">Уже партнёр? Войти в кабинет →</a>
     <div class="fsec">1 · Кто вы</div>
     ${pf('Компания / название команды','afcompany')}
     ${pfs('Тип','aftype',['Affiliate-сеть','Трафик-команда','Маркетинг-агентство','Инфлюенсер / Стример'])}
@@ -818,7 +823,10 @@ function affiliate(){
     <div class="fsec">3 · Условия</div>
     ${pf('Минимальные условия','afmin','мин. депозит, гарантии…')}
     ${pfc('Готов к проверке (KYB)','afkyb')}
-    <div class="disc">${ic('shield')} Заявка попадает в админ-панель на модерацию. Проверенным — бейдж «Approved / Partner by BetConstruct».</div>
+    <div class="fsec">4 · Доступ в кабинет партнёра</div>
+    <p class="sub" style="margin-top:-4px">Логином станут ваши <b>email или телефон</b> сверху. Придумайте пароль — доступ активируется после одобрения.</p>
+    ${pf('Пароль для кабинета','afportalpass','минимум 6 символов','password')}
+    <div class="disc">${ic('shield')} Заявка попадает в админ-панель на модерацию. Проверенным — бейдж «Approved / Partner by BetConstruct» и активация кабинета.</div>
     <button class="btn" onclick="submitAff()">${ic('check')} Отправить на модерацию</button></div>`;
 }
 function notifyApp(payload){try{fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(()=>{},()=>{});}catch(e){}}
@@ -827,7 +835,7 @@ function submitAff(){
   const e=val('pf_afemail');
   if(!c.trim()){toast('Укажите компанию/команду');return;}
   if(!e.trim()){toast('Укажите email');return;}
-  const payload={kind:'affiliate',company:c,contact_name:val('pf_afperson'),email:e,phone:val('pf_afphone'),site:val('pf_afsite'),category:val('pf_aftype'),model:val('pf_afmodel'),regions:val('pf_afgeo'),value_prop:val('pf_afvert'),features:val('pf_aftraffic')+' | Объёмы: '+val('pf_afvol'),description:val('pf_afcases'),compliance:val('pf_afmin'),ai_tags:{type:val('pf_aftype'),model:val('pf_afmodel'),geo:val('pf_afgeo'),vertical:val('pf_afvert'),kyb_ready:chk('pf_afkyb')}};
+  const payload={kind:'affiliate',company:c,contact_name:val('pf_afperson'),email:e,phone:val('pf_afphone'),site:val('pf_afsite'),category:val('pf_aftype'),model:val('pf_afmodel'),regions:val('pf_afgeo'),value_prop:val('pf_afvert'),features:val('pf_aftraffic')+' | Объёмы: '+val('pf_afvol'),description:val('pf_afcases'),compliance:val('pf_afmin'),ai_tags:{type:val('pf_aftype'),model:val('pf_afmodel'),geo:val('pf_afgeo'),vertical:val('pf_afvert'),kyb_ready:chk('pf_afkyb')},portal_pass:val('pf_afportalpass'),portal_active:false};
   if(db){db.from('applications').insert(payload).then(({error})=>{if(error)toast('Ошибка сохранения: '+error.message);});track('submit','affiliate_application',{company:c});}
   notifyApp(payload);
   $('#scroll').innerHTML=trHTML(header()+`<div class="page">
@@ -842,7 +850,7 @@ function submitPartner(){
   if(!c.trim()){toast('Укажите компанию');return;}
   if(!e.trim()){toast('Укажите email');return;}
   const typeMap={'Игра':'game','Платёжная система':'payment','Платформа':'platform','Инструмент / Софт':'tool','Лицензионный сервис':'license','Маркетинг / Affiliate':'marketing'};
-  const payload={kind:typeMap[val('pf_ptype')]||'game',company:c,country:val('pf_country'),reg_no:val('pf_reg'),contact_name:val('pf_person'),email:e,phone:val('pf_phone'),site:val('pf_site'),licenses:val('pf_lic'),product_name:val('pf_pname'),category:val('pf_pcat'),description:val('pf_pdesc'),value_prop:val('pf_pvalue'),features:val('pf_pfeat'),demo_url:val('pf_pdemo'),regions:val('pf_pregions'),forbidden_markets:val('pf_pforbidden'),languages:val('pf_plang'),currencies:val('pf_pcur'),crypto:chk('pf_pcrypto'),compliance:val('pf_pcompliance'),model:val('pf_pmodel'),price:val('pf_pprice'),platform_share:val('pf_pshare'),ai_tags:{vertical:val('pf_tvert'),geo:val('pf_tgeo'),segment:val('pf_tseg'),kyb_ready:chk('pf_pkyb')}};
+  const payload={kind:typeMap[val('pf_ptype')]||'game',company:c,country:val('pf_country'),reg_no:val('pf_reg'),contact_name:val('pf_person'),email:e,phone:val('pf_phone'),site:val('pf_site'),licenses:val('pf_lic'),product_name:val('pf_pname'),category:val('pf_pcat'),description:val('pf_pdesc'),value_prop:val('pf_pvalue'),features:val('pf_pfeat'),demo_url:val('pf_pdemo'),regions:val('pf_pregions'),forbidden_markets:val('pf_pforbidden'),languages:val('pf_plang'),currencies:val('pf_pcur'),crypto:chk('pf_pcrypto'),compliance:val('pf_pcompliance'),model:val('pf_pmodel'),price:val('pf_pprice'),platform_share:val('pf_pshare'),ai_tags:{vertical:val('pf_tvert'),geo:val('pf_tgeo'),segment:val('pf_tseg'),kyb_ready:chk('pf_pkyb')},portal_pass:val('pf_portalpass'),portal_active:false};
   if(db){db.from('applications').insert(payload).then(({error})=>{if(error)toast('Ошибка сохранения: '+error.message);});track('submit','partner_application',{company:c});}
   notifyApp(payload);
   $('#scroll').innerHTML=trHTML(header()+`<div class="page">
