@@ -270,7 +270,7 @@ let banners=[{title:'Запусти казино за 2 недели',sub:'Turnk
 let idxToggles={quick:true,live:true,promo:true,sections:true};
 
 /* ---------- TABS ---------- */
-const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['sales','Отдел Sales','crm'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
+const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
 function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();}
@@ -297,7 +297,7 @@ function vDash(){
   </div>
   <div class="grid2">
     <div class="card"><h3>${ic('users')} Кто в сети</h3>${(function(){const on=staff.filter(s=>isOnlineNow(s.name)||s.status==='online');return on.length?on.map(s=>`<div class="fbar"><span style="flex:1">${s.name} <span class="pill">${s.role}</span></span><span style="color:var(--green);font-weight:700">● в сети</span></div>`).join(''):'<p class="sub">Никого нет в сети.</p>';})()}</div>
-    <div class="card"><h3>${ic('crm')} Входящие лиды</h3>${leadsData.length?leadsData.slice(0,6).map(l=>`<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b><br><span style="color:var(--muted);font-size:12px">${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><button class="btn sm" onclick="go('sales')">Открыть</button></div>`).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
+    <div class="card"><h3>${ic('crm')} Входящие лиды</h3>${leadsData.length?leadsData.slice(0,6).map(l=>`<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b><br><span style="color:var(--muted);font-size:12px">${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><button class="btn sm" onclick="go('crm')">Открыть</button></div>`).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
   </div>
   <div class="grid2">
     <div class="card"><h3>${ic('eye')} Кто сейчас на сайте</h3>${(function(){const lv=liveVisitors();return lv.length?lv.slice(0,8).map(v=>`<div class="fbar"><span style="flex:1">Гость ${String(v.id).slice(0,6)} · <span style="color:var(--muted)">${v.last}</span></span><button class="btn sm" onclick="go('chat')">${ic('megaphone')} Чат</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте (за 5 мин).</p>';})()}</div>
@@ -367,7 +367,7 @@ function vStaff(){
     <div class="kpi"><div class="ic">${ic('shield')}</div><div class="n">${staff.filter(s=>s.active===false).length}</div><div class="l">Доступ отключён</div></div>
   </div>
   <div class="card"><h3>${ic('eye')} Кто сейчас в сети (${online.length})</h3>
-    ${online.length?online.map(s=>`<div class="fbar"><span style="flex:1"><b style="color:var(--mag);cursor:pointer" onclick="openStaff('${s.id}')">${s.name}</b> <span class="pill">${s.role}</span></span><span style="color:var(--green);font-weight:700">● в сети</span></div>`).join(''):'<p class="sub">Сейчас никого нет в сети.</p>'}</div>
+    ${online.length?online.map(s=>`<div class="fbar"><span style="flex:1"><b style="color:var(--mag);cursor:pointer" title="Click to see more about contact" onclick="openStaff('${s.id}')">${s.name}</b> <span class="pill">${s.role}</span></span><span style="color:var(--green);font-weight:700">● в сети</span></div>`).join(''):'<p class="sub">Сейчас никого нет в сети.</p>'}</div>
   <div class="card"><h3>${ic('plus')} Новый сотрудник</h3>
     <div class="grid2"><div><label>Имя и фамилия</label><input id="s_name" placeholder="Гор Казарян"></div>
       <div><label>Роль</label><select id="s_role">${ROLE_LIST.map(r=>`<option>${r}</option>`).join('')}</select></div>
@@ -378,9 +378,9 @@ function vStaff(){
     <select onchange="staffFilter=this.value;render()" style="max-width:200px"><option value="">Все отделы</option>${ROLE_LIST.map(r=>`<option ${r===staffFilter?'selected':''}>${r}</option>`).join('')}</select></div>
     <div style="overflow-x:auto"><table class="mtab"><tr><th>Имя</th><th>Роль</th><th>Email</th><th>Сеть</th><th>Логин / пароль</th><th>Доступ</th><th></th></tr>
     ${flt.map(s=>`<tr>
-      <td><b style="color:var(--mag);cursor:pointer" onclick="openStaff('${s.id}')">${s.name}</b></td>
+      <td><b style="color:var(--mag);cursor:pointer" title="Click to see more about contact" onclick="openStaff('${s.id}')">${s.name}</b> <span style="color:var(--muted);font-size:11px">ⓘ</span></td>
       <td>${s.id?`<select onchange="setStaffRole('${s.id}',this.value)">${ROLE_LIST.map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>`:`<span class="pill">${s.role}</span>`}</td>
-      <td>${s.id?`<input value="${s.email||''}" placeholder="email" style="min-width:150px;font-size:12px" onchange="setStaffField('${s.id}','email',this.value)">`:''}</td>
+      <td>${s.email?`<span style="font-size:12px;color:var(--ink)">${s.email}</span>`:'<span style="font-size:12px;color:var(--muted)">—</span>'}</td>
       <td>${isOnlineNow(s.name)?'<span style="color:var(--green);font-weight:700">●</span>':'<span style="color:var(--muted)">○</span>'}</td>
       <td class="mono" style="font-size:11px">${s.login} · ${s.pass||''} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Новый пароль">↻</button>`:''}</td>
       <td>${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
@@ -409,6 +409,19 @@ function vStaffDetail(){
     <div class="kpi"><div class="n">${myDeals.filter(d=>d.stage==='won').length}</div><div class="l">Closed Won</div></div>
     <div class="kpi"><div class="n">${emails.length}</div><div class="l">Письма</div></div>
     <div class="kpi"><div class="n">${s.shifts_total||0}</div><div class="l">Смен</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>${ic('star')} Продажи и выплаты</h3>
+      <div class="kpis" style="margin-bottom:12px">
+        <div class="kpi"><div class="n">${s.deals||myDeals.length||0}</div><div class="l">Сделок</div></div>
+        <div class="kpi"><div class="n">€${(s.payout||0).toLocaleString('ru-RU')}</div><div class="l">К выплате</div></div>
+        <div class="kpi"><div class="n">${s.conv||0}%</div><div class="l">Конверсия</div></div>
+      </div>
+      <div class="row"><button class="btn sm" onclick="go('chat')">${ic('megaphone')} Чаты менеджера</button>
+        <button class="btn sec sm" onclick="toast('Выплата поставлена в очередь')">Отметить выплату</button></div></div>
+    <div class="card"><h3>${ic('clock')} Присутствие</h3>
+      <label>Дата</label><input type="date" value="${presDate}" onchange="setPresDate(this.value)" style="max-width:190px">
+      ${presenceCard(s,true)}</div>
   </div>
   <div class="grid2">
     <div class="card"><h3>${ic('crm')} Лиды (${myLeads.length})</h3>${myLeads.length?myLeads.slice(0,12).map(l=>`<div class="fbar"><span style="flex:1"><b>${l.product||l.vendor||'—'}</b><br><span class="sub" style="font-size:11.5px">${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></span><span class="st ${l.source==='cart'?'pt':'nw'}" style="font-size:10px">${l.source==='cart'?'корзина':'демо'}</span></div>`).join(''):'<p class="sub">Нет лидов.</p>'}</div>
@@ -583,17 +596,18 @@ function vSales(){
     <p class="sub" style="margin-top:-4px">Всего смен и смен по выходным. Day 09:00–18:00 · Evening 18:01–01:59 · Night 02:00–08:59.</p>
     ${(function(){const rk=staff.filter(s=>(s.shifts_total||0)>0).sort((a,b)=>(b.shifts_total||0)-(a.shifts_total||0));const mx=Math.max(1,...rk.map(s=>s.shifts_total||0));return rk.length?`<div style="overflow-x:auto"><table class="mtab"><tr><th>#</th><th>Сотрудник</th><th>Всего смен</th><th>Выходные</th><th></th></tr>${rk.map((s,i)=>`<tr><td>${i+1}</td><td><b>${s.name}</b></td><td>${s.shifts_total}</td><td>${s.shifts_weekend||0}</td><td style="width:40%"><span class="bar"><span style="width:${(s.shifts_total/mx*100)}%"></span></span></td></tr>`).join('')}</table></div>`:'<p class="sub">Нет данных по сменам. Выполните <b>add_shift_ranks.sql</b> в Supabase.</p>';})()}</div>
   <div class="card"><h3>${ic('clock')} Присутствие сотрудников</h3>
+    <p class="sub" style="margin-top:-4px">Только просмотр. Отмечать вход/выход можно в карточке сотрудника (Сотрудники → имя).</p>
     <label>Дата</label><input type="date" value="${presDate}" onchange="setPresDate(this.value)" style="max-width:190px">
-    ${staff.map(s=>presenceCard(s)).join('')}</div>
-  ${salesOnly.map(s=>salesCard(s)).join('')}`;
+    ${staff.map(s=>presenceCard(s,false)).join('')}</div>`;
 }
-function presenceCard(s){
+function presenceCard(s,editable){
   const on=isOnlineNow(s.name);
   const sh=shiftsOn(s.name,presDate);
   const total=sh.reduce((a,x)=>a+shiftMs(x),0);
   const rows=sh.length?sh.map(x=>`<div class="step">${ic('clock')}<div style="flex:1"><b>${fmtT(x.online_at)} — ${x.offline_at?fmtT(x.offline_at):'сейчас'}</b></div><span class="t">${fmtDur(shiftMs(x))}</span></div>`).join(''):'<p class="sub" style="margin:6px 0">Нет смен за эту дату.</p>';
+  const toggle=editable?`<button class="btn sm ${on?'r':'g'}" style="margin-left:auto" onclick="toggleShift('${s.name.replace(/'/g,'')}','${s.role}')">${on?'Отметить выход':'Отметить вход'}</button>`:'';
   return `<div style="border-top:1px solid var(--line);padding:11px 0;margin-top:6px">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>${s.name}</b><span class="pill">${s.role}</span>${on?'<span style="color:var(--green);font-weight:700;font-size:12px">● в сети</span>':'<span style="color:var(--muted);font-size:12px">○ не в сети</span>'}<button class="btn sm ${on?'r':'g'}" style="margin-left:auto" onclick="toggleShift('${s.name.replace(/'/g,'')}','${s.role}')">${on?'Отметить выход':'Отметить вход'}</button></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>${s.name}</b><span class="pill">${s.role}</span>${on?'<span style="color:var(--green);font-weight:700;font-size:12px">● в сети</span>':'<span style="color:var(--muted);font-size:12px">○ не в сети</span>'}${toggle}</div>
     ${rows}<div style="font-size:12.5px;color:var(--muted);margin-top:4px">Итого за ${presDate}: <b style="color:var(--text)">${fmtDur(total)}</b></div></div>`;
 }
 function salesCard(s){
