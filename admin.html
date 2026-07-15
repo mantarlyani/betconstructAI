@@ -209,16 +209,7 @@ let apps=[
   {id:3,name:'TrafficLab',type:'Аффилейт',cat:'Трафик Tier-2',contact:'hi@trafficlab.net',regions:'CIS',desc:'SEO + PPC, ~200k кликов/мес, EPC €0.42, вертикаль казино.',status:'pending'},
   {id:4,name:'SoftGaming',type:'Игра',cat:'Casino Suite слоты',contact:'partners@softgaming.com',regions:'LATAM · EU',desc:'5000+ слотов, совместимость с BetConstruct Casino Suite.',status:'approved'}
 ];
-let staff=[
-  {name:'Ани Петросян',role:'Sales',login:'ani.petrosyan',pass:'Kp7mQx2r',status:'online',deals:9,payout:9200,conv:31,
-    sessions:[['Сегодня','09:02','сейчас'],['11.07','10:15','18:40'],['10.07','09:30','17:20']]},
-  {name:'Армен Казарян',role:'Sales',login:'armen.kazaryan',pass:'Zt4wLp9s',status:'offline',deals:6,payout:5400,conv:24,
-    sessions:[['11.07','11:00','19:10'],['10.07','10:05','16:45']]},
-  {name:'Лилит Саркисян',role:'Юрист',login:'lilit.sarkisyan',pass:'Nb8vRy3k',status:'offline'},
-  {name:'Нарек Аветисян',role:'Service Sales',login:'narek.avetisyan',pass:'Sd5xQe1m',status:'online'},
-  {name:'Давид Хачатрян',role:'PM',login:'david.khachatryan',pass:'Pm9kLt4w',status:'online'},
-  {name:'Гор Мнацаканян',role:'Account Manager',login:'gor.mnatsakanyan',pass:'Am3zBv7n',status:'offline'}
-];
+let staff=[]; // реальная команда грузится из БД (loadStaff)
 let convos=[
   {id:1,visitor:'Гость #4821',rep:'Ани Петросян',online:true,unread:1,msgs:[
     {who:'v',text:'Здравствуйте! Интересует крипто-казино для LATAM',tm:'13:38'},
@@ -251,14 +242,7 @@ const FLOW=[
   {t:'Go Live notice',   d:'Проект запущен; официальный email-уведомление', role:'PM'},
   {t:'AM Handover',      d:'Передача проекта Account Manager', role:'Account Manager'}
 ];
-let deals=[
-  {id:'BC-1042',client:'CryptoCasino LATAM',resp:'Ани Петросян',ssales:'',pm:'',am:'',stage:'confirmed',status:'active',
-    agr:{signed:false,paid:false},flow:[true,false,false,false,false,false,false],
-    steps:[{n:'Lead Email · заведён',by:'Ани',at:'12.07 09:14'},{n:'Convert to Deal',by:'Ани',at:'12.07 10:02'},{n:'Project Confirmed',by:'Ани',at:'12.07 11:30'}]},
-  {id:'BC-1039',client:'BetStart EU',resp:'Армен Казарян',ssales:'Нарек Аветисян',pm:'Давид Хачатрян',am:'',stage:'agreement',status:'active',
-    agr:{signed:true,paid:false},flow:[true,true,true,false,false,false,false],
-    steps:[{n:'Lead Email · заведён',by:'Армен',at:'11.07 15:20'},{n:'Convert to Deal',by:'Армен',at:'12.07 12:00'},{n:'Agreement отправлен',by:'Лилит',at:'12.07 13:10'}]}
-];
+let deals=[]; // реальные сделки грузятся из БД (loadDeals)
 let activeDeal=null;
 async function loadDeals(){if(!db)return;const {data}=await db.from('deals').select('*').order('created_at',{ascending:true});if(data&&data.length){deals=data.map(r=>({id:r.id,client:r.client,resp:r.resp||'',ssales:r.ssales||'',pm:r.pm||'',am:r.am||'',stage:r.stage||'lead',status:r.status||'active',agr:r.agr||{signed:false,paid:false},flow:r.flow||[false,false,false,false,false,false,false],steps:r.steps||[],_rr:!!r.rr_done,_kick:!!r.kick_done}));render();}}
 function saveDeal(d){if(!db)return;db.from('deals').upsert({id:d.id,client:d.client,resp:d.resp,ssales:d.ssales,pm:d.pm,am:d.am,stage:d.stage,status:d.status,agr:d.agr,flow:d.flow,steps:d.steps,rr_done:!!d._rr,kick_done:!!d._kick}).then(({error})=>{if(error)toast('Сделка: '+error.message);});}
