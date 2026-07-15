@@ -267,13 +267,13 @@ let banners=[{title:'Запусти казино за 2 недели',sub:'Turnk
 let idxToggles={quick:true,live:true,promo:true,sections:true};
 
 /* ---------- TABS ---------- */
-const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
+const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['sales','Отдел Sales','crm'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();}
+function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();}
 
 /* ---------- VIEWS ---------- */
-function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
+function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
 
 function vDash(){
   const pend=apps.filter(a=>a.status==='pending').length;
@@ -517,7 +517,7 @@ function vSales(){
     <div class="card"><h3>${ic('chart')} Топ запрашиваемых продуктов</h3>${topProd.length?topProd.map(p=>`<div class="fbar"><span style="flex:1">${p[0]}</span><b>${p[1]}</b></div>`).join(''):'<p class="sub">Нет данных.</p>'}</div>
   </div>
   <div class="card"><h3>${ic('crm')} Входящие лиды</h3>
-    ${leadsData.length?leadsData.slice(0,25).map(l=>`<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b> <span class="st ${l.source==='cart'?'pt':'ap'}" style="margin-left:6px">${l.source==='cart'?'корзина':'демо'}</span><br><span style="color:var(--muted);font-size:12px">${l.vendor&&l.product?l.product+' · ':''}${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><span class="tm">${l.created_at?new Date(l.created_at).toLocaleString('ru-RU'):''}</span></div>`).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
+    ${leadsData.length?leadsData.slice(0,25).map(l=>{const ac=acctOwnerFor(l);const own=ac&&ac.owner?`<span class="st pt" style="margin-left:6px">ведёт ${ac.owner}</span>`:(ac?`<span class="st nw" style="margin-left:6px">клиент без владельца</span>`:'');return `<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b> <span class="st ${l.source==='cart'?'pt':'ap'}" style="margin-left:6px">${l.source==='cart'?'корзина':'демо'}</span>${own}<br><span style="color:var(--muted);font-size:12px">${l.vendor&&l.product?l.product+' · ':''}${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><span class="tm">${l.created_at?new Date(l.created_at).toLocaleString('ru-RU'):''}</span></div>`;}).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
   <div class="card"><h3>${ic('clock')} Присутствие сотрудников</h3>
     <label>Дата</label><input type="date" value="${presDate}" onchange="setPresDate(this.value)" style="max-width:190px">
     ${staff.map(s=>presenceCard(s)).join('')}</div>
@@ -835,6 +835,81 @@ function vTasks(){
       return `<div class="kcol"><div class="khd">${st[1]}<span class="kn">${col.length}</span></div>${col.map(tkCard).join('')||'<div class="kempty">—</div>'}</div>`;
     }).join('')}</div>
     ${!taskData.length?'<p class="sub" style="margin-top:10px">Пока нет задач. Создайте задачу выше или отметьте шаг 3 «Resource request» в сделке CRM — запросы PM/Service Sales создадутся автоматически. Если пусто после создания — проверьте <b>add_tasks.sql</b> в Supabase.</p>':''}</div>`;
+}
+
+// ============ АККАУНТЫ · чей клиент/партнёр + импорт ============
+let acctData=[];
+async function loadAccounts(){if(!db)return;const {data}=await db.from('accounts').select('*').order('created_at',{ascending:false}).limit(1000);if(data){acctData=data;render();}}
+function normP(s){return String(s||'').replace(/[\s()\-+]/g,'').toLowerCase();}
+function acctOwnerFor(l){const c=(l.contact||'').toLowerCase();const nm=(l.visitor_name||l.vendor||'').toLowerCase();
+  return acctData.find(a=>(a.email&&c&&a.email.toLowerCase()===c)||(a.phone&&c&&normP(a.phone)===normP(c))||(a.name&&nm&&a.name.toLowerCase()===nm));}
+function parseCSV(txt){
+  const lines=String(txt||'').split(/\r?\n/).filter(l=>l.trim().length);if(!lines.length)return [];
+  const split=l=>{const out=[];let cur='',q=false;for(let i=0;i<l.length;i++){const c=l[i];if(c==='"'){if(q&&l[i+1]==='"'){cur+='"';i++;}else q=!q;}else if((c===','||c===';'||c==='\t')&&!q){out.push(cur);cur='';}else cur+=c;}out.push(cur);return out.map(s=>s.trim());};
+  const heads=split(lines[0]).map(h=>h.toLowerCase());
+  const idx=keys=>heads.findIndex(h=>keys.some(k=>h.includes(k)));
+  const m={name:idx(['компан','company','name','имя','клиент','account','партн']),contact:idx(['контакт','contact','лицо']),email:idx(['email','почт','mail']),phone:idx(['телефон','phone','тел','telegram']),owner:idx(['владел','менедж','ответствен','owner','sales','менеджер','am']),kind:idx(['тип','kind','type']),stage:idx(['стад','stage','статус','status']),source:idx(['источник','source','система']),notes:idx(['примеч','note','коммент'])};
+  const rows=[];
+  for(let i=1;i<lines.length;i++){const c=split(lines[i]);const g=k=>m[k]>=0?(c[m[k]]||''):'';const name=g('name');if(!name)continue;
+    const kraw=(g('kind')||'').toLowerCase();const kind=kraw.includes('партн')||kraw.includes('partner')?'partner':kraw.includes('лид')||kraw.includes('prospect')?'prospect':'client';
+    rows.push({name,contact_name:g('contact'),email:g('email').toLowerCase(),phone:g('phone'),owner:g('owner'),kind,stage:g('stage'),source:g('source')||'import',notes:g('notes')});}
+  return rows;
+}
+async function importAccounts(){
+  if(!db){toast('База недоступна');return;}
+  let txt=($('#imp_text')&&$('#imp_text').value)||'';
+  const fi=$('#imp_file');
+  if(fi&&fi.files&&fi.files[0]){try{txt=await fi.files[0].text();}catch(e){}}
+  const rows=parseCSV(txt);
+  if(!rows.length){toast('Не найдено строк. Нужен CSV с заголовками.');return;}
+  toast('Импорт '+rows.length+' строк…');let ins=0,upd=0;
+  for(const r of rows){
+    let ex=null;
+    if(r.email){const {data}=await db.from('accounts').select('id').eq('email',r.email).limit(1);if(data&&data.length)ex=data[0].id;}
+    if(!ex){const {data}=await db.from('accounts').select('id').eq('name',r.name).limit(1);if(data&&data.length)ex=data[0].id;}
+    if(ex){await db.from('accounts').update(r).eq('id',ex);upd++;}else{await db.from('accounts').insert(r);ins++;}
+  }
+  toast('Готово: +'+ins+' новых, '+upd+' обновлено');const tx=$('#imp_text');if(tx)tx.value='';loadAccounts();
+}
+async function createAccount(){const n=($('#ac_name')&&$('#ac_name').value)||'';if(!n.trim()){toast('Укажите компанию');return;}
+  const row={name:n.trim(),kind:($('#ac_kind')&&$('#ac_kind').value)||'client',contact_name:($('#ac_contact')&&$('#ac_contact').value)||'',email:(($('#ac_email')&&$('#ac_email').value)||'').toLowerCase(),phone:($('#ac_phone')&&$('#ac_phone').value)||'',owner:($('#ac_owner')&&$('#ac_owner').value)||'',source:'manual'};
+  if(db){const {error}=await db.from('accounts').insert(row);if(error){toast('Ошибка: '+error.message);return;}}toast('Аккаунт добавлен');loadAccounts();}
+async function setAcctOwner(id,val){if(db)await db.from('accounts').update({owner:val}).eq('id',id);toast('Владелец: '+(val||'снят'));loadAccounts();}
+async function delAccount(id){if(!db)return;if(!confirm('Удалить аккаунт?'))return;await db.from('accounts').delete().eq('id',id);loadAccounts();}
+function acctOwnerSel(a){return `<select onchange="setAcctOwner('${a.id}',this.value)"><option value="">— не назначен —</option>${staff.map(s=>`<option ${a.owner===s.name?'selected':''}>${s.name}</option>`).join('')}</select>`;}
+function vAccounts(){
+  const cl=acctData.filter(a=>a.kind!=='partner'&&a.kind!=='prospect').length,pt=acctData.filter(a=>a.kind==='partner').length,noOwner=acctData.filter(a=>!a.owner).length;
+  return `<h2>Аккаунты · чей клиент / партнёр</h2><p class="sub">Единый реестр клиентов и партнёров с закреплённым владельцем. Импортируйте выгрузку из Zoho / DocuSign / Pandayo / Hoory / Jira — и у sales не будет конфликтов «чей это клиент».</p>
+  <div class="kpis">
+    <div class="kpi"><div class="ic">${ic('building')}</div><div class="n">${acctData.length}</div><div class="l">Всего аккаунтов</div></div>
+    <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${cl}</div><div class="l">Клиенты</div></div>
+    <div class="kpi"><div class="ic">${ic('star')}</div><div class="n">${pt}</div><div class="l">Партнёры</div></div>
+    <div class="kpi"><div class="ic">${ic('clock')}</div><div class="n">${noOwner}</div><div class="l">Без владельца</div></div>
+  </div>
+  <div class="card"><h3>${ic('plus')} Импорт из файла (CSV)</h3>
+    <p class="sub">Загрузите CSV или вставьте таблицу. Колонки распознаются по заголовкам: Компания, Контакт, Email, Телефон, Владелец, Тип, Стадия, Источник, Примечание. Excel — сохраните как CSV.</p>
+    <input id="imp_file" type="file" accept=".csv,text/csv,text/plain">
+    <label style="margin-top:8px">…или вставьте CSV сюда</label>
+    <textarea id="imp_text" rows="4" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-family:ui-monospace,monospace;font-size:12.5px" placeholder="Компания,Контакт,Email,Телефон,Владелец,Тип&#10;CryptoCasino LATAM,Иван,ivan@cc.com,+37411,Ани Петросян,client"></textarea>
+    <button class="btn" style="margin-top:10px" onclick="importAccounts()">${ic('check')} Импортировать</button></div>
+  <div class="card"><h3>${ic('plus')} Добавить вручную</h3>
+    <div class="grid2">
+      <div><label>Компания / клиент</label><input id="ac_name"></div>
+      <div><label>Тип</label><select id="ac_kind"><option value="client">Клиент</option><option value="partner">Партнёр</option><option value="prospect">Лид</option></select></div>
+      <div><label>Контакт</label><input id="ac_contact"></div>
+      <div><label>Email</label><input id="ac_email"></div>
+      <div><label>Телефон</label><input id="ac_phone"></div>
+      <div><label>Владелец</label><select id="ac_owner"><option value="">— не назначен —</option>${staff.map(s=>`<option>${s.name}</option>`).join('')}</select></div>
+    </div>
+    <button class="btn" style="margin-top:12px" onclick="createAccount()">${ic('check')} Добавить</button></div>
+  <div class="card"><h3>${ic('users')} Реестр (${acctData.length})</h3>
+    <div style="overflow-x:auto"><table class="mtab"><tr><th>Компания</th><th>Тип</th><th>Контакт</th><th>Email / тел</th><th>Владелец</th><th>Источник</th><th></th></tr>
+    ${acctData.length?acctData.map(a=>`<tr><td><b>${a.name||'—'}</b></td>
+      <td>${a.kind==='partner'?'<span class="st pt">Партнёр</span>':a.kind==='prospect'?'<span class="st nw">Лид</span>':'<span class="st ap">Клиент</span>'}</td>
+      <td>${a.contact_name||'—'}</td><td style="font-size:11px">${a.email||''}${a.phone?('<br>'+a.phone):''}</td>
+      <td>${acctOwnerSel(a)}</td><td>${a.source||'—'}</td>
+      <td><button class="btn r sm" onclick="delAccount('${a.id}')">${ic('x')}</button></td></tr>`).join(''):'<tr><td colspan="7" class="sub" style="padding:12px">Реестр пуст. Импортируйте файл или добавьте вручную.</td></tr>'}
+    </table></div></div>`;
 }
 
 boot();
