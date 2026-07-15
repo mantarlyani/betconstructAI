@@ -57,6 +57,36 @@
   .krow{display:flex;justify-content:space-between;align-items:center;margin-top:9px}
   .kbtn{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:3px 12px;font-weight:700;cursor:pointer;color:var(--mag)}
   .kempty{color:var(--muted);font-size:12px;text-align:center;padding:10px 0}
+  .mtab{width:100%;border-collapse:collapse;font-size:12.5px}
+  .mtab th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .mtab td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .mtab tr:last-child td{border-bottom:none}
+  .docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:13px;margin-top:13px}
+  .doccard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .docimg{width:100%;height:130px;object-fit:cover;display:block;background:var(--bg)}
+  .docfile{height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--bg);color:var(--muted);font-size:12px;text-decoration:none;padding:10px;text-align:center}
+  .docfile{font-size:30px}.docfile span{font-size:11px}
+  .docmeta{padding:9px 11px}
+  .chatimg{max-width:210px;max-height:180px;border-radius:10px;display:block;margin-bottom:4px}
+  .kprog{height:5px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0 4px}
+  .kprog span{display:block;height:100%;background:var(--mag);border-radius:4px}
+  .stepper{display:flex;gap:6px;margin-top:12px;overflow-x:auto;padding-bottom:4px}
+  .stp{flex:1;min-width:92px;text-align:center;padding:8px 6px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+  .stp b{display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:50%;background:var(--line);color:var(--muted);font-size:12px}
+  .stp span{display:block;font-size:10.5px;margin-top:5px;color:var(--muted);line-height:1.25}
+  .stp.on{background:#e3f6ee;border-color:#bfe9d5}.stp.on b{background:#0f7a52;color:#fff}
+  .stp.cur{background:#eef0ff;border-color:#cdd2ff}.stp.cur b{background:var(--mag);color:#fff}.stp.cur span{color:var(--text);font-weight:600}
+  .flowrow{display:flex;align-items:center;gap:11px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+  .flowrow:last-child{border-bottom:none}
+  .fchk{width:26px;height:26px;flex:0 0 26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted)}
+  .flowrow.done .fchk{background:#0f7a52;border-color:#0f7a52;color:#fff}
+  .flowrow.done b{color:var(--muted);text-decoration:line-through}
+  .rtag{font-size:10.5px;font-weight:700;color:#4a44b8;background:#eef0ff;padding:3px 9px;border-radius:8px;white-space:nowrap}
+  .apipe{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .apx{font-size:11px;font-weight:600;color:var(--muted);background:var(--bg);border:1px solid var(--line);padding:4px 10px;border-radius:20px}
+  .apx.on{background:#eef0ff;color:#4a44b8;border-color:#cdd2ff}
+  .apipe i{color:var(--muted);font-style:normal}
+  .agrbody{white-space:pre-wrap;font:12.5px/1.5 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:8px;max-height:280px;overflow:auto}
   table{width:100%;border-collapse:collapse;font-size:13px}
   th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
   th{color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:600}
@@ -179,7 +209,10 @@ let staff=[
     sessions:[['Сегодня','09:02','сейчас'],['11.07','10:15','18:40'],['10.07','09:30','17:20']]},
   {name:'Армен Казарян',role:'Sales',login:'armen.kazaryan',pass:'Zt4wLp9s',status:'offline',deals:6,payout:5400,conv:24,
     sessions:[['11.07','11:00','19:10'],['10.07','10:05','16:45']]},
-  {name:'Лилит Саркисян',role:'Юрист',login:'lilit.sarkisyan',pass:'Nb8vRy3k',status:'offline'}
+  {name:'Лилит Саркисян',role:'Юрист',login:'lilit.sarkisyan',pass:'Nb8vRy3k',status:'offline'},
+  {name:'Нарек Аветисян',role:'Service Sales',login:'narek.avetisyan',pass:'Sd5xQe1m',status:'online'},
+  {name:'Давид Хачатрян',role:'PM',login:'david.khachatryan',pass:'Pm9kLt4w',status:'online'},
+  {name:'Гор Мнацаканян',role:'Account Manager',login:'gor.mnatsakanyan',pass:'Am3zBv7n',status:'offline'}
 ];
 let convos=[
   {id:1,visitor:'Гость #4821',rep:'Ани Петросян',online:true,unread:1,msgs:[
@@ -194,11 +227,34 @@ let convos=[
     {who:'s',text:'Подключу юриста — Лилит уточнит детали по юрисдикции.',tm:'12:53'}]}
 ];
 let activeConvo=null;
-let deals=[
-  {id:'BC-1042',client:'CryptoCasino LATAM',resp:'Ани Петросян',stage:'Демо',steps:[{n:'Принял лид',by:'Ани',at:'12.07 09:14'},{n:'Первый контакт',by:'Ани',at:'12.07 10:02'},{n:'Назначил демо',by:'Ани',at:'12.07 11:30'}]},
-  {id:'BC-1039',client:'BetStart EU',resp:'Армен Казарян',stage:'Переговоры',steps:[{n:'Принял лид',by:'Армен',at:'11.07 15:20'},{n:'Демо проведено',by:'Армен',at:'12.07 12:00'},{n:'Юр. проверка',by:'Лилит',at:'12.07 13:10'}]}
+// Стадии ровно как в Zoho CRM партнёра
+const STAGES=[
+  {k:'lead',      n:'Lead Email',          sub:'Проверить email, завести лид'},
+  {k:'deal',      n:'Convert to Deal',     sub:'Подтверждена возможность'},
+  {k:'confirmed', n:'Project Confirmed',   sub:'Согласован scope с партнёром'},
+  {k:'agreement', n:'Agreement & Payment', sub:'DocuSign + setup fee'},
+  {k:'started',   n:'Project Started',     sub:'PM: активная разработка'},
+  {k:'won',       n:'Closed Won',          sub:'Проект Live'}
 ];
-const STAGES=['Новый','Контакт','Демо','Переговоры','Покупка'];
+// Операционный флоу из 7 шагов (движок сделки)
+const FLOW=[
+  {t:'Lead check',       d:'Проверить email в системе; если нет — завести лид', role:'Sales'},
+  {t:'Agreement & Fee',  d:'Договор (DocuSign) → подпись партнёра → setup fee оплачен', role:'Sales'},
+  {t:'Resource request', d:'Запрос PM и Service Sales (во время шага 2)', role:'Service Sales'},
+  {t:'Kickoff chat',     d:'Групповой канал PM + Партнёр', role:'PM'},
+  {t:'Development',       d:'Разработка и настройка (~3–4 недели)', role:'PM'},
+  {t:'Go Live notice',   d:'Проект запущен; официальный email-уведомление', role:'PM'},
+  {t:'AM Handover',      d:'Передача проекта Account Manager', role:'Account Manager'}
+];
+let deals=[
+  {id:'BC-1042',client:'CryptoCasino LATAM',resp:'Ани Петросян',ssales:'',pm:'',am:'',stage:'confirmed',status:'active',
+    agr:{signed:false,paid:false},flow:[true,false,false,false,false,false,false],
+    steps:[{n:'Lead Email · заведён',by:'Ани',at:'12.07 09:14'},{n:'Convert to Deal',by:'Ани',at:'12.07 10:02'},{n:'Project Confirmed',by:'Ани',at:'12.07 11:30'}]},
+  {id:'BC-1039',client:'BetStart EU',resp:'Армен Казарян',ssales:'Нарек Аветисян',pm:'Давид Хачатрян',am:'',stage:'agreement',status:'active',
+    agr:{signed:true,paid:false},flow:[true,true,true,false,false,false,false],
+    steps:[{n:'Lead Email · заведён',by:'Армен',at:'11.07 15:20'},{n:'Convert to Deal',by:'Армен',at:'12.07 12:00'},{n:'Agreement отправлен',by:'Лилит',at:'12.07 13:10'}]}
+];
+let activeDeal=null;
 let analytics={visitors:1287,today:143,sections:[['Home',100],['Быстрый доступ',72],['Live',54],['Products',48],['Marketplace',37],['AI-советник',29],['Регистрация',18]],
   journeys:[
     {u:'Гость #4821',path:['Вход','Home','Быстрый доступ → Live','AI-советник','Регистрация'],tm:'12.07 13:41'},
@@ -209,13 +265,13 @@ let banners=[{title:'Запусти казино за 2 недели',sub:'Turnk
 let idxToggles={quick:true,live:true,promo:true,sections:true};
 
 /* ---------- TABS ---------- */
-const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['chat','Чат','megaphone'],['crm','CRM','crm'],['stats','Аналитика','chart'],['content','Контент','layout']];
+const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();}if(t==='dash')loadEvents();}
+function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();}
 
 /* ---------- VIEWS ---------- */
-function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
+function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
 
 function vDash(){
   const pend=apps.filter(a=>a.status==='pending').length;
@@ -241,6 +297,10 @@ function vDash(){
   <div class="grid2">
     <div class="card"><h3>${ic('eye')} Кто сейчас на сайте</h3>${(function(){const lv=liveVisitors();return lv.length?lv.slice(0,8).map(v=>`<div class="fbar"><span style="flex:1">Гость ${String(v.id).slice(0,6)} · <span style="color:var(--muted)">${v.last}</span></span><button class="btn sm" onclick="go('chat')">${ic('megaphone')} Чат</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте (за 5 мин).</p>';})()}</div>
     <div class="card"><h3>${ic('eye')} Последние пути посетителей</h3>${(function(){const js=journeys();return js.length?js.map(j=>`<div class="jrow"><div style="flex:1"><b>Гость ${j.v}</b><br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div></div>`).join(''):'<p class="sub">Пока нет событий.</p>';})()}</div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>${ic('layout')} Открытые задачи</h3>${(function(){const op=taskData.filter(t=>t.status!=='done');return op.length?op.slice(0,7).map(t=>`<div class="fbar"><span style="flex:1"><span class="st ${TPRIO[t.priority]||'pend'}" style="font-size:10px">${t.priority||'P3'}</span> ${t.title}${t.dept?` · <span style="color:var(--muted)">${t.dept}</span>`:''}</span><button class="btn sm" onclick="go('tasks')">Открыть</button></div>`).join(''):'<p class="sub">Открытых задач нет.</p>';})()}</div>
+    <div class="card"><h3>${ic('crm')} Сделки по стадиям</h3>${STAGES.map(s=>{const n=deals.filter(d=>d.stage===s.k&&d.status==='active').length;return `<div class="fbar"><span style="flex:1">${s.n}</span><b>${n}</b></div>`;}).join('')}</div>
   </div>`;
 }
 function sectionsBars(){const max=Math.max(...analytics.sections.map(s=>s[1]));return analytics.sections.map(s=>`<div class="fbar"><span style="width:120px">${s[0]}</span><span class="bar"><span style="width:${s[1]/max*100}%"></span></span><b>${s[1]}%</b></div>`).join('');}
@@ -308,23 +368,77 @@ function addStaff(){const n=($('#s_name')||{}).value||'';const r=($('#s_role')||
   render();toast('Создан: '+login+' / '+pass);}
 function copyv(v){navigator.clipboard&&navigator.clipboard.writeText(v);toast('Скопировано: '+v);}
 
+function stageIdx(k){return STAGES.findIndex(s=>s.k===k);}
+function stageName(k){const s=STAGES.find(x=>x.k===k);return s?s.n:k;}
 function vCrm(){
-  return `<h2>CRM · воронка по колонкам</h2><p class="sub">Сделки по стадиям. Двигайте карточки стрелками ◀ ▶.</p>
+  const d=activeDeal?deals.find(x=>x.id===activeDeal):null;
+  if(d) return dealDetail(d);
+  return `<h2>CRM · воронка партнёра (Zoho)</h2><p class="sub">6 стадий вашего пайплайна. Двигайте карточки ◀ ▶, нажмите карточку — операционный флоу из 7 шагов.</p>
   <div class="kanban">${STAGES.map(st=>{
-    const col=deals.filter(d=>d.stage===st);
-    return `<div class="kcol"><div class="khd">${st}<span class="kn">${col.length}</span></div>${col.map(d=>kCard(d)).join('')||'<div class="kempty">—</div>'}</div>`;
-  }).join('')}</div>`;
+    const col=deals.filter(x=>x.stage===st.k&&x.status==='active');
+    return `<div class="kcol"><div class="khd"><div><div>${st.n}</div><div style="font-weight:400;font-size:10px;color:var(--muted)">${st.sub}</div></div><span class="kn">${col.length}</span></div>${col.map(kCard).join('')||'<div class="kempty">—</div>'}</div>`;
+  }).join('')}
+  <div class="kcol" style="background:#fff4f4"><div class="khd"><div>На паузе / Потеряно</div><span class="kn" style="background:var(--red)">${deals.filter(x=>x.status!=='active').length}</span></div>${deals.filter(x=>x.status!=='active').map(kCard).join('')||'<div class="kempty">—</div>'}</div></div>`;
 }
 function kCard(d){
-  const si=STAGES.indexOf(d.stage);const last=d.steps&&d.steps.length?d.steps[d.steps.length-1]:null;
-  return `<div class="kcard"><div class="kid">${d.id}</div><div class="kcl">${d.client}</div>
-    <div class="kresp">${ic('users')} ${d.resp}</div>
-    ${last?`<div class="klast">${last.n} · <span style="color:var(--muted)">${last.at}</span></div>`:''}
-    <div class="krow">${si>0?`<button class="kbtn" onclick="moveStage('${d.id}',-1)">◀</button>`:'<span></span>'}
-      ${si<STAGES.length-1?`<button class="kbtn" onclick="moveStage('${d.id}',1)">▶</button>`:`<span class="st ap" style="font-size:10px">${ic('check')} Закрыта</span>`}</div></div>`;
+  const si=stageIdx(d.stage);const done=d.flow.filter(Boolean).length;
+  const nextI=d.flow.findIndex(x=>!x);const next=nextI>=0?FLOW[nextI].t:'завершено';
+  return `<div class="kcard" onclick="openDeal('${d.id}')">
+    <div class="kid">${d.id}${d.status!=='active'?` · <span class="st rej" style="font-size:9px">${d.status==='lost'?'Потеряно':'Пауза'}</span>`:''}</div>
+    <div class="kcl">${d.client}</div>
+    <div class="kresp">${ic('users')} ${d.resp||'—'}</div>
+    <div class="kprog"><span style="width:${Math.round(done/7*100)}%"></span></div>
+    <div class="klast">Шаги ${done}/7 · далее: ${next}</div>
+    <div class="krow" onclick="event.stopPropagation()">
+      ${si>0?`<button class="kbtn" onclick="moveStage('${d.id}',-1)">◀</button>`:'<span></span>'}
+      ${si<STAGES.length-1?`<button class="kbtn" onclick="moveStage('${d.id}',1)">▶</button>`:`<span class="st ap" style="font-size:10px">${ic('check')} Live</span>`}</div></div>`;
 }
-function setResp(id,name){const d=deals.find(x=>x.id===id);d.resp=name;d.steps.push({n:'Переназначен ответственный',by:name.split(' ')[0],at:now()});render();toast('Ответственный: '+name);}
-function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=STAGES.indexOf(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i];d.steps.push({n:'Стадия → '+STAGES[i],by:d.resp.split(' ')[0],at:now()});render();}
+function roleSel(d,field,label,role){
+  const opts=staff.filter(s=>s.role===role);
+  return `<div><label>${label}</label><select onchange="setDealPerson('${d.id}','${field}',this.value)">
+    <option value="">— не назначен —</option>
+    ${opts.map(s=>`<option ${d[field]===s.name?'selected':''}>${s.name}</option>`).join('')}</select></div>`;
+}
+function dealDetail(d){
+  const si=stageIdx(d.stage);
+  return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeDeal()">‹ Все сделки</button></div>
+  <div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:flex-start">
+    <div><h3 style="margin:0">${d.client}</h3><span class="sub">${d.id} · стадия: <b>${stageName(d.stage)}</b></span></div>
+    <div>${d.status!=='active'?`<span class="st rej">${d.status==='lost'?'Потеряно':'На паузе'}</span>`:`<span class="st ap">Активна</span>`}</div></div>
+    <div class="stepper">${STAGES.map((s,i)=>`<div class="stp ${i<si?'on':i===si?'cur':''}"><b>${i+1}</b><span>${s.n}</span></div>`).join('')}</div>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn sec sm" onclick="moveStage('${d.id}',-1)">◀ Стадия назад</button>
+      <button class="btn sm" onclick="moveStage('${d.id}',1)">Стадия вперёд ▶</button>
+      ${d.status==='active'?`<button class="btn sec sm" onclick="setDealStatus('${d.id}','hold')">На паузу</button>
+      <button class="btn r sm" onclick="setDealStatus('${d.id}','lost')">Потеряно</button>`:`<button class="btn sm" onclick="setDealStatus('${d.id}','active')">Вернуть в работу</button>`}
+    </div></div>
+  <div class="card"><h3>${ic('users')} Ответственные по ролям</h3>
+    <div class="grid2">
+      ${roleSel(d,'resp','Sales / владелец сделки','Sales')}
+      ${roleSel(d,'ssales','Service Sales','Service Sales')}
+      ${roleSel(d,'pm','Project Manager','PM')}
+      ${roleSel(d,'am','Account Manager','Account Manager')}
+    </div></div>
+  <div class="card"><h3>${ic('shield')} Операционный флоу · 7 шагов</h3>
+    <p class="sub" style="margin-top:-4px">Отмечайте шаги по мере выполнения. Каждый шаг закреплён за ролью.</p>
+    ${FLOW.map((f,i)=>`<div class="flowrow ${d.flow[i]?'done':''}" onclick="toggleFlow('${d.id}',${i})">
+      <div class="fchk">${d.flow[i]?'✓':(i+1)}</div>
+      <div style="flex:1"><b>${f.t}</b><div class="sub" style="font-size:12px">${f.d}</div></div>
+      <span class="rtag">${f.role}</span></div>`).join('')}</div>
+  <div class="card"><h3>${ic('layout')} Соглашение и оплата (шаг 2)</h3>
+    <div class="banner"><b>Договор подписан (DocuSign)</b><div class="sw ${d.agr.signed?'on':''}" onclick="toggleAgr('${d.id}','signed')"><b></b></div></div>
+    <div class="banner"><b>Setup fee оплачен</b><div class="sw ${d.agr.paid?'on':''}" onclick="toggleAgr('${d.id}','paid')"><b></b></div></div>
+    <p class="sub" style="margin-top:8px">Полноценный модуль соглашений (замена DocuSign) — следующий блок.</p></div>
+  <div class="card"><h3>${ic('chart')} История сделки</h3>${d.steps.slice().reverse().map(s=>`<div class="fbar"><span style="flex:1">${s.n}</span><span class="sub">${s.by} · ${s.at}</span></div>`).join('')}</div>`;
+}
+function openDeal(id){activeDeal=id;render();}
+function closeDeal(){activeDeal=null;render();}
+function dealActor(d){return (d.resp||'Система').split(' ')[0];}
+function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=stageIdx(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i].k;d.steps.push({n:'Стадия → '+STAGES[i].n,by:dealActor(d),at:now()});render();toast('Стадия: '+STAGES[i].n);}
+function setDealPerson(id,field,val){const d=deals.find(x=>x.id===id);d[field]=val;const lbl={resp:'Sales',ssales:'Service Sales',pm:'PM',am:'Account Manager'}[field];d.steps.push({n:lbl+': '+(val||'снят'),by:dealActor(d),at:now()});render();toast(lbl+': '+(val||'не назначен'));}
+function toggleFlow(id,i){const d=deals.find(x=>x.id===id);d.flow[i]=!d.flow[i];d.steps.push({n:(d.flow[i]?'✓ ':'✗ ')+FLOW[i].t,by:dealActor(d),at:now()});if(i===2&&d.flow[2]&&!d._rr){d._rr=true;addResourceRequest(d);}render();}
+function toggleAgr(id,key){const d=deals.find(x=>x.id===id);d.agr[key]=!d.agr[key];d.steps.push({n:(key==='signed'?'Договор':'Setup fee')+': '+(d.agr[key]?'да':'нет'),by:dealActor(d),at:now()});render();}
+function setDealStatus(id,st){const d=deals.find(x=>x.id===id);d.status=st;d.steps.push({n:'Статус → '+(st==='lost'?'Потеряно':st==='hold'?'На паузе':'В работе'),by:dealActor(d),at:now()});render();toast('Статус обновлён');}
 
 function vStats(){
   const max=Math.max(...analytics.sections.map(s=>s[1]));
@@ -336,10 +450,42 @@ function vStats(){
   </div>
   <div class="card"><h3>${ic('chart')} Воронка визита → лид</h3>
     ${[['Зашли',1287],['Смотрели разделы',940],['AI-советник / чат',372],['Оставили заявку',118],['Стали лидом',118]].map((f,i,arr)=>`<div class="fbar"><span style="width:170px">${f[0]}</span><span class="bar"><span style="width:${f[1]/1287*100}%"></span></span><b>${f[1]}</b></div>`).join('')}</div>
-  <div class="grid2">
-    <div class="card"><h3>${ic('chart')} Поисковые запросы</h3>${searchQueries.length?searchQueries.map(x=>`<div class="fbar"><span style="flex:1">${x[0]}</span><b>${x[1]}</b></div>`).join(''):'<p class="sub">Пока нет запросов.</p>'}</div>
-    <div class="card"><h3>${ic('chart')} Marketplace: показы и клики</h3>${vendorsData.length?vendorsData.map(v=>`<div class="fbar"><span style="flex:1">${v.name||'—'}</span><span style="white-space:nowrap">${v.impressions||0} показов · ${v.clicks||0} кликов</span></div>`).join(''):'<p class="sub">Пока нет вендоров.</p>'}</div>
-  </div>`;
+  <div class="card"><h3>${ic('chart')} Поисковые запросы</h3>${searchQueries.length?searchQueries.map(x=>`<div class="fbar"><span style="flex:1">${x[0]}</span><b>${x[1]}</b></div>`).join(''):'<p class="sub">Пока нет запросов.</p>'}</div>
+  ${mktAnalytics()}`;
+}
+
+// --- Аналитика Marketplace: по продуктам и услугам партнёров ---
+function mktLeads(v){return leadsData.filter(l=>(l.vendor_id&&v.id&&l.vendor_id===v.id)||(l.vendor&&v.name&&l.vendor===v.name));}
+function badgeRu(b){return b==='partner'?'Партнёр':b==='approved'?'Проверен':b==='new'?'New offer':(b||'—');}
+function pct(a,b){return b>0?Math.round(a/b*100):0;}
+function mktRows(){
+  return vendorsData.map(v=>{
+    const imp=v.impressions||0,clk=v.clicks||0,ls=mktLeads(v);
+    const cart=ls.filter(l=>l.source==='cart').length, demo=ls.filter(l=>l.source==='demo_request').length;
+    return {name:v.name||'—',cat:v.category||'—',badge:v.badge,imp,clk,ctr:pct(clk,imp),cart,demo,leads:ls.length,conv:pct(ls.length,clk)};
+  }).sort((a,b)=>b.imp-a.imp||b.leads-a.leads);
+}
+function mktAnalytics(){
+  const rows=mktRows();
+  if(!rows.length) return `<div class="card"><h3>${ic('chart')} Аналитика Marketplace</h3><p class="sub">Пока нет продуктов в каталоге.</p></div>`;
+  const tot=rows.reduce((a,r)=>({imp:a.imp+r.imp,clk:a.clk+r.clk,cart:a.cart+r.cart,demo:a.demo+r.demo,leads:a.leads+r.leads}),{imp:0,clk:0,cart:0,demo:0,leads:0});
+  // сводка по типу партнёра
+  const byB={};rows.forEach(r=>{const k=r.badge||'other';(byB[k]=byB[k]||{n:0,imp:0,clk:0,leads:0});byB[k].n++;byB[k].imp+=r.imp;byB[k].clk+=r.clk;byB[k].leads+=r.leads;});
+  const partSummary=Object.keys(byB).map(k=>`<div class="fbar"><span style="flex:1"><span class="st ${k==='partner'?'pt':k==='approved'?'ap':k==='new'?'nw':'pend'}">${badgeRu(k)}</span> · ${byB[k].n}</span><span style="white-space:nowrap;color:var(--muted)">${byB[k].imp} показов · ${byB[k].clk} кликов · ${byB[k].leads} лид.</span></div>`).join('');
+  const head=`<tr><th>Продукт / услуга</th><th>Тип</th><th>Показы</th><th>Клики</th><th>CTR</th><th>В корзину</th><th>Демо</th><th>Лиды</th><th>Конв.</th></tr>`;
+  const body=rows.map(r=>`<tr><td><b>${r.name}</b><br><span style="color:var(--muted);font-size:11px">${r.cat}</span></td><td><span class="st ${r.badge==='partner'?'pt':r.badge==='approved'?'ap':r.badge==='new'?'nw':'pend'}" style="font-size:10px">${badgeRu(r.badge)}</span></td><td>${r.imp}</td><td>${r.clk}</td><td>${r.ctr}%</td><td>${r.cart}</td><td>${r.demo}</td><td><b>${r.leads}</b></td><td>${r.conv}%</td></tr>`).join('');
+  return `<div class="grid2">
+    <div class="card"><h3>${ic('chart')} Итоги Marketplace</h3>
+      <div class="fbar"><span style="flex:1">Показы</span><b>${tot.imp}</b></div>
+      <div class="fbar"><span style="flex:1">Клики (CTR ${pct(tot.clk,tot.imp)}%)</span><b>${tot.clk}</b></div>
+      <div class="fbar"><span style="flex:1">Добавлений в корзину</span><b>${tot.cart}</b></div>
+      <div class="fbar"><span style="flex:1">Запросов демо</span><b>${tot.demo}</b></div>
+      <div class="fbar"><span style="flex:1">Лидов всего (конв. ${pct(tot.leads,tot.clk)}%)</span><b>${tot.leads}</b></div></div>
+    <div class="card"><h3>${ic('users')} По типу партнёра</h3>${partSummary||'<p class="sub">—</p>'}</div>
+  </div>
+  <div class="card"><h3>${ic('chart')} Продукты и услуги — воронка показ → клик → лид</h3>
+    <div style="overflow-x:auto"><table class="mtab">${head}${body}</table></div>
+    <p class="sub" style="margin-top:8px">CTR = клики/показы · Конв. = лиды/клики. Данные реальные: показы и клики из Marketplace, корзина и демо — из заявок посетителей.</p></div>`;
 }
 
 function srcLabel(s){return s==='demo_request'?'Запрос демо':s==='cart'?'Корзина интересов':s==='chat'?'Чат':(s||'—');}
@@ -400,8 +546,11 @@ function vChat(){
     const c=convos.find(x=>x.id===activeConvo);
     return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeConvo()">‹ Все чаты</button></div>
     <div class="card"><h3>${ic('megaphone')} ${c.visitor} ${c.online?'<span style="color:var(--green);font-weight:700;font-size:12px">● online</span>':''} · менеджер ${c.rep}</h3>
-      <div class="chatbox">${c.msgs.map(m=>`<div class="msg ${m.who}"><div>${m.text}</div><div class="mt2">${m.tm}</div></div>`).join('')}</div>
-      <div class="row" style="margin-top:10px"><input id="cmsg" placeholder="Ответить посетителю…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn" onclick="sendMsg()">▶</button></div></div>`;
+      <div class="chatbox">${c.msgs.map(m=>`<div class="msg ${m.who}">${m.url?(m.kind==='image'?`<a href="${m.url}" target="_blank"><img src="${m.url}" class="chatimg" alt=""></a>`:m.kind==='video'?`<video src="${m.url}" class="chatimg" controls preload="metadata"></video>`:`<a href="${m.url}" target="_blank" style="color:inherit">📎 файл</a>`):''}${m.text?`<div>${m.text}</div>`:''}<div class="mt2">${m.tm}</div></div>`).join('')}</div>
+      <div class="row" style="margin-top:10px">
+        <input id="cfile" type="file" accept="image/*,video/*" style="display:none" onchange="sendChatFile()">
+        <button class="btn sec" title="Фото/видео" onclick="document.getElementById('cfile').click()">📎</button>
+        <input id="cmsg" placeholder="Ответить посетителю…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn" onclick="sendMsg()">▶</button></div></div>`;
   }
   return `<h2>Чаты с посетителями</h2><p class="sub">Диалоги менеджеров с посетителями платформы.</p>
   ${convos.map(c=>`<div class="appc" style="cursor:pointer" onclick="openConvo(${c.id})"><div class="h"><div class="lg">${ic('megaphone')}</div>
@@ -414,6 +563,10 @@ function openConvo(id){activeConvo=id;const c=convos.find(x=>x.id===id);c.unread
 function closeConvo(){activeConvo=null;render();}
 function sendMsg(){const el=$('#cmsg');const t=(el.value||'').trim();if(!t)return;const c=convos.find(x=>x.id===activeConvo);
   c.msgs.push({who:'s',text:t,tm:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})});render();}
+async function sendChatFile(){const fi=$('#cfile');const file=fi&&fi.files&&fi.files[0];if(!file)return;
+  toast('Загрузка…');try{const up=await uploadToStorage(file);const c=convos.find(x=>x.id===activeConvo);
+  c.msgs.push({who:'s',url:up.url,kind:up.kind,tm:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})});render();toast('Отправлено');
+  }catch(e){toast('Ошибка: '+((e&&e.message)||e));}}
 
 function vContent(){
   return `<h2>Контент и управление index</h2><p class="sub">Создавайте баннеры и управляйте главной страницей.</p>
@@ -432,6 +585,244 @@ function addBanner(){const t=($('#b_title')||{}).value||'';const s=($('#b_sub')|
 function toggleBanner(i){banners[i].active=!banners[i].active;render();}
 function delBanner(i){banners.splice(i,1);render();toast('Баннер удалён');}
 function toggleIdx(k){idxToggles[k]=!idxToggles[k];render();toast(idxToggles[k]?'Раздел включён':'Раздел выключен');}
+
+// ============ ДОКУМЕНТЫ + ХРАНИЛИЩЕ ============
+let docsData=[];
+async function loadDocs(){if(!db)return;const {data}=await db.from('documents').select('*').order('created_at',{ascending:false}).limit(200);if(data){docsData=data;render();}}
+function fileKind(name,mime){const n=(name||'').toLowerCase();const m=(mime||'').toLowerCase();
+  if(m.startsWith('image/')||/\.(png|jpe?g|gif|webp|svg|avif)$/.test(n))return'image';
+  if(m.startsWith('video/')||/\.(mp4|webm|mov|m4v)$/.test(n))return'video';
+  if(m==='application/pdf'||/\.pdf$/.test(n))return'pdf';return'file';}
+function fmtSize(b){b=+b||0;if(b<1024)return b+' Б';if(b<1048576)return(b/1024).toFixed(0)+' КБ';return(b/1048576).toFixed(1)+' МБ';}
+async function uploadToStorage(file){
+  if(!db) throw new Error('Хранилище недоступно');
+  const ext=(file.name.split('.').pop()||'bin').toLowerCase();
+  const path='u_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+  const {error}=await db.storage.from('uploads').upload(path,file,{contentType:file.type||'application/octet-stream',upsert:false});
+  if(error) throw error;
+  const {data}=db.storage.from('uploads').getPublicUrl(path);
+  return {url:data.publicUrl,kind:fileKind(file.name,file.type)};
+}
+async function uploadDoc(){
+  const fi=$('#doc_file'), ti=$('#doc_title'), ci=$('#doc_cat');
+  const file=fi&&fi.files&&fi.files[0];
+  if(!file){toast('Выберите файл');return;}
+  toast('Загрузка…');
+  try{
+    const up=await uploadToStorage(file);
+    const row={title:(ti&&ti.value&&ti.value.trim())||file.name,category:(ci&&ci.value)||'Общее',
+      file_url:up.url,file_type:up.kind,file_name:file.name,size_bytes:file.size,uploaded_by:'Админ'};
+    if(db){const {error}=await db.from('documents').insert(row);if(error)throw error;}
+    toast('Документ загружен');loadDocs();
+    if(ti)ti.value='';if(fi)fi.value='';
+  }catch(e){toast('Ошибка: '+((e&&e.message)||e));}
+}
+async function delDoc(id){if(!db)return;if(!confirm('Удалить документ?'))return;await db.from('documents').delete().eq('id',id);loadDocs();}
+const DOC_CATS=['Общее','Договоры','Лицензии','KYB / Комплаенс','Партнёрские','Маркетинг','Медиа','Прочее'];
+let docFilter='';
+function setDocFilter(v){docFilter=v;render();}
+function docPreview(d){
+  if(d.file_type==='image')return `<a href="${d.file_url}" target="_blank"><img src="${d.file_url}" class="docimg" alt=""></a>`;
+  if(d.file_type==='video')return `<video src="${d.file_url}" class="docimg" controls preload="metadata"></video>`;
+  const ic2=d.file_type==='pdf'?'📄':'📎';
+  return `<a href="${d.file_url}" target="_blank" class="docfile">${ic2}<span>${(d.file_name||'файл').slice(0,24)}</span></a>`;
+}
+function vDocs(){
+  const list=docFilter?docsData.filter(d=>d.category===docFilter):docsData;
+  return `<h2>Документы</h2><p class="sub">Договоры, лицензии, партнёрские файлы, медиа. Хранятся в защищённом бакете.</p>
+  <div class="card"><h3>${ic('plus')} Загрузить документ</h3>
+    <div class="grid2">
+      <div><label>Название</label><input id="doc_title" placeholder="Напр. Договор с Provider X"></div>
+      <div><label>Категория</label><select id="doc_cat">${DOC_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+    </div>
+    <div style="margin-top:11px"><label>Файл (фото, видео, PDF, документ)</label>
+      <input id="doc_file" type="file" accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx"></div>
+    <button class="btn" style="margin-top:13px" onclick="uploadDoc()">${ic('layout')} Загрузить</button></div>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <h3 style="margin:0">${ic('layout')} Файлы (${list.length})</h3>
+    <select onchange="setDocFilter(this.value)" style="max-width:220px"><option value="">Все категории</option>${DOC_CATS.map(c=>`<option ${c===docFilter?'selected':''}>${c}</option>`).join('')}</select></div>
+    ${list.length?`<div class="docgrid">${list.map(d=>`<div class="doccard">${docPreview(d)}
+      <div class="docmeta"><b>${d.title||d.file_name||'—'}</b>
+        <div class="sub" style="font-size:11px;margin:2px 0">${d.category||''} · ${fmtSize(d.size_bytes)} · ${(d.created_at||'').slice(0,10)}</div>
+        <div class="row"><a class="btn sec sm" href="${d.file_url}" target="_blank">Открыть</a><button class="btn r sm" onclick="delDoc('${d.id}')">${ic('x')}</button></div></div></div>`).join('')}</div>`
+    :'<p class="sub" style="margin-top:12px">Пока нет документов. Загрузите первый файл выше. Если пусто после загрузки — проверьте, что выполнен <b>add_docs.sql</b> в Supabase.</p>'}</div>`;
+}
+
+// ============ СОГЛАШЕНИЯ (замена DocuSign) ============
+function notifyApp(payload){try{fetch('/api/notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(()=>{},()=>{});}catch(e){}}
+let agrData=[];
+async function loadAgreements(){if(!db)return;const {data}=await db.from('agreements').select('*').order('created_at',{ascending:false}).limit(200);if(data){agrData=data;render();}}
+const AGR_STATUS=[['draft','Черновик','pend'],['sent','Отправлено','nw'],['signed','Подписано','pt'],['completed','Завершено','ap']];
+function agrBadge(s){const x=AGR_STATUS.find(a=>a[0]===s)||AGR_STATUS[0];return `<span class="st ${x[2]}">${x[1]}</span>`;}
+const AGR_TEMPLATES={
+  'Setup & License Agreement':(c)=>`SETUP & LICENSE AGREEMENT
+
+Между: BetConstructAI ("Провайдер")
+И: ${c.partner} ("Партнёр")
+Дата: ${c.date}
+
+1. ПРЕДМЕТ. Провайдер предоставляет Партнёру доступ к платформе iGaming и услуги по запуску проекта.
+2. SETUP FEE. Единовременный установочный платёж: ${c.amount} ${c.cur}, оплачивается до старта разработки.
+3. СРОКИ. Запуск проекта — ориентировочно 3–4 недели после оплаты и передачи материалов.
+4. РОЛИ. Со стороны Провайдера назначается Project Manager; после запуска проект передаётся Account Manager.
+5. ЛИЦЕНЗИЯ И КОМПЛАЕНС. Партнёр обеспечивает наличие необходимых лицензий в целевых юрисдикциях.
+6. КОНФИДЕНЦИАЛЬНОСТЬ. Стороны сохраняют конфиденциальность коммерческих условий.
+
+Подпись Партнёра: ____________________   (${c.signer||'—'})`,
+  'Partner Marketplace Agreement':(c)=>`PARTNER MARKETPLACE AGREEMENT
+
+Между: BetConstructAI ("Платформа")
+И: ${c.partner} ("Партнёр")
+Дата: ${c.date}
+
+1. Партнёр размещает свой продукт/услугу в Marketplace BetConstructAI.
+2. Комиссия платформы и условия расчётов согласуются сторонами отдельно.
+3. Setup fee (при наличии): ${c.amount} ${c.cur}.
+4. Модерация (KYB) обязательна до публикации листинга.
+5. Партнёр отвечает за качество и легальность своего продукта.
+
+Подпись Партнёра: ____________________   (${c.signer||'—'})`,
+  'NDA':(c)=>`СОГЛАШЕНИЕ О НЕРАЗГЛАШЕНИИ (NDA)
+
+Между: BetConstructAI и ${c.partner}
+Дата: ${c.date}
+
+Стороны обязуются не раскрывать конфиденциальную информацию, полученную в ходе переговоров и сотрудничества, третьим лицам без письменного согласия.
+
+Подпись Партнёра: ____________________   (${c.signer||'—'})`
+};
+function agrCtx(){const d=$('#agr_deal'),p=$('#agr_partner');return {partner:(p&&p.value)||'',amount:($('#agr_amount')&&$('#agr_amount').value)||'0',cur:($('#agr_cur')&&$('#agr_cur').value)||'EUR',signer:($('#agr_sname')&&$('#agr_sname').value)||'',date:new Date().toLocaleDateString('ru-RU')};}
+function agrDealPick(){const sel=$('#agr_deal');if(!sel)return;const d=deals.find(x=>x.id===sel.value);const p=$('#agr_partner');if(d&&p)p.value=d.client;}
+async function createAgr(){
+  const tpl=($('#agr_tpl')&&$('#agr_tpl').value)||'Setup & License Agreement';
+  const c=agrCtx();
+  if(!c.partner.trim()){toast('Укажите партнёра');return;}
+  const body=(AGR_TEMPLATES[tpl]||AGR_TEMPLATES['Setup & License Agreement'])(c);
+  const row={deal_id:($('#agr_deal')&&$('#agr_deal').value)||'',partner:c.partner.trim(),title:tpl+' · '+c.partner.trim(),template:tpl,body,
+    amount:parseFloat(c.amount)||0,currency:c.cur,signer_name:c.signer,signer_email:($('#agr_semail')&&$('#agr_semail').value)||'',status:'draft'};
+  if(db){const {error}=await db.from('agreements').insert(row);if(error){toast('Ошибка: '+error.message);return;}}
+  toast('Черновик соглашения создан');loadAgreements();
+}
+function signLink(id){return location.origin+'/?sign='+id;}
+async function sendAgr(a){
+  if(!a.signer_email){toast('Нет email партнёра');return;}
+  if(db)await db.from('agreements').update({status:'sent',sent_at:new Date().toISOString()}).eq('id',a.id);
+  notifyApp({company:a.partner,kind:'Соглашение на подпись',product_name:a.title,email:a.signer_email,
+    contact_name:a.signer_name,site:signLink(a.id),description:'Ссылка на подписание: '+signLink(a.id)});
+  toast('Отправлено партнёру на подпись');loadAgreements();
+}
+function reflectDeal(a,fld){const d=deals.find(x=>x.id===a.deal_id);if(d){d.agr[fld]=true;if(fld==='signed'||fld==='paid'){if(!d.flow[1]){d.flow[1]=true;d.steps.push({n:'✓ Agreement & Fee',by:'Система',at:now()});}}}}
+async function markSigned(a){if(db)await db.from('agreements').update({status:'signed',signed_at:new Date().toISOString()}).eq('id',a.id);reflectDeal(a,'signed');toast('Отмечено: подписано');loadAgreements();}
+async function markPaid(a){if(db)await db.from('agreements').update({status:'completed',paid_at:new Date().toISOString()}).eq('id',a.id);reflectDeal(a,'paid');toast('Отмечено: setup fee оплачен');loadAgreements();}
+async function genDocAgr(a){
+  try{
+    const html='<!doctype html><meta charset=utf-8><title>'+(a.title||'Соглашение')+'</title><pre style="font:14px/1.5 system-ui;white-space:pre-wrap;max-width:720px;margin:40px auto;padding:0 20px">'+(a.body||'').replace(/</g,'&lt;')+'</pre>';
+    const file=new File([html],'agreement_'+(a.partner||'doc')+'.html',{type:'text/html'});
+    const up=await uploadToStorage(file);
+    if(db){await db.from('agreements').update({doc_url:up.url}).eq('id',a.id);
+      await db.from('documents').insert({title:a.title||'Соглашение',category:'Договоры',file_url:up.url,file_type:'file',file_name:file.name,size_bytes:file.size,uploaded_by:'Система',});}
+    toast('Документ сгенерирован и сохранён в «Документы»');loadAgreements();
+  }catch(e){toast('Ошибка: '+((e&&e.message)||e));}
+}
+async function delAgr(id){if(!db)return;if(!confirm('Удалить соглашение?'))return;await db.from('agreements').delete().eq('id',id);loadAgreements();}
+function agrPipeline(s){const cur=AGR_STATUS.findIndex(a=>a[0]===s);return `<div class="apipe">${AGR_STATUS.map((x,i)=>`<span class="apx ${i<=cur?'on':''}">${x[1]}</span>${i<AGR_STATUS.length-1?'<i>›</i>':''}`).join('')}</div>`;}
+function vAgr(){
+  const cnt={};AGR_STATUS.forEach(s=>cnt[s[0]]=agrData.filter(a=>a.status===s[0]).length);
+  const dealOpts=deals.map(d=>`<option value="${d.id}">${d.id} · ${d.client}</option>`).join('');
+  return `<h2>Соглашения · замена DocuSign</h2><p class="sub">Договор → отправка партнёру → подпись → оплата setup fee. Привязка к сделке, автосохранение в «Документы».</p>
+  <div class="kpis">${AGR_STATUS.map(s=>`<div class="kpi"><div class="ic">${ic('shield')}</div><div class="n">${cnt[s[0]]||0}</div><div class="l">${s[1]}</div></div>`).join('')}</div>
+  <div class="card"><h3>${ic('plus')} Новое соглашение</h3>
+    <div class="grid2">
+      <div><label>Сделка (необязательно)</label><select id="agr_deal" onchange="agrDealPick()"><option value="">— без привязки —</option>${dealOpts}</select></div>
+      <div><label>Партнёр</label><input id="agr_partner" placeholder="Название компании партнёра"></div>
+      <div><label>Шаблон</label><select id="agr_tpl">${Object.keys(AGR_TEMPLATES).map(k=>`<option>${k}</option>`).join('')}</select></div>
+      <div><label>Setup fee</label><div class="row"><input id="agr_amount" type="number" placeholder="0" style="flex:1"><select id="agr_cur" style="max-width:90px"><option>EUR</option><option>USD</option><option>AMD</option></select></div></div>
+      <div><label>Подписант (имя)</label><input id="agr_sname" placeholder="Имя партнёра"></div>
+      <div><label>Email подписанта</label><input id="agr_semail" type="email" placeholder="name@company.com"></div>
+    </div>
+    <button class="btn" style="margin-top:13px" onclick="createAgr()">${ic('shield')} Создать черновик</button></div>
+  ${agrData.length?agrData.map(a=>`<div class="card">
+    <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:flex-start">
+      <div><h3 style="margin:0">${a.partner||'—'}</h3><span class="sub">${a.template||''}${a.deal_id?(' · сделка '+a.deal_id):''}${a.amount?(' · '+a.amount+' '+(a.currency||'')):''}</span></div>
+      <div>${agrBadge(a.status)}</div></div>
+    ${agrPipeline(a.status)}
+    <details style="margin-top:8px"><summary class="sub" style="cursor:pointer">Текст соглашения</summary><pre class="agrbody">${(a.body||'').replace(/</g,'&lt;')}</pre></details>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:10px">
+      ${a.status==='draft'?`<button class="btn sm" onclick='sendAgr(${JSON.stringify(a).replace(/'/g,"&#39;")})'>▶ Отправить на подпись</button>`:''}
+      ${a.status==='sent'||a.status==='draft'?`<button class="btn sec sm" onclick='markSigned(${JSON.stringify(a).replace(/'/g,"&#39;")})'>Отметить подписано</button>`:''}
+      ${a.status==='signed'?`<button class="btn sm" onclick='markPaid(${JSON.stringify(a).replace(/'/g,"&#39;")})'>Отметить оплату setup fee</button>`:''}
+      <button class="btn sec sm" onclick='genDocAgr(${JSON.stringify(a).replace(/'/g,"&#39;")})'>Сгенерировать документ</button>
+      ${a.doc_url?`<a class="btn sec sm" href="${a.doc_url}" target="_blank">Открыть документ</a>`:''}
+      ${a.signer_email?`<span class="sub" style="align-self:center">✉ ${a.signer_email}</span>`:''}
+      <button class="btn r sm" onclick="delAgr('${a.id}')">${ic('x')}</button></div>
+    ${a.status==='signed'||a.status==='completed'?`<p class="sub" style="margin-top:8px">Подписано: ${(a.signed_at||'').slice(0,16).replace('T',' ')}${a.paid_at?(' · оплата: '+(a.paid_at||'').slice(0,16).replace('T',' ')):''}</p>`:''}
+  </div>`).join(''):'<div class="card"><p class="sub">Пока нет соглашений. Создайте первое выше. Если после создания пусто — проверьте, что выполнен <b>add_agreements.sql</b> в Supabase.</p></div>'}`;
+}
+
+// ============ ЗАДАЧИ / ЗАПРОСЫ РЕСУРСОВ (замена Jira) ============
+let taskData=[], taskDept='';
+async function loadTasks(){if(!db)return;const {data}=await db.from('tasks').select('*').order('created_at',{ascending:false}).limit(300);if(data){taskData=data;render();}}
+const TDEPTS=['PM','Service Sales','Sales','Legal','Dev','Ops'];
+const TPRIO={P1:'rej',P2:'nw',P3:'pt',P4:'pend'};
+const TSTATUS=[['open','Открыто'],['in_progress','В работе'],['blocked','Блок'],['done','Готово']];
+function tstatIdx(s){return TSTATUS.findIndex(x=>x[0]===s);}
+async function createTask(){
+  const g=id=>($('#'+id)&&$('#'+id).value)||'';
+  const title=g('tk_title').trim();if(!title){toast('Название задачи пусто');return;}
+  const row={title,description:g('tk_desc'),type:g('tk_type')||'dept_task',dept:g('tk_dept'),assignee:g('tk_assignee'),
+    requester:'Админ',deal_id:g('tk_deal'),priority:g('tk_prio')||'P3',status:'open',due_date:g('tk_due')||null};
+  if(db){const {error}=await db.from('tasks').insert(row);if(error){toast('Ошибка: '+error.message);return;}}
+  toast('Задача создана');loadTasks();const ti=$('#tk_title');if(ti)ti.value='';const td=$('#tk_desc');if(td)td.value='';
+}
+async function addResourceRequest(d){
+  if(!db)return;
+  const rows=[
+    {title:'Назначить PM на проект '+d.client,type:'resource_request',dept:'PM',requester:d.resp||'Sales',deal_id:d.id,priority:'P2',status:'open'},
+    {title:'Подключить Service Sales · '+d.client,type:'resource_request',dept:'Service Sales',requester:d.resp||'Sales',deal_id:d.id,priority:'P2',status:'open'}
+  ];
+  await db.from('tasks').insert(rows);toast('Созданы запросы ресурсов (PM + Service Sales)');loadTasks();
+}
+async function moveTask(id,dir){const tk=taskData.find(x=>x.id===id);if(!tk)return;const i=tstatIdx(tk.status)+dir;if(i<0||i>=TSTATUS.length)return;if(db)await db.from('tasks').update({status:TSTATUS[i][0]}).eq('id',id);loadTasks();}
+async function setTaskAssignee(id,val){if(db)await db.from('tasks').update({assignee:val}).eq('id',id);loadTasks();}
+async function delTask(id){if(!db)return;if(!confirm('Удалить задачу?'))return;await db.from('tasks').delete().eq('id',id);loadTasks();}
+function tkCard(tk){
+  const si=tstatIdx(tk.status);
+  return `<div class="kcard">
+    <div class="row" style="justify-content:space-between"><span class="st ${TPRIO[tk.priority]||'pend'}" style="font-size:10px">${tk.priority||'P3'}</span>
+      ${tk.type==='resource_request'?`<span class="rtag">запрос</span>`:tk.type==='bug'?`<span class="st rej" style="font-size:10px">bug</span>`:''}</div>
+    <div class="kcl" style="margin-top:5px">${tk.title||'—'}</div>
+    <div class="kresp">${tk.dept?`<span class="rtag">${tk.dept}</span>`:''}${tk.deal_id?` · <span style="color:var(--muted)">${tk.deal_id}</span>`:''}</div>
+    <select style="margin-top:7px;font-size:12px" onchange="setTaskAssignee('${tk.id}',this.value)"><option value="">— исполнитель —</option>${staff.map(s=>`<option ${tk.assignee===s.name?'selected':''}>${s.name}</option>`).join('')}</select>
+    ${tk.due_date?`<div class="klast">срок: ${tk.due_date}</div>`:''}
+    <div class="krow">${si>0?`<button class="kbtn" onclick="moveTask('${tk.id}',-1)">◀</button>`:'<span></span>'}
+      <button class="btn r sm" style="padding:2px 8px" onclick="delTask('${tk.id}')">${ic('x')}</button>
+      ${si<TSTATUS.length-1?`<button class="kbtn" onclick="moveTask('${tk.id}',1)">▶</button>`:'<span></span>'}</div></div>`;
+}
+function vTasks(){
+  const list=taskDept?taskData.filter(t=>t.dept===taskDept):taskData;
+  const dealOpts=deals.map(d=>`<option value="${d.id}">${d.id} · ${d.client}</option>`).join('');
+  return `<h2>Задачи · запросы ресурсов (Jira)</h2><p class="sub">Внутренние задачи отделов и запросы PM/Service Sales. Двигайте карточки ◀ ▶ по статусам.</p>
+  <div class="card"><h3>${ic('plus')} Новая задача</h3>
+    <div class="grid2">
+      <div><label>Название</label><input id="tk_title" placeholder="Что нужно сделать"></div>
+      <div><label>Тип</label><select id="tk_type"><option value="dept_task">Задача отдела</option><option value="resource_request">Запрос ресурса</option><option value="bug">Bug</option></select></div>
+      <div><label>Отдел</label><select id="tk_dept">${TDEPTS.map(d=>`<option>${d}</option>`).join('')}</select></div>
+      <div><label>Исполнитель</label><select id="tk_assignee"><option value="">— не назначен —</option>${staff.map(s=>`<option>${s.name}</option>`).join('')}</select></div>
+      <div><label>Приоритет</label><select id="tk_prio"><option>P1</option><option>P2</option><option selected>P3</option><option>P4</option></select></div>
+      <div><label>Срок</label><input id="tk_due" type="date"></div>
+      <div><label>Сделка (необязательно)</label><select id="tk_deal"><option value="">— без привязки —</option>${dealOpts}</select></div>
+      <div><label>Описание</label><input id="tk_desc" placeholder="Детали"></div>
+    </div>
+    <button class="btn" style="margin-top:13px" onclick="createTask()">${ic('layout')} Создать задачу</button></div>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <h3 style="margin:0">${ic('layout')} Доска задач (${list.length})</h3>
+    <select onchange="taskDept=this.value;render()" style="max-width:200px"><option value="">Все отделы</option>${TDEPTS.map(d=>`<option ${d===taskDept?'selected':''}>${d}</option>`).join('')}</select></div>
+    <div class="kanban" style="margin-top:12px">${TSTATUS.map(st=>{
+      const col=list.filter(t=>t.status===st[0]);
+      return `<div class="kcol"><div class="khd">${st[1]}<span class="kn">${col.length}</span></div>${col.map(tkCard).join('')||'<div class="kempty">—</div>'}</div>`;
+    }).join('')}</div>
+    ${!taskData.length?'<p class="sub" style="margin-top:10px">Пока нет задач. Создайте задачу выше или отметьте шаг 3 «Resource request» в сделке CRM — запросы PM/Service Sales создадутся автоматически. Если пусто после создания — проверьте <b>add_tasks.sql</b> в Supabase.</p>':''}</div>`;
+}
 
 boot();
 </script>
