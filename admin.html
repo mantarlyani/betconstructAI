@@ -268,7 +268,7 @@ let idxToggles={quick:true,live:true,promo:true,sections:true};
 const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();}
+function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();}
 
 /* ---------- VIEWS ---------- */
 function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
@@ -436,7 +436,7 @@ function closeDeal(){activeDeal=null;render();}
 function dealActor(d){return (d.resp||'Система').split(' ')[0];}
 function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=stageIdx(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i].k;d.steps.push({n:'Стадия → '+STAGES[i].n,by:dealActor(d),at:now()});render();toast('Стадия: '+STAGES[i].n);}
 function setDealPerson(id,field,val){const d=deals.find(x=>x.id===id);d[field]=val;const lbl={resp:'Sales',ssales:'Service Sales',pm:'PM',am:'Account Manager'}[field];d.steps.push({n:lbl+': '+(val||'снят'),by:dealActor(d),at:now()});render();toast(lbl+': '+(val||'не назначен'));}
-function toggleFlow(id,i){const d=deals.find(x=>x.id===id);d.flow[i]=!d.flow[i];d.steps.push({n:(d.flow[i]?'✓ ':'✗ ')+FLOW[i].t,by:dealActor(d),at:now()});if(i===2&&d.flow[2]&&!d._rr){d._rr=true;addResourceRequest(d);}render();}
+function toggleFlow(id,i){const d=deals.find(x=>x.id===id);d.flow[i]=!d.flow[i];d.steps.push({n:(d.flow[i]?'✓ ':'✗ ')+FLOW[i].t,by:dealActor(d),at:now()});if(i===2&&d.flow[2]&&!d._rr){d._rr=true;addResourceRequest(d);}if(i===3&&d.flow[3]&&!d._kick){d._kick=true;createKickoff(d);}render();}
 function toggleAgr(id,key){const d=deals.find(x=>x.id===id);d.agr[key]=!d.agr[key];d.steps.push({n:(key==='signed'?'Договор':'Setup fee')+': '+(d.agr[key]?'да':'нет'),by:dealActor(d),at:now()});render();}
 function setDealStatus(id,st){const d=deals.find(x=>x.id===id);d.status=st;d.steps.push({n:'Статус → '+(st==='lost'?'Потеряно':st==='hold'?'На паузе':'В работе'),by:dealActor(d),at:now()});render();toast('Статус обновлён');}
 
@@ -541,32 +541,41 @@ function salesCard(s){
       <button class="btn sec sm" onclick="toast('Выплата поставлена в очередь')">Отметить выплату</button></div></div>`;
 }
 
+let threadsData=[], activeThread=null, threadMsgs=[], athreadPoll=null;
 function vChat(){
-  if(activeConvo!=null){
-    const c=convos.find(x=>x.id===activeConvo);
-    return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeConvo()">‹ Все чаты</button></div>
-    <div class="card"><h3>${ic('megaphone')} ${c.visitor} ${c.online?'<span style="color:var(--green);font-weight:700;font-size:12px">● online</span>':''} · менеджер ${c.rep}</h3>
-      <div class="chatbox">${c.msgs.map(m=>`<div class="msg ${m.who}">${m.url?(m.kind==='image'?`<a href="${m.url}" target="_blank"><img src="${m.url}" class="chatimg" alt=""></a>`:m.kind==='video'?`<video src="${m.url}" class="chatimg" controls preload="metadata"></video>`:`<a href="${m.url}" target="_blank" style="color:inherit">📎 файл</a>`):''}${m.text?`<div>${m.text}</div>`:''}<div class="mt2">${m.tm}</div></div>`).join('')}</div>
+  if(!db) return `<h2>Чаты и каналы</h2><p class="sub">База данных не подключена.</p>`;
+  if(activeThread){
+    const th=threadsData.find(x=>x.id===activeThread)||{};
+    const kindLbl=th.kind==='internal'?'внутренний канал':th.kind==='kickoff'?('kickoff · '+(th.partner||th.deal_id||'')):'посетитель';
+    return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeThread()">‹ Все каналы</button></div>
+    <div class="card"><h3>${ic('megaphone')} ${th.title||'Диалог'} <span class="pill">${kindLbl}</span></h3>
+      <div class="chatbox" id="athreadbox">${threadMsgs.map(amsgHTML).join('')||'<p class="sub">Сообщений пока нет.</p>'}</div>
       <div class="row" style="margin-top:10px">
         <input id="cfile" type="file" accept="image/*,video/*" style="display:none" onchange="sendChatFile()">
         <button class="btn sec" title="Фото/видео" onclick="document.getElementById('cfile').click()">📎</button>
-        <input id="cmsg" placeholder="Ответить посетителю…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn" onclick="sendMsg()">▶</button></div></div>`;
+        <input id="cmsg" placeholder="Написать…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn" onclick="sendMsg()">▶</button></div></div>`;
   }
-  return `<h2>Чаты с посетителями</h2><p class="sub">Диалоги менеджеров с посетителями платформы.</p>
-  ${convos.map(c=>`<div class="appc" style="cursor:pointer" onclick="openConvo(${c.id})"><div class="h"><div class="lg">${ic('megaphone')}</div>
-    <div style="flex:1"><div class="nm">${c.visitor} ${c.unread?`<span class="st pend" style="margin-left:6px">${c.unread} новое</span>`:''}</div>
-      <div class="mt">${c.msgs[c.msgs.length-1].text}</div></div>
-    <div style="text-align:right"><div style="font-size:11.5px;color:var(--muted)">${c.msgs[c.msgs.length-1].tm}</div>
-      <div style="font-size:11.5px;color:${c.online?'var(--green)':'var(--muted)'};font-weight:700">${c.online?'online':'офлайн'}</div></div></div></div>`).join('')}`;
+  const groups=[['visitor','Посетители (Hoory)'],['kickoff','Kickoff · партнёры'],['internal','Внутренние каналы (Pandayo)']];
+  return `<h2>Чаты и каналы</h2><p class="sub">Живой чат с посетителями + внутренние и kickoff-каналы. Обновление вживую (~3.5с).</p>
+  <div class="card"><button class="btn sm" onclick="createInternal()">${ic('plus')} Новый внутренний канал</button></div>
+  ${groups.map(g=>{const list=threadsData.filter(t=>(t.kind||'visitor')===g[0]);return `<div class="card"><h3>${ic('megaphone')} ${g[1]} (${list.length})</h3>${list.length?list.map(t=>`<div class="appc" style="cursor:pointer" onclick="openThread('${t.id}')"><div class="h"><div class="lg">${ic('megaphone')}</div><div style="flex:1"><div class="nm">${t.title||'Диалог'}${t.deal_id?` · <span style="color:var(--muted);font-size:12px">${t.deal_id}</span>`:''}</div><div class="mt">обновлён: ${(t.last_at||'').slice(0,16).replace('T',' ')}</div></div></div></div>`).join(''):'<p class="sub">Пусто.</p>'}</div>`;}).join('')}`;
 }
-function openConvo(id){activeConvo=id;const c=convos.find(x=>x.id===id);c.unread=0;render();}
-function closeConvo(){activeConvo=null;render();}
-function sendMsg(){const el=$('#cmsg');const t=(el.value||'').trim();if(!t)return;const c=convos.find(x=>x.id===activeConvo);
-  c.msgs.push({who:'s',text:t,tm:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})});render();}
-async function sendChatFile(){const fi=$('#cfile');const file=fi&&fi.files&&fi.files[0];if(!file)return;
-  toast('Загрузка…');try{const up=await uploadToStorage(file);const c=convos.find(x=>x.id===activeConvo);
-  c.msgs.push({who:'s',url:up.url,kind:up.kind,tm:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})});render();toast('Отправлено');
+function amsgHTML(m){const side=m.role==='staff'?'s':'v';const media=m.file_url?(m.file_type==='image'?`<a href="${m.file_url}" target="_blank"><img src="${m.file_url}" class="chatimg" alt=""></a>`:m.file_type==='video'?`<video src="${m.file_url}" class="chatimg" controls preload="metadata"></video>`:`<a href="${m.file_url}" target="_blank" style="color:inherit">📎 файл</a>`):'';return `<div class="msg ${side}">${media}${m.text?`<div>${m.text}</div>`:''}<div class="mt2">${(m.created_at||'').slice(11,16)}${m.sender?(' · '+m.sender):''}</div></div>`;}
+function paintAThread(){const b=$('#athreadbox');if(b){b.innerHTML=threadMsgs.map(amsgHTML).join('')||'<p class="sub">Сообщений пока нет.</p>';b.scrollTop=b.scrollHeight;}}
+async function loadThreads(){if(!db)return;const {data}=await db.from('threads').select('*').order('last_at',{ascending:false}).limit(100);if(data){threadsData=data;if(!activeThread)render();}}
+async function loadAThreadMsgs(paintOnly){if(!db||!activeThread)return;const {data}=await db.from('thread_messages').select('*').eq('thread_id',activeThread).order('created_at',{ascending:true}).limit(300);if(data){threadMsgs=data;paintOnly?paintAThread():render();}}
+function openThread(id){activeThread=id;threadMsgs=[];render();loadAThreadMsgs();if(athreadPoll)clearInterval(athreadPoll);athreadPoll=setInterval(()=>loadAThreadMsgs(true),3500);}
+function closeThread(){if(athreadPoll){clearInterval(athreadPoll);athreadPoll=null;}activeThread=null;render();loadThreads();}
+async function sendMsg(){const el=$('#cmsg');const tx=(el.value||'').trim();if(!tx||!activeThread)return;el.value='';
+  try{await db.from('thread_messages').insert({thread_id:activeThread,sender:'Менеджер',role:'staff',text:tx});
+    await db.from('threads').update({last_at:new Date().toISOString()}).eq('id',activeThread);loadAThreadMsgs(true);}catch(e){toast('Ошибка: '+((e&&e.message)||e));}}
+async function sendChatFile(){const fi=$('#cfile');const file=fi&&fi.files&&fi.files[0];if(!file||!activeThread)return;
+  toast('Загрузка…');try{const up=await uploadToStorage(file);
+    await db.from('thread_messages').insert({thread_id:activeThread,sender:'Менеджер',role:'staff',file_url:up.url,file_type:up.kind});
+    await db.from('threads').update({last_at:new Date().toISOString()}).eq('id',activeThread);loadAThreadMsgs(true);toast('Отправлено');
   }catch(e){toast('Ошибка: '+((e&&e.message)||e));}}
+async function createInternal(){const title=prompt('Название внутреннего канала:');if(!title||!title.trim())return;if(db){await db.from('threads').insert({kind:'internal',title:title.trim()});loadThreads();toast('Канал создан');}}
+async function createKickoff(d){if(!db)return;const {data:ex}=await db.from('threads').select('id').eq('kind','kickoff').eq('deal_id',d.id).limit(1);if(ex&&ex.length){toast('Kickoff-канал уже есть');return;}const {data:ins}=await db.from('threads').insert({kind:'kickoff',title:'Kickoff · '+d.client,deal_id:d.id,partner:d.client}).select('id').single();if(ins){await db.from('thread_messages').insert({thread_id:ins.id,sender:'Система',role:'system',text:'Kickoff-канал создан для проекта «'+d.client+'». Участники: PM '+(d.pm||'—')+' + партнёр.'});}toast('Kickoff-канал создан');}
 
 function vContent(){
   return `<h2>Контент и управление index</h2><p class="sub">Создавайте баннеры и управляйте главной страницей.</p>
