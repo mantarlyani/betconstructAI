@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кабинет партнёра · BetConstructAI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--mag:#d6006c;--bg:#f6f7fb;--card:#fff;--line:#e7e9f2;--text:#141631;--muted:#8b8fa7;--green:#12a150;--amber:#c98a00;--red:#e5484d}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text)}
+  a{color:inherit}
+  .top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:12px 18px}
+  .blogo{width:34px;height:34px;border-radius:9px;background:var(--mag);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+  .top b{font-size:15px}.top .sp{flex:1}
+  .btn{background:var(--mag);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer}
+  .btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line)}
+  .btn.sm{padding:6px 12px;font-size:13px}
+  .btn.r{background:#fdecea;color:var(--red)}
+  .wrap{max-width:960px;margin:0 auto;padding:18px}
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:12px 18px 0}
+  .tabs button{background:none;border:none;padding:9px 14px;border-radius:10px 10px 0 0;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .tabs button.on{background:#fff;color:var(--mag);border:1px solid var(--line);border-bottom:none}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  .card h3{margin:0 0 11px;font-size:15px}
+  h2{font-size:20px;margin:4px 0 2px}.sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+  label{display:block;font-size:12.5px;color:var(--muted);margin:9px 0 4px}
+  input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:11px;margin-bottom:14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px}
+  .kpi .n{font-size:24px;font-weight:800}.kpi .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .fbar{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .fbar:last-child{border-bottom:none}
+  .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+  .st.pend{background:#fdf3dc;color:var(--amber)}.st.ap{background:#e3f6ee;color:#0f7a52}.st.pt{background:#eef0ff;color:#4a44b8}.st.rej{background:#fdecea;color:var(--red)}.st.nw{background:#fff0e0;color:#b5700d}
+  .login{max-width:400px;margin:8vh auto;text-align:center}
+  .login .blogo{width:56px;height:56px;font-size:28px;border-radius:15px;margin:0 auto 16px}
+  .chatbox{height:320px;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:12px;display:flex;flex-direction:column;gap:9px}
+  .msg{max-width:80%;padding:9px 12px;border-radius:13px;font-size:14px}
+  .msg.v{background:var(--card);border:1px solid var(--line);align-self:flex-start}
+  .msg.s{background:var(--mag);color:#fff;align-self:flex-end}
+  .msg .mt2{font-size:10.5px;opacity:.7;margin-top:3px}
+  .cimg{max-width:210px;max-height:180px;border-radius:10px;display:block;margin-bottom:4px}
+  .row{display:flex;gap:8px;align-items:center}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#141631;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;z-index:50}
+  .toast.on{opacity:1}
+  .agrbody{white-space:pre-wrap;font:12.5px/1.55 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:8px;max-height:260px;overflow:auto}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+const SB_URL='https://smddtvaewmmpuyvtuscb.supabase.co';
+const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
+const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
+const $=s=>document.querySelector(s);
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');setTimeout(()=>el.classList.remove('on'),2200);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+let P={email:'',companies:[],apps:[],vendors:[],leads:[],agreements:[],threads:[]};
+let cur='overview', activeThread=null, threadMsgs=[], poll=null;
+
+function uniq(a){return [...new Set(a.filter(Boolean))];}
+
+async function loadAll(){
+  if(!db)return;
+  const email=P.email;
+  const {data:apps}=await db.from('applications').select('*').eq('email',email);
+  P.apps=apps||[];
+  P.companies=uniq(P.apps.map(a=>a.company));
+  const appIds=P.apps.map(a=>a.id).filter(Boolean);
+  let vendors=[];
+  if(appIds.length){const {data}=await db.from('vendors').select('*').in('application_id',appIds);if(data)vendors=data;}
+  if(P.companies.length){const {data}=await db.from('vendors').select('*').in('name',P.companies);if(data)vendors=vendors.concat(data);}
+  const seen={};P.vendors=vendors.filter(v=>seen[v.id]?false:(seen[v.id]=true));
+  const vNames=uniq(P.vendors.map(v=>v.name).concat(P.companies));
+  const vIds=P.vendors.map(v=>v.id);
+  const {data:leads}=await db.from('leads').select('*').order('created_at',{ascending:false}).limit(500);
+  P.leads=(leads||[]).filter(l=>(l.vendor&&vNames.includes(l.vendor))||(l.vendor_id&&vIds.includes(l.vendor_id)));
+  const {data:agr}=await db.from('agreements').select('*').order('created_at',{ascending:false}).limit(200);
+  P.agreements=(agr||[]).filter(a=>(a.signer_email&&a.signer_email===email)||(a.partner&&P.companies.includes(a.partner)));
+  if(P.companies.length){const {data:th}=await db.from('threads').select('*').eq('kind','kickoff').in('partner',P.companies).order('last_at',{ascending:false});P.threads=th||[];}
+  else P.threads=[];
+  renderApp();
+}
+
+// ---------- LOGIN ----------
+function renderLogin(){
+  $('#app').innerHTML=`<div class="login">
+    <div class="blogo">B</div>
+    <h2>Кабинет партнёра</h2>
+    <p class="sub">Войдите по email, который вы указали в заявке.</p>
+    <div class="card" style="text-align:left">
+      <label>Email</label><input id="p_email" type="email" placeholder="name@company.com" onkeydown="if(event.key==='Enter')pLogin()">
+      <button class="btn" style="width:100%;margin-top:14px" onclick="pLogin()">Войти</button>
+    </div>
+    <p class="sub">Нет заявки? <a href="/" style="color:var(--mag)">Подайте продукт на модерацию</a></p>
+  </div>`;
+}
+async function pLogin(){
+  const email=(($('#p_email')||{}).value||'').trim().toLowerCase();
+  if(!email||!/@/.test(email)){toast('Введите корректный email');return;}
+  P.email=email;try{sessionStorage.setItem('bc_partner',email);}catch(e){}
+  toast('Входим…');await loadAll();
+}
+function logout(){try{sessionStorage.removeItem('bc_partner');}catch(e){}P={email:'',companies:[],apps:[],vendors:[],leads:[],agreements:[],threads:[]};stopPoll();activeThread=null;renderLogin();}
+
+// ---------- APP SHELL ----------
+const TABS=[['overview','Обзор'],['products','Мои продукты'],['leads','Лиды'],['agreements','Соглашения'],['chat','Канал'],['profile','Профиль']];
+function renderApp(){
+  $('#app').innerHTML=`<div class="top"><div class="blogo">B</div><b>BetConstructAI · Партнёр</b><div class="sp"></div>
+    <span class="sub" style="margin:0">${esc(P.email)}</span><button class="btn sec sm" onclick="logout()">Выйти</button></div>
+    <div class="tabs">${TABS.map(t=>`<button class="${cur===t[0]?'on':''}" onclick="goP('${t[0]}')">${t[1]}</button>`).join('')}</div>
+    <div class="wrap" id="body"></div>`;
+  paintBody();
+}
+function goP(t){cur=t;if(t!=='chat'){stopPoll();activeThread=null;}renderApp();}
+function paintBody(){
+  const v={overview:vOverview,products:vProducts,leads:vLeads,agreements:vAgreements,chat:vChat,profile:vProfile}[cur];
+  $('#body').innerHTML=v();
+  if(cur==='chat'&&activeThread)startPoll();
+}
+
+// ---------- VIEWS ----------
+function vOverview(){
+  const imp=P.vendors.reduce((a,v)=>a+(v.impressions||0),0);
+  const clk=P.vendors.reduce((a,v)=>a+(v.clicks||0),0);
+  const toSign=P.agreements.filter(a=>a.status==='draft'||a.status==='sent').length;
+  return `<h2>Здравствуйте!</h2><p class="sub">${P.companies.join(', ')||'Профиль партнёра'}</p>
+  <div class="kpis">
+    <div class="kpi"><div class="n">${P.vendors.length}</div><div class="l">Продуктов в каталоге</div></div>
+    <div class="kpi"><div class="n">${imp}</div><div class="l">Показов</div></div>
+    <div class="kpi"><div class="n">${clk}</div><div class="l">Кликов</div></div>
+    <div class="kpi"><div class="n">${P.leads.length}</div><div class="l">Лидов</div></div>
+    <div class="kpi"><div class="n">${toSign}</div><div class="l">Соглашений к подписи</div></div>
+  </div>
+  ${toSign?`<div class="card"><h3>✍ Требуют вашей подписи</h3>${P.agreements.filter(a=>a.status==='draft'||a.status==='sent').map(a=>`<div class="fbar"><span style="flex:1">${esc(a.title||a.partner)}</span><a class="btn sm" href="/?sign=${a.id}">Подписать</a></div>`).join('')}</div>`:''}
+  ${!P.apps.length?`<div class="card"><p class="sub">По этому email не найдено заявок. Проверьте адрес или <a href="/" style="color:var(--mag)">подайте заявку</a>.</p></div>`:''}`;
+}
+function vProducts(){
+  if(!P.vendors.length&&!P.apps.length) return `<h2>Мои продукты</h2><p class="sub">Пока нет заявок и листингов.</p>`;
+  const badge=b=>b==='partner'?'<span class="st pt">Partner</span>':b==='approved'?'<span class="st ap">Approved</span>':b==='new'?'<span class="st nw">New offer</span>':'<span class="st pend">на модерации</span>';
+  return `<h2>Мои продукты</h2><p class="sub">Статус модерации, показы и клики.</p>
+  ${P.apps.map(a=>{const v=P.vendors.find(x=>x.application_id===a.id);return `<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(a.company||'—')}</b>${badge(a.status)}</div>
+    <p class="sub" style="margin:6px 0 0">${esc(a.product_name||a.category||'')}</p>
+    ${v?`<div class="row" style="gap:16px;margin-top:8px"><span class="sub">${v.impressions||0} показов</span><span class="sub">${v.clicks||0} кликов</span><span class="sub">CTR ${v.impressions?Math.round((v.clicks||0)/v.impressions*100):0}%</span></div>`:'<p class="sub" style="margin-top:6px">Ещё не опубликован в Marketplace.</p>'}</div>`;}).join('')}`;
+}
+function vLeads(){
+  return `<h2>Лиды по моим продуктам</h2><p class="sub">Запросы демо и добавления в корзину интереса.</p>
+  ${P.leads.length?P.leads.map(l=>`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(l.product||l.vendor||'—')}</b><span class="st ${l.source==='cart'?'pt':'nw'}">${l.source==='cart'?'корзина':'демо'}</span></div>
+    <p class="sub" style="margin:6px 0 0">${esc(l.visitor_name||'Гость')}${l.contact?(' · '+esc(l.contact)):''} · ${(l.created_at||'').slice(0,16).replace('T',' ')}</p>
+    ${l.message?`<p style="margin:6px 0 0;font-size:13.5px">${esc(l.message)}</p>`:''}</div>`).join(''):'<div class="card"><p class="sub">Пока нет лидов.</p></div>'}`;
+}
+function vAgreements(){
+  const badge=s=>s==='completed'?'<span class="st ap">Завершено</span>':s==='signed'?'<span class="st pt">Подписано</span>':s==='sent'?'<span class="st nw">Ждёт подписи</span>':'<span class="st pend">Черновик</span>';
+  return `<h2>Соглашения</h2><p class="sub">Договоры и setup fee по вашим проектам.</p>
+  ${P.agreements.length?P.agreements.map(a=>`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(a.title||a.partner)}</b>${badge(a.status)}</div>
+    <p class="sub" style="margin:6px 0 0">${esc(a.template||'')}${a.amount?(' · setup fee '+a.amount+' '+esc(a.currency||'')):''}</p>
+    <details style="margin-top:8px"><summary class="sub" style="cursor:pointer">Текст соглашения</summary><pre class="agrbody">${esc(a.body||'')}</pre></details>
+    <div class="row" style="margin-top:10px">${(a.status==='draft'||a.status==='sent')?`<a class="btn sm" href="/?sign=${a.id}">✍ Подписать</a>`:''}${a.doc_url?`<a class="btn sec sm" href="${a.doc_url}" target="_blank">Документ</a>`:''}</div></div>`).join(''):'<div class="card"><p class="sub">Соглашений пока нет.</p></div>'}`;
+}
+
+// ---------- CHAT (kickoff) ----------
+function amsgHTML(m){const side=m.role==='partner'?'s':'v';const media=m.file_url?(m.file_type==='image'?`<a href="${m.file_url}" target="_blank"><img src="${m.file_url}" class="cimg"></a>`:m.file_type==='video'?`<video src="${m.file_url}" class="cimg" controls preload="metadata"></video>`:`<a href="${m.file_url}" target="_blank" style="color:inherit">📎 файл</a>`):'';return `<div class="msg ${side}">${media}${m.text?`<div>${esc(m.text)}</div>`:''}<div class="mt2">${(m.created_at||'').slice(11,16)}${m.sender?(' · '+esc(m.sender)):''}</div></div>`;}
+function vChat(){
+  if(activeThread){const th=P.threads.find(x=>x.id===activeThread)||{};
+    return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeThread()">‹ Все каналы</button></div>
+    <div class="card"><h3>💬 ${esc(th.title||'Канал проекта')}</h3>
+      <div class="chatbox" id="cbox">${threadMsgs.map(amsgHTML).join('')||'<p class="sub">Сообщений пока нет.</p>'}</div>
+      <div class="row" style="margin-top:10px">
+        <input id="cfile" type="file" accept="image/*,video/*" style="display:none" onchange="sendFile()">
+        <button class="btn sec" onclick="document.getElementById('cfile').click()" title="Фото/видео">📎</button>
+        <input id="cin" placeholder="Написать команде проекта…" onkeydown="if(event.key==='Enter')sendP()"><button class="btn" onclick="sendP()">▶</button></div></div>`;
+  }
+  return `<h2>Каналы проекта</h2><p class="sub">Kickoff-каналы с командой BetConstructAI (PM и менеджеры).</p>
+  ${P.threads.length?P.threads.map(t=>`<div class="card" style="cursor:pointer" onclick="openThread('${t.id}')"><div class="row" style="justify-content:space-between"><b>${esc(t.title||'Канал')}</b><span class="sub">${(t.last_at||'').slice(0,16).replace('T',' ')}</span></div></div>`).join(''):'<div class="card"><p class="sub">Канал появится, когда команда запустит kickoff по вашему проекту.</p></div>'}`;
+}
+function paintChat(){const b=$('#cbox');if(b){b.innerHTML=threadMsgs.map(amsgHTML).join('')||'<p class="sub">Сообщений пока нет.</p>';b.scrollTop=b.scrollHeight;}}
+async function loadMsgs(paintOnly){if(!db||!activeThread)return;const {data}=await db.from('thread_messages').select('*').eq('thread_id',activeThread).order('created_at',{ascending:true}).limit(300);if(data){threadMsgs=data;paintOnly?paintChat():paintBody();}}
+function openThread(id){activeThread=id;threadMsgs=[];paintBody();loadMsgs();}
+function closeThread(){stopPoll();activeThread=null;paintBody();}
+function startPoll(){if(poll)clearInterval(poll);loadMsgs(true);poll=setInterval(()=>loadMsgs(true),3500);}
+function stopPoll(){if(poll){clearInterval(poll);poll=null;}}
+async function sendP(){const el=$('#cin');const tx=(el.value||'').trim();if(!tx||!activeThread)return;el.value='';
+  try{await db.from('thread_messages').insert({thread_id:activeThread,sender:(P.companies[0]||'Партнёр'),role:'partner',text:tx});
+    await db.from('threads').update({last_at:new Date().toISOString()}).eq('id',activeThread);loadMsgs(true);}catch(e){toast('Ошибка: '+((e&&e.message)||e));}}
+async function sendFile(){const fi=$('#cfile');const file=fi&&fi.files&&fi.files[0];if(!file||!activeThread)return;
+  toast('Загрузка…');try{const ext=(file.name.split('.').pop()||'bin').toLowerCase();const path='p_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+    const {error}=await db.storage.from('uploads').upload(path,file,{contentType:file.type||'application/octet-stream'});if(error)throw error;
+    const {data}=db.storage.from('uploads').getPublicUrl(path);const kind=(file.type||'').startsWith('video')?'video':'image';
+    await db.from('thread_messages').insert({thread_id:activeThread,sender:(P.companies[0]||'Партнёр'),role:'partner',file_url:data.publicUrl,file_type:kind});
+    await db.from('threads').update({last_at:new Date().toISOString()}).eq('id',activeThread);loadMsgs(true);toast('Отправлено');
+  }catch(e){toast('Ошибка: '+((e&&e.message)||e));}}
+
+function vProfile(){
+  return `<h2>Профиль</h2><p class="sub">Данные вашего партнёрского аккаунта.</p>
+  <div class="card"><div class="fbar"><span style="flex:1">Email</span><b>${esc(P.email)}</b></div>
+    <div class="fbar"><span style="flex:1">Компании</span><b>${esc(P.companies.join(', ')||'—')}</b></div>
+    <div class="fbar"><span style="flex:1">Заявок</span><b>${P.apps.length}</b></div>
+    <div class="fbar"><span style="flex:1">Продуктов в каталоге</span><b>${P.vendors.length}</b></div></div>
+  <button class="btn r" onclick="logout()">Выйти из кабинета</button>`;
+}
+
+// ---------- BOOT ----------
+(function(){
+  let e='';try{e=sessionStorage.getItem('bc_partner')||'';}catch(x){}
+  if(e){P.email=e;loadAll();}else renderLogin();
+})();
+</script>
+</body>
+</html>
