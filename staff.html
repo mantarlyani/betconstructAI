@@ -136,7 +136,7 @@ async function sLogin(){
   const {data}=await db.from('staff').select('*').eq('login',login).eq('active',true);
   const m=(data||[]).find(x=>x.pass===pass);
   if(!m){toast('Неверный логин или пароль');return;}
-  S={id:m.id,name:m.name,role:m.role,login:m.login};
+  S={id:m.id,name:m.name,role:m.role,login:m.login,shifts_total:m.shifts_total||0,shifts_weekend:m.shifts_weekend||0};
   try{sessionStorage.setItem('bc_staff',JSON.stringify(S));}catch(e){}
   await loadAll();
 }
@@ -290,6 +290,7 @@ function vStats(){
     <div class="kpi"><div class="n">${md.length?Math.round(won/md.length*100):0}%</div><div class="l">Конверсия</div></div>
     <div class="kpi"><div class="n">${myLeads().length}</div><div class="l">Мои лиды</div></div>
     <div class="kpi"><div class="n">${fmtDur(wkMs)}</div><div class="l">На смене за 7 дней</div></div>
+    <div class="kpi"><div class="n">${S.shifts_total||0}</div><div class="l">Смен в графике (вых. ${S.shifts_weekend||0})</div></div>
   </div>
   <div class="card"><h3>Мои сделки по стадиям</h3>${byStage.map(x=>`<div class="fbar"><span style="width:150px">${x[0]}</span><span class="bar"><span style="width:${x[1]/max*100}%"></span></span><b>${x[1]}</b></div>`).join('')}</div>
   <div class="card"><h3>Мои задачи</h3><div class="fbar"><span style="flex:1">Открытые</span><b>${openT}</b></div><div class="fbar"><span style="flex:1">Завершённые</span><b>${doneT}</b></div></div>`;
