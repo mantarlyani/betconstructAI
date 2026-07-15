@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кабинет сотрудника · BetConstructAI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--mag:#d6006c;--bg:#f6f7fb;--card:#fff;--line:#e7e9f2;--text:#141631;--muted:#8b8fa7;--green:#12a150;--amber:#c98a00;--red:#e5484d;--blue:#4a44b8}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text)}
+  a{color:inherit}
+  .top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:12px 18px}
+  .blogo{width:34px;height:34px;border-radius:9px;background:var(--mag);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0}
+  .top b{font-size:15px}.top .sp{flex:1}
+  .btn{background:var(--mag);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer}
+  .btn.sec{background:var(--card);color:var(--text);border:1px solid var(--line)}
+  .btn.sm{padding:6px 12px;font-size:13px}
+  .btn.g{background:#e3f6ee;color:#0f7a52}.btn.r{background:#fdecea;color:var(--red)}
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:12px 18px 0}
+  .tabs button{background:none;border:none;padding:9px 13px;border-radius:10px 10px 0 0;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:14px}
+  .tabs button.on{background:#fff;color:var(--mag);border:1px solid var(--line);border-bottom:none}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  .card h3{margin:0 0 11px;font-size:15px}
+  h2{font-size:20px;margin:4px 0 2px}.sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+  label{display:block;font-size:12.5px;color:var(--muted);margin:9px 0 4px}
+  input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:11px;margin-bottom:14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px}
+  .kpi .n{font-size:22px;font-weight:800}.kpi .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .fbar{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .fbar:last-child{border-bottom:none}
+  .bar{flex:1;height:8px;background:var(--bg);border-radius:5px;overflow:hidden}.bar span{display:block;height:100%;background:var(--mag)}
+  .st{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+  .st.pend{background:#fdf3dc;color:var(--amber)}.st.ap{background:#e3f6ee;color:#0f7a52}.st.pt{background:#eef0ff;color:#4a44b8}.st.rej{background:#fdecea;color:var(--red)}.st.nw{background:#fff0e0;color:#b5700d}
+  .pill{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--bg);border:1px solid var(--line)}
+  .rtag{font-size:10.5px;font-weight:700;color:var(--blue);background:#eef0ff;padding:3px 9px;border-radius:8px}
+  .tag{display:inline-block;font-size:11px;background:var(--bg);border:1px solid var(--line);padding:2px 7px;border-radius:7px;margin:2px 2px 0 0}
+  .kprog{height:6px;background:var(--bg);border-radius:5px;overflow:hidden;margin:8px 0 4px}.kprog span{display:block;height:100%;background:var(--mag)}
+  .flowrow{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}.flowrow:last-child{border-bottom:none}
+  .fchk{width:24px;height:24px;flex:0 0 24px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted)}
+  .flowrow.done .fchk{background:#0f7a52;border-color:#0f7a52;color:#fff}
+  .docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .doccard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .docimg{width:100%;height:110px;object-fit:cover;display:block;background:var(--bg)}
+  .docfile{height:110px;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--bg);text-decoration:none}
+  .login{max-width:400px;margin:8vh auto;text-align:center}
+  .login .blogo{width:56px;height:56px;font-size:28px;border-radius:15px;margin:0 auto 16px}
+  .chatbox{height:320px;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:12px;display:flex;flex-direction:column;gap:9px}
+  .msg{max-width:80%;padding:9px 12px;border-radius:13px;font-size:14px}
+  .msg.v{background:var(--card);border:1px solid var(--line);align-self:flex-start}
+  .msg.s{background:var(--mag);color:#fff;align-self:flex-end}
+  .msg .mt2{font-size:10.5px;opacity:.7;margin-top:3px}
+  .cimg{max-width:210px;max-height:180px;border-radius:10px;display:block;margin-bottom:4px}
+  .row{display:flex;gap:8px;align-items:center}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#141631;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:.2s;z-index:50}
+  .toast.on{opacity:1}
+  .agrbody{white-space:pre-wrap;font:12.5px/1.55 ui-monospace,monospace;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:8px;max-height:240px;overflow:auto}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+const SB_URL='https://smddtvaewmmpuyvtuscb.supabase.co';
+const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
+const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
+const $=s=>document.querySelector(s);
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');setTimeout(()=>el.classList.remove('on'),2200);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function now(){return new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+
+let S={id:'',name:'',role:'',login:''};
+let leads=[],tasks=[],shifts=[],threads=[],deals=[],agreements=[],docs=[],events=[];
+let cur='overview', activeThread=null, threadMsgs=[], poll=null, openDealId=null;
+const TSTATUS=[['open','Открыто'],['in_progress','В работе'],['blocked','Блок'],['done','Готово']];
+const TPRIO={P1:'rej',P2:'nw',P3:'pt',P4:'pend'};
+const STAGES=[{k:'lead',n:'Lead Email'},{k:'deal',n:'Convert to Deal'},{k:'confirmed',n:'Project Confirmed'},{k:'agreement',n:'Agreement & Payment'},{k:'started',n:'Project Started'},{k:'won',n:'Closed Won'}];
+const FLOW=[{t:'Lead check',role:'Sales'},{t:'Agreement & Fee',role:'Sales'},{t:'Resource request',role:'Service Sales'},{t:'Kickoff chat',role:'PM'},{t:'Development',role:'PM'},{t:'Go Live notice',role:'PM'},{t:'AM Handover',role:'Account Manager'}];
+function stageIdx(k){return STAGES.findIndex(s=>s.k===k);}
+function stageName(k){const s=STAGES.find(x=>x.k===k);return s?s.n:k;}
+
+// ---------- LOAD ----------
+async function loadAll(){
+  if(!db)return;
+  const [l,t,sh,th,d,ag,dc,ev]=await Promise.all([
+    db.from('leads').select('*').order('created_at',{ascending:false}).limit(200),
+    db.from('tasks').select('*').eq('assignee',S.name).order('created_at',{ascending:false}).limit(200),
+    db.from('shifts').select('*').eq('staff',S.name).order('online_at',{ascending:false}).limit(60),
+    db.from('threads').select('*').order('last_at',{ascending:false}).limit(100),
+    db.from('deals').select('*').order('created_at',{ascending:true}),
+    db.from('agreements').select('*').order('created_at',{ascending:false}).limit(200),
+    db.from('documents').select('*').order('created_at',{ascending:false}).limit(200),
+    db.from('events').select('visitor_anon,session_id,type,target,meta,created_at').order('created_at',{ascending:false}).limit(400)
+  ]);
+  leads=l.data||[];tasks=t.data||[];shifts=sh.data||[];threads=th.data||[];
+  deals=(d.data||[]).map(r=>({id:r.id,client:r.client,resp:r.resp||'',ssales:r.ssales||'',pm:r.pm||'',am:r.am||'',stage:r.stage||'lead',status:r.status||'active',agr:r.agr||{signed:false,paid:false},flow:r.flow||[false,false,false,false,false,false,false],steps:r.steps||[]}));
+  agreements=ag.data||[];docs=dc.data||[];events=ev.data||[];
+  renderApp();
+}
+function isMine(d){return [d.resp,d.ssales,d.pm,d.am].includes(S.name);}
+function myDeals(){return deals.filter(isMine);}
+function myDealIds(){return myDeals().map(d=>d.id);}
+function myAgreements(){const ids=myDealIds();return agreements.filter(a=>ids.includes(a.deal_id));}
+function myLeads(){return leads.filter(l=>l.owner===S.name);}
+function queueLeads(){return leads.filter(l=>!l.owner);}
+function openShift(){return shifts.find(s=>!s.offline_at);}
+function todayShifts(){const d=new Date().toISOString().slice(0,10);return shifts.filter(s=>(s.online_at||'').slice(0,10)===d);}
+function fmtT(t){return t?new Date(t).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'—';}
+function durMs(s){const a=new Date(s.online_at).getTime();const b=s.offline_at?new Date(s.offline_at).getTime():Date.now();return Math.max(0,b-a);}
+function fmtDur(ms){const m=Math.floor(ms/60000);return (Math.floor(m/60))+'ч '+(m%60)+'м';}
+function liveVisitors(){const cut=Date.now()-5*60000;const seen={};const out=[];events.forEach(e=>{const t=new Date(e.created_at).getTime();if(t<cut)return;const k=e.session_id||e.visitor_anon;if(!k||seen[k])return;seen[k]=1;out.push({id:k,last:e.target||e.type||'—',tm:fmtT(e.created_at)});});return out;}
+function journeys(){const by={};events.slice().reverse().forEach(e=>{const k=e.session_id||e.visitor_anon;if(!k)return;(by[k]=by[k]||{v:k,path:[],tm:''});if(e.target)by[k].path.push(e.target);by[k].tm=e.created_at;});return Object.values(by).sort((a,b)=>new Date(b.tm)-new Date(a.tm)).slice(0,6).map(j=>({v:String(j.v).slice(0,6),path:j.path.slice(-6),tm:fmtT(j.tm)}));}
+
+function saveDeal(d){if(!db)return;db.from('deals').upsert({id:d.id,client:d.client,resp:d.resp,ssales:d.ssales,pm:d.pm,am:d.am,stage:d.stage,status:d.status,agr:d.agr,flow:d.flow,steps:d.steps}).then(({error})=>{if(error)toast('Сделка: '+error.message);});}
+
+// ---------- LOGIN ----------
+function renderLogin(){
+  $('#app').innerHTML=`<div class="login"><div class="blogo">B</div>
+    <h2>Кабинет сотрудника</h2><p class="sub">Войдите под логином и паролем из админки.</p>
+    <div class="card" style="text-align:left">
+      <label>Логин</label><input id="s_login" placeholder="ani.petrosyan" onkeydown="if(event.key==='Enter')sLogin()">
+      <label>Пароль</label><input id="s_pass" type="password" placeholder="пароль" onkeydown="if(event.key==='Enter')sLogin()">
+      <button class="btn" style="width:100%;margin-top:14px" onclick="sLogin()">Войти</button></div></div>`;
+}
+async function sLogin(){
+  const login=(($('#s_login')||{}).value||'').trim().toLowerCase();const pass=(($('#s_pass')||{}).value||'');
+  if(!login||!pass){toast('Введите логин и пароль');return;}
+  if(!db){toast('База недоступна');return;}
+  toast('Входим…');
+  const {data}=await db.from('staff').select('*').eq('login',login).eq('active',true);
+  const m=(data||[]).find(x=>x.pass===pass);
+  if(!m){toast('Неверный логин или пароль');return;}
+  S={id:m.id,name:m.name,role:m.role,login:m.login};
+  try{sessionStorage.setItem('bc_staff',JSON.stringify(S));}catch(e){}
+  await loadAll();
+}
+function logout(){try{sessionStorage.removeItem('bc_staff');}catch(e){}stopPoll();S={id:'',name:'',role:'',login:''};activeThread=null;renderLogin();}
+
+// ---------- SHELL ----------
+const TABS=[['overview','Обзор'],['online','Онлайн'],['leads','Мои лиды'],['crm','Мой CRM'],['agr','Соглашения'],['tasks','Задачи'],['docs','Документы'],['shift','Смена'],['chat','Чаты'],['stats','Аналитика'],['profile','Профиль']];
+function renderApp(){
+  $('#app').innerHTML=`<div class="top"><div class="blogo">B</div><b>Сотрудник</b><div class="sp"></div>
+    <span class="pill">${esc(S.role)}</span><span class="sub" style="margin:0">${esc(S.name)}</span><button class="btn sec sm" onclick="logout()">Выйти</button></div>
+    <div class="tabs">${TABS.map(t=>`<button class="${cur===t[0]?'on':''}" onclick="goS('${t[0]}')">${t[1]}</button>`).join('')}</div>
+    <div class="wrap" id="body"></div>`;
+  paintBody();
+}
+function goS(t){cur=t;if(t!=='chat'){stopPoll();activeThread=null;}openDealId=null;renderApp();}
+function paintBody(){
+  const v={overview:vOverview,online:vOnline,leads:vLeads,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,shift:vShift,chat:vChat,stats:vStats,profile:vProfile}[cur];
+  $('#body').innerHTML=v();
+  if(cur==='chat'&&activeThread)startPoll();
+}
+
+// ---------- OVERVIEW ----------
+function vOverview(){
+  const os=openShift();const openT=tasks.filter(t=>t.status!=='done').length;
+  return `<h2>Здравствуйте, ${esc(S.name.split(' ')[0])}!</h2><p class="sub">${esc(S.role)} · ${now()}</p>
+  <div class="kpis">
+    <div class="kpi"><div class="n">${myLeads().length}</div><div class="l">Мои лиды</div></div>
+    <div class="kpi"><div class="n">${myDeals().length}</div><div class="l">Мои сделки</div></div>
+    <div class="kpi"><div class="n">${openT}</div><div class="l">Мои задачи</div></div>
+    <div class="kpi"><div class="n">${liveVisitors().length}</div><div class="l">Сейчас на сайте</div></div>
+    <div class="kpi"><div class="n">${os?'● смена':'○ офлайн'}</div><div class="l">${os?'с '+fmtT(os.online_at):'не начата'}</div></div>
+  </div>
+  <div class="card"><h3>Быстрые действия</h3><div class="row" style="flex-wrap:wrap">
+    ${os?`<button class="btn r sm" onclick="clockOut()">Завершить смену</button>`:`<button class="btn g sm" onclick="clockIn()">Начать смену</button>`}
+    <button class="btn sec sm" onclick="goS('leads')">Лиды</button>
+    <button class="btn sec sm" onclick="goS('crm')">CRM</button>
+    <button class="btn sec sm" onclick="goS('chat')">Чаты</button></div></div>`;
+}
+
+// ---------- ONLINE ----------
+function vOnline(){
+  const lv=liveVisitors();const js=journeys();
+  return `<h2>Кто сейчас на сайте</h2><p class="sub">Онлайн-посетители (активность за 5 мин) и их пути. Нажмите «Чат», чтобы подключиться.</p>
+  <div class="card"><h3>👀 Онлайн (${lv.length})</h3>${lv.length?lv.map(v=>`<div class="fbar"><span style="flex:1">Гость ${esc(String(v.id).slice(0,6))} · <span class="sub">${esc(v.last)}</span></span><span class="sub">${v.tm}</span><button class="btn sm" onclick="goS('chat')">Чат</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте.</p>'}</div>
+  <div class="card"><h3>🧭 Последние пути посетителей</h3>${js.length?js.map(j=>`<div class="fbar"><div style="flex:1"><b>Гость ${esc(j.v)}</b><br>${j.path.map(p=>`<span class="tag">${esc(p)}</span>`).join(' ')}</div><span class="sub">${j.tm}</span></div>`).join(''):'<p class="sub">Пока нет событий.</p>'}</div>`;
+}
+
+// ---------- LEADS ----------
+function vLeads(){
+  return `<h2>Мои лиды</h2><p class="sub">Взятые в работу вами лиды и общая очередь.</p>
+  <div class="card"><h3>Мои (${myLeads().length})</h3>${myLeads().length?myLeads().map(l=>leadRow(l,true)).join(''):'<p class="sub">Вы ещё не взяли лиды.</p>'}</div>
+  <div class="card"><h3>Очередь (${queueLeads().length})</h3>${queueLeads().length?queueLeads().map(l=>leadRow(l,false)).join(''):'<p class="sub">Свободных лидов нет.</p>'}</div>`;
+}
+function leadRow(l,mine){
+  return `<div class="fbar"><div style="flex:1"><b>${esc(l.product||l.vendor||'—')}</b> <span class="st ${l.source==='cart'?'pt':'nw'}">${l.source==='cart'?'корзина':'демо'}</span>
+    <br><span class="sub">${esc(l.visitor_name||'Гость')}${l.contact?(' · '+esc(l.contact)):''} · ${(l.created_at||'').slice(0,16).replace('T',' ')}</span>${l.message?`<br><span style="font-size:13px">${esc(l.message)}</span>`:''}</div>
+    ${mine?'<span class="st ap">моя</span>':`<button class="btn sm" onclick="claimLead('${l.id}')">Взять</button>`}</div>`;
+}
+async function claimLead(id){if(!db)return;await db.from('leads').update({owner:S.name,status:'in_progress'}).eq('id',id);toast('Лид взят в работу');loadAll();}
+
+// ---------- CRM ----------
+function vCrm(){
+  if(openDealId){const d=deals.find(x=>x.id===openDealId);if(d)return dealDetail(d);}
+  const md=myDeals();
+  return `<h2>Мой CRM</h2><p class="sub">Сделки, где вы ответственный (Sales / Service Sales / PM / AM).</p>
+  ${md.length?STAGES.map(st=>{const col=md.filter(d=>d.stage===st.k&&d.status==='active');return col.length?`<div class="card"><h3>${st.n} (${col.length})</h3>${col.map(dealMini).join('')}</div>`:'';}).join(''):'<div class="card"><p class="sub">На вас пока нет сделок.</p></div>'}
+  ${md.filter(d=>d.status!=='active').length?`<div class="card"><h3>На паузе / Потеряно</h3>${md.filter(d=>d.status!=='active').map(dealMini).join('')}</div>`:''}`;
+}
+function dealMini(d){const done=d.flow.filter(Boolean).length;return `<div class="fbar" style="cursor:pointer" onclick="openDeal('${d.id}')"><div style="flex:1"><b>${esc(d.client)}</b> <span class="sub">${d.id}</span><div class="kprog"><span style="width:${Math.round(done/7*100)}%"></span></div><span class="sub">Шаги ${done}/7</span></div><span class="pill">${stageName(d.stage)}</span></div>`;}
+function dealDetail(d){
+  const si=stageIdx(d.stage);
+  return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeDeal()">‹ Мои сделки</button></div>
+  <div class="card"><div class="row" style="justify-content:space-between"><div><h3 style="margin:0">${esc(d.client)}</h3><span class="sub">${d.id} · ${stageName(d.stage)}</span></div>
+    ${d.status!=='active'?`<span class="st rej">${d.status==='lost'?'Потеряно':'Пауза'}</span>`:`<span class="st ap">Активна</span>`}</div>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn sec sm" onclick="dMove('${d.id}',-1)">◀ Назад</button>
+      <button class="btn sm" onclick="dMove('${d.id}',1)">Вперёд ▶</button></div></div>
+  <div class="card"><h3>Роли</h3>
+    <div class="fbar"><span style="flex:1">Sales</span><b>${esc(d.resp||'—')}</b></div>
+    <div class="fbar"><span style="flex:1">Service Sales</span><b>${esc(d.ssales||'—')}</b></div>
+    <div class="fbar"><span style="flex:1">PM</span><b>${esc(d.pm||'—')}</b></div>
+    <div class="fbar"><span style="flex:1">Account Manager</span><b>${esc(d.am||'—')}</b></div></div>
+  <div class="card"><h3>Операционный флоу · 7 шагов</h3>${FLOW.map((f,i)=>`<div class="flowrow ${d.flow[i]?'done':''}" onclick="dFlow('${d.id}',${i})"><div class="fchk">${d.flow[i]?'✓':(i+1)}</div><div style="flex:1"><b>${f.t}</b></div><span class="rtag">${f.role}</span></div>`).join('')}</div>
+  <div class="card"><h3>История</h3>${(d.steps||[]).slice().reverse().map(s=>`<div class="fbar"><span style="flex:1">${esc(s.n)}</span><span class="sub">${esc(s.by||'')} · ${esc(s.at||'')}</span></div>`).join('')||'<p class="sub">—</p>'}</div>`;
+}
+function openDeal(id){openDealId=id;paintBody();}
+function closeDeal(){openDealId=null;paintBody();}
+function dMove(id,dir){const d=deals.find(x=>x.id===id);const i=stageIdx(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i].k;d.steps.push({n:'Стадия → '+STAGES[i].n,by:S.name.split(' ')[0],at:now()});saveDeal(d);paintBody();toast('Стадия: '+STAGES[i].n);}
+function dFlow(id,i){const d=deals.find(x=>x.id===id);d.flow[i]=!d.flow[i];d.steps.push({n:(d.flow[i]?'✓ ':'✗ ')+FLOW[i].t,by:S.name.split(' ')[0],at:now()});saveDeal(d);paintBody();}
+
+// ---------- AGREEMENTS ----------
+function vAgr(){
+  const badge=s=>s==='completed'?'<span class="st ap">Завершено</span>':s==='signed'?'<span class="st pt">Подписано</span>':s==='sent'?'<span class="st nw">Ждёт подписи</span>':'<span class="st pend">Черновик</span>';
+  const ma=myAgreements();
+  return `<h2>Мои соглашения</h2><p class="sub">Договоры по вашим сделкам.</p>
+  ${ma.length?ma.map(a=>`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(a.title||a.partner)}</b>${badge(a.status)}</div>
+    <p class="sub" style="margin:6px 0 0">${esc(a.template||'')}${a.amount?(' · setup fee '+a.amount+' '+esc(a.currency||'')):''} · сделка ${esc(a.deal_id||'—')}</p>
+    <details style="margin-top:8px"><summary class="sub" style="cursor:pointer">Текст</summary><pre class="agrbody">${esc(a.body||'')}</pre></details>
+    ${a.doc_url?`<a class="btn sec sm" href="${a.doc_url}" target="_blank" style="margin-top:8px">Документ</a>`:''}</div>`).join(''):'<div class="card"><p class="sub">Соглашений по вашим сделкам нет.</p></div>'}`;
+}
+
+// ---------- TASKS ----------
+function vTasks(){
+  function moveBtns(tk){const i=TSTATUS.findIndex(x=>x[0]===tk.status);return `${i>0?`<button class="btn sec sm" onclick="moveTask('${tk.id}',-1)">◀</button>`:''}${i<TSTATUS.length-1?`<button class="btn sm" onclick="moveTask('${tk.id}',1)">${TSTATUS[i+1][1]} ▶</button>`:'<span class="st ap">Готово</span>'}`;}
+  return `<h2>Мои задачи</h2><p class="sub">Назначенные на вас.</p>
+  ${tasks.length?tasks.map(tk=>`<div class="card"><div class="row" style="justify-content:space-between"><b>${esc(tk.title||'—')}</b><span class="st ${TPRIO[tk.priority]||'pend'}">${tk.priority||'P3'}</span></div>
+    <p class="sub" style="margin:6px 0 8px">${tk.dept?`<span class="rtag">${esc(tk.dept)}</span> `:''}${tk.deal_id?('· '+esc(tk.deal_id)):''}${tk.due_date?(' · срок '+tk.due_date):''}</p>
+    <div class="row">${moveBtns(tk)}</div></div>`).join(''):'<div class="card"><p class="sub">На вас пока нет задач.</p></div>'}`;
+}
+async function moveTask(id,dir){const tk=tasks.find(x=>x.id===id);if(!tk)return;const i=TSTATUS.findIndex(x=>x[0]===tk.status)+dir;if(i<0||i>=TSTATUS.length)return;if(db)await db.from('tasks').update({status:TSTATUS[i][0]}).eq('id',id);loadAll();}
+
+// ---------- DOCS ----------
+function vDocs(){
+  return `<h2>Документы</h2><p class="sub">Доступ к общим документам (только просмотр).</p>
+  ${docs.length?`<div class="docgrid">${docs.map(d=>`<div class="doccard">${d.file_type==='image'?`<a href="${d.file_url}" target="_blank"><img src="${d.file_url}" class="docimg"></a>`:d.file_type==='video'?`<video src="${d.file_url}" class="docimg" controls preload="metadata"></video>`:`<a href="${d.file_url}" target="_blank" class="docfile">📄</a>`}<div style="padding:9px 11px"><b style="font-size:13px">${esc(d.title||d.file_name||'—')}</b><div class="sub" style="font-size:11px">${esc(d.category||'')}</div></div></div>`).join('')}</div>`:'<div class="card"><p class="sub">Документов пока нет.</p></div>'}`;
+}
+
+// ---------- SHIFT ----------
+function vShift(){
+  const os=openShift();
+  return `<h2>Моя смена</h2><p class="sub">Отмечайте вход и выход — время учитывается в отделе Sales.</p>
+  <div class="card"><div class="row" style="justify-content:space-between"><b>${os?'● Вы на смене с '+fmtT(os.online_at):'○ Смена не начата'}</b>
+    ${os?`<button class="btn r sm" onclick="clockOut()">Завершить</button>`:`<button class="btn g sm" onclick="clockIn()">Начать смену</button>`}</div></div>
+  <div class="card"><h3>Сегодня</h3>${todayShifts().length?todayShifts().map(s=>`<div class="fbar"><span style="flex:1">${fmtT(s.online_at)} — ${s.offline_at?fmtT(s.offline_at):'сейчас'}</span><b>${fmtDur(durMs(s))}</b></div>`).join(''):'<p class="sub">Смен сегодня ещё не было.</p>'}
+    <div class="fbar" style="font-weight:700"><span style="flex:1">Итого сегодня</span><b>${fmtDur(todayShifts().reduce((a,s)=>a+durMs(s),0))}</b></div></div>
+  <div class="card"><h3>История</h3>${shifts.slice(0,15).map(s=>`<div class="fbar"><span style="flex:1">${(s.online_at||'').slice(0,10)} · ${fmtT(s.online_at)}—${s.offline_at?fmtT(s.offline_at):'…'}</span><b>${fmtDur(durMs(s))}</b></div>`).join('')||'<p class="sub">Пусто.</p>'}</div>`;
+}
+async function clockIn(){if(!db)return;if(openShift()){toast('Смена уже начата');return;}await db.from('shifts').insert({staff:S.name,role:S.role,online_at:new Date().toISOString()});toast('Смена начата');loadAll();}
+async function clockOut(){if(!db)return;const os=openShift();if(!os){toast('Нет активной смены');return;}await db.from('shifts').update({offline_at:new Date().toISOString()}).eq('id',os.id);toast('Смена завершена');loadAll();}
+
+// ---------- STATS ----------
+function vStats(){
+  const md=myDeals();const won=md.filter(d=>d.stage==='won').length;
+  const wk=Date.now()-7*864e5;const wkMs=shifts.filter(s=>new Date(s.online_at).getTime()>=wk).reduce((a,s)=>a+durMs(s),0);
+  const byStage=STAGES.map(st=>[st.n,md.filter(d=>d.stage===st.k).length]);
+  const max=Math.max(1,...byStage.map(x=>x[1]));
+  const openT=tasks.filter(t=>t.status!=='done').length,doneT=tasks.filter(t=>t.status==='done').length;
+  return `<h2>Моя аналитика</h2><p class="sub">Личные показатели.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="n">${md.length}</div><div class="l">Мои сделки</div></div>
+    <div class="kpi"><div class="n">${won}</div><div class="l">Closed Won</div></div>
+    <div class="kpi"><div class="n">${md.length?Math.round(won/md.length*100):0}%</div><div class="l">Конверсия</div></div>
+    <div class="kpi"><div class="n">${myLeads().length}</div><div class="l">Мои лиды</div></div>
+    <div class="kpi"><div class="n">${fmtDur(wkMs)}</div><div class="l">На смене за 7 дней</div></div>
+  </div>
+  <div class="card"><h3>Мои сделки по стадиям</h3>${byStage.map(x=>`<div class="fbar"><span style="width:150px">${x[0]}</span><span class="bar"><span style="width:${x[1]/max*100}%"></span></span><b>${x[1]}</b></div>`).join('')}</div>
+  <div class="card"><h3>Мои задачи</h3><div class="fbar"><span style="flex:1">Открытые</span><b>${openT}</b></div><div class="fbar"><span style="flex:1">Завершённые</span><b>${doneT}</b></div></div>`;
+}
+
+// ---------- CHAT ----------
+function amsgHTML(m){const side=m.role==='staff'?'s':'v';const media=m.file_url?(m.file_type==='image'?`<a href="${m.file_url}" target="_blank"><img src="${m.file_url}" class="cimg"></a>`:m.file_type==='video'?`<video src="${m.file_url}" class="cimg" controls preload="metadata"></video>`:`<a href="${m.file_url}" target="_blank" style="color:inherit">📎 файл</a>`):'';return `<div class="msg ${side}">${media}${m.text?`<div>${esc(m.text)}</div>`:''}<div class="mt2">${(m.created_at||'').slice(11,16)}${m.sender?(' · '+esc(m.sender)):''}</div></div>`;}
+function vChat(){
+  if(activeThread){const th=threads.find(x=>x.id===activeThread)||{};
+    return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeThread()">‹ Все каналы</button></div>
+    <div class="card"><h3>💬 ${esc(th.title||'Диалог')} <span class="pill">${th.kind==='internal'?'внутренний':th.kind==='kickoff'?'kickoff':'посетитель'}</span></h3>
+      <div class="chatbox" id="cbox">${threadMsgs.map(amsgHTML).join('')||'<p class="sub">Сообщений пока нет.</p>'}</div>
+      <div class="row" style="margin-top:10px">
+        <input id="cfile" type="file" accept="image/*,video/*" style="display:none" onchange="sendFile()">
+        <button class="btn sec" onclick="document.getElementById('cfile').click()" title="Фото/видео">📎</button>
+        <input id="cin" placeholder="Написать…" onkeydown="if(event.key==='Enter')sendM()"><button class="btn" onclick="sendM()">▶</button></div></div>`;
+  }
+  const groups=[['visitor','Посетители'],['kickoff','Kickoff · партнёры'],['internal','Внутренние каналы']];
+  return `<h2>Чаты и каналы</h2><p class="sub">Диалоги с посетителями и внутренние каналы. Обновление вживую.</p>
+  ${groups.map(g=>{const list=threads.filter(t=>(t.kind||'visitor')===g[0]);return `<div class="card"><h3>${g[1]} (${list.length})</h3>${list.length?list.map(t=>`<div class="fbar" style="cursor:pointer" onclick="openThread('${t.id}')"><span style="flex:1"><b>${esc(t.title||'Диалог')}</b>${t.deal_id?` · <span class="sub">${esc(t.deal_id)}</span>`:''}</span><span class="sub">${(t.last_at||'').slice(5,16).replace('T',' ')}</span></div>`).join(''):'<p class="sub">Пусто.</p>'}</div>`;}).join('')}`;
+}
+function paintChat(){const b=$('#cbox');if(b){b.innerHTML=threadMsgs.map(amsgHTML).join('')||'<p class="sub">Сообщений пока нет.</p>';b.scrollTop=b.scrollHeight;}}
+async function loadMsgs(paintOnly){if(!db||!activeThread)return;const {data}=await db.from('thread_messages').select('*').eq('thread_id',activeThread).order('created_at',{ascending:true}).limit(300);if(data){threadMsgs=data;paintOnly?paintChat():paintBody();}}
+function openThread(id){activeThread=id;threadMsgs=[];paintBody();loadMsgs();}
+function closeThread(){stopPoll();activeThread=null;paintBody();}
+function startPoll(){if(poll)clearInterval(poll);loadMsgs(true);poll=setInterval(()=>loadMsgs(true),3500);}
+function stopPoll(){if(poll){clearInterval(poll);poll=null;}}
+async function sendM(){const el=$('#cin');const tx=(el.value||'').trim();if(!tx||!activeThread)return;el.value='';
+  try{await db.from('thread_messages').insert({thread_id:activeThread,sender:S.name,role:'staff',text:tx});
+    await db.from('threads').update({last_at:new Date().toISOString()}).eq('id',activeThread);loadMsgs(true);}catch(e){toast('Ошибка: '+((e&&e.message)||e));}}
+async function sendFile(){const fi=$('#cfile');const file=fi&&fi.files&&fi.files[0];if(!file||!activeThread)return;
+  toast('Загрузка…');try{const ext=(file.name.split('.').pop()||'bin').toLowerCase();const path='s_'+Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+    const {error}=await db.storage.from('uploads').upload(path,file,{contentType:file.type||'application/octet-stream'});if(error)throw error;
+    const {data}=db.storage.from('uploads').getPublicUrl(path);const kind=(file.type||'').startsWith('video')?'video':'image';
+    await db.from('thread_messages').insert({thread_id:activeThread,sender:S.name,role:'staff',file_url:data.publicUrl,file_type:kind});
+    await db.from('threads').update({last_at:new Date().toISOString()}).eq('id',activeThread);loadMsgs(true);toast('Отправлено');
+  }catch(e){toast('Ошибка: '+((e&&e.message)||e));}}
+
+function vProfile(){
+  return `<h2>Профиль</h2><p class="sub">Данные аккаунта.</p>
+  <div class="card"><div class="fbar"><span style="flex:1">Имя</span><b>${esc(S.name)}</b></div>
+    <div class="fbar"><span style="flex:1">Роль</span><b>${esc(S.role)}</b></div>
+    <div class="fbar"><span style="flex:1">Логин</span><b>${esc(S.login)}</b></div></div>
+  <button class="btn r" onclick="logout()">Выйти</button>`;
+}
+
+// ---------- BOOT ----------
+(function(){
+  let s=null;try{s=JSON.parse(sessionStorage.getItem('bc_staff')||'null');}catch(x){}
+  if(s&&s.name){S=s;loadAll();}else renderLogin();
+})();
+</script>
+</body>
+</html>

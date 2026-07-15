@@ -255,6 +255,8 @@ let deals=[
     steps:[{n:'Lead Email · заведён',by:'Армен',at:'11.07 15:20'},{n:'Convert to Deal',by:'Армен',at:'12.07 12:00'},{n:'Agreement отправлен',by:'Лилит',at:'12.07 13:10'}]}
 ];
 let activeDeal=null;
+async function loadDeals(){if(!db)return;const {data}=await db.from('deals').select('*').order('created_at',{ascending:true});if(data&&data.length){deals=data.map(r=>({id:r.id,client:r.client,resp:r.resp||'',ssales:r.ssales||'',pm:r.pm||'',am:r.am||'',stage:r.stage||'lead',status:r.status||'active',agr:r.agr||{signed:false,paid:false},flow:r.flow||[false,false,false,false,false,false,false],steps:r.steps||[],_rr:!!r.rr_done,_kick:!!r.kick_done}));render();}}
+function saveDeal(d){if(!db)return;db.from('deals').upsert({id:d.id,client:d.client,resp:d.resp,ssales:d.ssales,pm:d.pm,am:d.am,stage:d.stage,status:d.status,agr:d.agr,flow:d.flow,steps:d.steps,rr_done:!!d._rr,kick_done:!!d._kick}).then(({error})=>{if(error)toast('Сделка: '+error.message);});}
 let analytics={visitors:1287,today:143,sections:[['Home',100],['Быстрый доступ',72],['Live',54],['Products',48],['Marketplace',37],['AI-советник',29],['Регистрация',18]],
   journeys:[
     {u:'Гость #4821',path:['Вход','Home','Быстрый доступ → Live','AI-советник','Регистрация'],tm:'12.07 13:41'},
@@ -268,7 +270,7 @@ let idxToggles={quick:true,live:true,promo:true,sections:true};
 const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['sales','Отдел Sales','crm'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();}
+function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();}
 
 /* ---------- VIEWS ---------- */
 function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
@@ -366,7 +368,8 @@ function addStaff(){const n=($('#s_name')||{}).value||'';const r=($('#s_role')||
   if(!n.trim()){toast('Укажите имя');return;}
   const login=translit(n.trim());const pass=genPass();
   staff.unshift({name:n.trim(),role:r,login,pass,status:'offline'});
-  render();toast('Создан: '+login+' / '+pass);}
+  if(db){db.from('staff').insert({name:n.trim(),role:r,login,pass,active:true}).then(({error})=>{if(error)toast('БД: '+error.message);});}
+  render();toast('Создан: '+login+' / '+pass+' · вход в кабинете активен');}
 function copyv(v){navigator.clipboard&&navigator.clipboard.writeText(v);toast('Скопировано: '+v);}
 
 function stageIdx(k){return STAGES.findIndex(s=>s.k===k);}
@@ -435,11 +438,11 @@ function dealDetail(d){
 function openDeal(id){activeDeal=id;render();}
 function closeDeal(){activeDeal=null;render();}
 function dealActor(d){return (d.resp||'Система').split(' ')[0];}
-function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=stageIdx(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i].k;d.steps.push({n:'Стадия → '+STAGES[i].n,by:dealActor(d),at:now()});render();toast('Стадия: '+STAGES[i].n);}
-function setDealPerson(id,field,val){const d=deals.find(x=>x.id===id);d[field]=val;const lbl={resp:'Sales',ssales:'Service Sales',pm:'PM',am:'Account Manager'}[field];d.steps.push({n:lbl+': '+(val||'снят'),by:dealActor(d),at:now()});render();toast(lbl+': '+(val||'не назначен'));}
-function toggleFlow(id,i){const d=deals.find(x=>x.id===id);d.flow[i]=!d.flow[i];d.steps.push({n:(d.flow[i]?'✓ ':'✗ ')+FLOW[i].t,by:dealActor(d),at:now()});if(i===2&&d.flow[2]&&!d._rr){d._rr=true;addResourceRequest(d);}if(i===3&&d.flow[3]&&!d._kick){d._kick=true;createKickoff(d);}render();}
-function toggleAgr(id,key){const d=deals.find(x=>x.id===id);d.agr[key]=!d.agr[key];d.steps.push({n:(key==='signed'?'Договор':'Setup fee')+': '+(d.agr[key]?'да':'нет'),by:dealActor(d),at:now()});render();}
-function setDealStatus(id,st){const d=deals.find(x=>x.id===id);d.status=st;d.steps.push({n:'Статус → '+(st==='lost'?'Потеряно':st==='hold'?'На паузе':'В работе'),by:dealActor(d),at:now()});render();toast('Статус обновлён');}
+function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=stageIdx(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i].k;d.steps.push({n:'Стадия → '+STAGES[i].n,by:dealActor(d),at:now()});saveDeal(d);render();toast('Стадия: '+STAGES[i].n);}
+function setDealPerson(id,field,val){const d=deals.find(x=>x.id===id);d[field]=val;const lbl={resp:'Sales',ssales:'Service Sales',pm:'PM',am:'Account Manager'}[field];d.steps.push({n:lbl+': '+(val||'снят'),by:dealActor(d),at:now()});saveDeal(d);render();toast(lbl+': '+(val||'не назначен'));}
+function toggleFlow(id,i){const d=deals.find(x=>x.id===id);d.flow[i]=!d.flow[i];d.steps.push({n:(d.flow[i]?'✓ ':'✗ ')+FLOW[i].t,by:dealActor(d),at:now()});if(i===2&&d.flow[2]&&!d._rr){d._rr=true;addResourceRequest(d);}if(i===3&&d.flow[3]&&!d._kick){d._kick=true;createKickoff(d);}saveDeal(d);render();}
+function toggleAgr(id,key){const d=deals.find(x=>x.id===id);d.agr[key]=!d.agr[key];d.steps.push({n:(key==='signed'?'Договор':'Setup fee')+': '+(d.agr[key]?'да':'нет'),by:dealActor(d),at:now()});saveDeal(d);render();}
+function setDealStatus(id,st){const d=deals.find(x=>x.id===id);d.status=st;d.steps.push({n:'Статус → '+(st==='lost'?'Потеряно':st==='hold'?'На паузе':'В работе'),by:dealActor(d),at:now()});saveDeal(d);render();toast('Статус обновлён');}
 
 function vStats(){
   const max=Math.max(...analytics.sections.map(s=>s[1]));
@@ -721,7 +724,7 @@ async function sendAgr(a){
     contact_name:a.signer_name,site:signLink(a.id),description:'Ссылка на подписание: '+signLink(a.id)});
   toast('Отправлено партнёру на подпись');loadAgreements();
 }
-function reflectDeal(a,fld){const d=deals.find(x=>x.id===a.deal_id);if(d){d.agr[fld]=true;if(fld==='signed'||fld==='paid'){if(!d.flow[1]){d.flow[1]=true;d.steps.push({n:'✓ Agreement & Fee',by:'Система',at:now()});}}}}
+function reflectDeal(a,fld){const d=deals.find(x=>x.id===a.deal_id);if(d){d.agr[fld]=true;if(fld==='signed'||fld==='paid'){if(!d.flow[1]){d.flow[1]=true;d.steps.push({n:'✓ Agreement & Fee',by:'Система',at:now()});}}saveDeal(d);}}
 async function markSigned(a){if(db)await db.from('agreements').update({status:'signed',signed_at:new Date().toISOString()}).eq('id',a.id);reflectDeal(a,'signed');toast('Отмечено: подписано');loadAgreements();}
 async function markPaid(a){if(db)await db.from('agreements').update({status:'completed',paid_at:new Date().toISOString()}).eq('id',a.id);reflectDeal(a,'paid');toast('Отмечено: setup fee оплачен');loadAgreements();}
 async function genDocAgr(a){
