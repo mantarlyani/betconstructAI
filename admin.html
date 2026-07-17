@@ -118,15 +118,25 @@
 <div class="top">
   <div class="wm"><span class="b">Bet</span>Construct<span class="a">AI</span></div>
   <span class="chip-admin">ADMIN</span>
-  <div class="who"><span>Персонал</span><button class="btn sec sm" onclick="logout()">Выйти</button></div>
+  <div class="who"><span class="langsw" style="display:inline-flex;gap:1px;align-items:center;margin-right:6px"><a data-l="ru" onclick="setLang('ru')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">RU</a><a data-l="en" onclick="setLang('en')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">EN</a><a data-l="hy" onclick="setLang('hy')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">HY</a></span><span>Персонал</span><button class="btn sec sm" onclick="logout()">Выйти</button></div>
 </div>
 <div class="tabs" id="tabs"></div>
 <main id="main"></main>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin_i18n.js"></script>
 <script>
 const $=s=>document.querySelector(s);
-function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2200);}
+let LANG='ru';try{LANG=localStorage.getItem('bc_alang')||'ru';}catch(e){}
+function trStr(s){if(LANG==='ru'||!window.I18N)return s;const d=window.I18N[String(s).trim()];return d&&d[LANG]?d[LANG]:s;}
+function paintLangSw(){document.querySelectorAll('.langsw a').forEach(a=>{a.style.opacity=a.dataset.l===LANG?'1':'.45';a.style.textDecoration=a.dataset.l===LANG?'underline':'none';});}
+function setLang(l){LANG=l;try{localStorage.setItem('bc_alang',l);}catch(e){}if(typeof renderTabs==='function')renderTabs();if(typeof render==='function')render();try{translateDOM(document.querySelector('.top'));}catch(e){}paintLangSw();}
+function translateDOM(root){if(LANG==='ru'||!window.I18N)return;root=root||document.body;const skip={SCRIPT:1,STYLE:1,OPTION:1,SELECT:1,TEXTAREA:1};
+  const wk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);const ns=[];while(wk.nextNode())ns.push(wk.currentNode);
+  ns.forEach(n=>{const pn=n.parentNode;if(pn&&skip[pn.nodeName])return;const raw=n.nodeValue;const key=raw.trim();if(!key)return;const d=window.I18N[key];if(d&&d[LANG])n.nodeValue=raw.replace(key,d[LANG]);});
+  root.querySelectorAll('[placeholder]').forEach(el=>{const d=window.I18N[(el.getAttribute('placeholder')||'').trim()];if(d&&d[LANG])el.setAttribute('placeholder',d[LANG]);});
+  root.querySelectorAll('[title]').forEach(el=>{const d=window.I18N[(el.getAttribute('title')||'').trim()];if(d&&d[LANG])el.setAttribute('title',d[LANG]);});}
+function toast(t){const e=$('#toast');e.textContent=trStr(t);e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2200);}
 function now(){return new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
 /* ---------- Supabase + auth ---------- */
 const SB_URL='https://smddtvaewmmpuyvtuscb.supabase.co';
@@ -150,6 +160,7 @@ function renderLogin(){
       <span onclick="togglePass()" style="position:absolute;right:12px;top:11px;cursor:pointer;color:var(--muted);font-size:19px">${ic('eye')}</span></div>
     <button class="btn" style="margin-top:14px" onclick="doLogin()">Войти</button>
     <p class="sub" style="margin-top:12px">Вход для персонала (демо: логин/пароль вшиты).</p></div></div>`;
+  try{translateDOM(document.body);paintLangSw();}catch(e){}
 }
 async function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase();const p=($('#lg_pass')||{}).value||'';
   if(ADMINS.some(a=>e===String(a[0]).toLowerCase()&&p===a[1])){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');}catch(x){}startApp();return;}
@@ -288,11 +299,11 @@ let idxToggles={quick:true,live:true,promo:true,sections:true};
 /* ---------- TABS ---------- */
 const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
-function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
+function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');translateDOM($('#tabs'));}
 function go(t){if(t!=='chat'&&t!=='staff')chatBackStaff=null;cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();loadEvents();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();}
 
 /* ---------- VIEWS ---------- */
-function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
+function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);translateDOM(document.body);paintLangSw();}
 
 function vDash(){
   const pend=apps.filter(a=>a.status==='pending').length;
@@ -1062,7 +1073,7 @@ function vAccounts(){
     </table></div></div>`;
 }
 
-boot();
+boot();try{translateDOM(document.querySelector('.top'));paintLangSw();}catch(e){}
 </script>
 </body>
 </html>
