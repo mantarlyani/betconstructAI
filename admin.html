@@ -231,7 +231,12 @@ function fmtT(t){return t?new Date(t).toLocaleTimeString('ru-RU',{hour:'2-digit'
 function setPresDate(v){presDate=v;render();}
 let eventsData=[];
 async function loadEvents(){if(!db)return;const {data}=await db.from('events').select('visitor_anon,session_id,type,target,meta,created_at').order('created_at',{ascending:false}).limit(400);if(data){eventsData=data;render();}}
-function liveVisitors(){const cut=Date.now()-5*60000;const seen={};eventsData.forEach(e=>{const t=new Date(e.created_at).getTime();if(t>=cut){const v=e.visitor_anon||e.session_id;if(v&&!seen[v])seen[v]={id:v,last:e.target||e.type,at:e.created_at};}});return Object.keys(seen).map(k=>seen[k]);}
+function liveVisitors(){const cut=Date.now()-5*60000;const seen={},info={},path={};
+  eventsData.forEach(e=>{const v=e.visitor_anon||e.session_id;if(!v)return;if(e.meta){if(e.meta.name&&!(info[v]&&info[v].name)){info[v]=info[v]||{};info[v].name=String(e.meta.name);}if(e.meta.contact&&!(info[v]&&info[v].contact)){info[v]=info[v]||{};info[v].contact=String(e.meta.contact);}}});
+  eventsData.forEach(e=>{const v=e.visitor_anon||e.session_id;if(!v)return;const t=new Date(e.created_at).getTime();const act=e.target||e.type;const isPing=(e.type==='ping'||act==='beat');
+    if(t>=cut&&!seen[v])seen[v]={last:isPing?'на сайте':act,at:e.created_at};
+    if(!isPing){path[v]=path[v]||[];if(path[v].length<8)path[v].push(act);}});
+  return Object.keys(seen).map(k=>({id:k,last:seen[k].last,at:seen[k].at,name:(info[k]&&info[k].name)||'',contact:(info[k]&&info[k].contact)||'',path:(path[k]||[]).slice().reverse()}));}
 function shortCode(v){let h=0;const s=String(v);for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0;}return h.toString(36).toUpperCase().slice(0,6).padStart(6,'0');}
 function journeys(){
   // 1) собрать по каждому устройству имя/контакт (контакт есть только в событии входа)
@@ -241,9 +246,14 @@ function journeys(){
   eventsData.forEach(e=>{const dev=e.visitor_anon||e.session_id;if(!dev)return;const ci=info[dev]||{};const key=ci.contact?('c:'+ci.contact.toLowerCase()):('d:'+dev);
     if(!by[key]){by[key]=[];order.push(key);meta[key]={name:ci.name||'',contact:ci.contact||'',code:shortCode(dev),devs:new Set()};}
     meta[key].devs.add(dev);if(!meta[key].name&&ci.name)meta[key].name=ci.name;
-    if(by[key].length<10)by[key].push(e.target||e.type);});
+    {const act=e.target||e.type;if(e.type!=='ping'&&act!=='beat'&&by[key].length<10)by[key].push(act);}});
   return order.slice(0,12).map(key=>{const m=meta[key];return {v:m.code,name:(m.name||'').replace(/</g,'&lt;'),contact:(m.contact||'').replace(/</g,'&lt;'),devices:m.devs.size,path:by[key].slice().reverse()};});
 }
+async function dmVisitor(anon,name){if(!db){toast('База недоступна');return;}
+  let th=null;const {data}=await db.from('threads').select('*').eq('kind','visitor').eq('guest_key',anon).limit(1);
+  if(data&&data.length)th=data[0];
+  if(!th){const ins=await db.from('threads').insert({kind:'visitor',guest_key:anon,title:name||('Гость '+shortCode(anon))}).select('*').single();th=ins.data;}
+  await loadThreads();go('chat');if(th)openThread(th.id);}
 async function loadStats(){if(!db)return;const {data}=await db.from('events').select('type,target,meta,created_at').eq('type','search').order('created_at',{ascending:false}).limit(300);if(data){const c={};data.forEach(e=>{const q=(e.meta&&e.meta.q)||e.target;if(q){c[q]=(c[q]||0)+1;}});searchQueries=Object.keys(c).map(k=>[k,c[k]]).sort((a,b)=>b[1]-a[1]).slice(0,15);render();}}
 let apps=[
   {id:1,name:'NovaSpin',type:'Игра',cat:'Crash & instant',contact:'sales@novaspin.io',regions:'EU · Азия',desc:'Провайдер crash/instant игр, RTP 97%, сертификат iTech Labs.',status:'pending'},
@@ -328,7 +338,7 @@ function vDash(){
     <div class="card"><h3>${ic('crm')} Входящие лиды</h3>${leadsData.length?leadsData.slice(0,6).map(l=>`<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b><br><span style="color:var(--muted);font-size:12px">${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><button class="btn sm" onclick="go('crm')">Открыть</button></div>`).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
   </div>
   <div class="grid2">
-    <div class="card"><h3>${ic('eye')} Кто сейчас на сайте</h3>${(function(){const lv=liveVisitors();return lv.length?lv.slice(0,8).map(v=>`<div class="fbar"><span style="flex:1">Гость ${String(v.id).slice(0,6)} · <span style="color:var(--muted)">${v.last}</span></span><button class="btn sm" onclick="go('chat')">${ic('megaphone')} Чат</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте (за 5 мин).</p>';})()}</div>
+    <div class="card"><h3>${ic('eye')} Кто сейчас на сайте</h3>${(function(){const lv=liveVisitors();return lv.length?lv.slice(0,10).map(v=>`<div class="fbar" style="align-items:flex-start"><div style="flex:1"><b>${v.name||('Гость '+shortCode(v.id))}</b>${v.contact?` <span style="color:var(--mag);font-size:12px">· ${v.contact}</span>`:''} <span class="st ap" style="font-size:9px">● на сайте</span><br><span style="color:var(--muted);font-size:11.5px">${((v.path&&v.path.length)?v.path:[v.last]).map(p=>`<span class="tag">${p}</span>`).join(' ')}</span></div><button class="btn sm" onclick="dmVisitor('${v.id}','${(v.name||'').replace(/'/g,'')}')">${ic('megaphone')} Написать</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте (за 5 мин).</p>';})()}</div>
     <div class="card"><h3>${ic('eye')} Последние пути посетителей</h3>${(function(){const js=journeys();return js.length?js.map(j=>`<div class="jrow"><div style="flex:1">${j.contact?`<b>${j.name||'Гость'}</b> <span style="color:var(--mag)">· ${j.contact}</span>${j.devices>1?` <span class="sub">· ${j.devices} устр.</span>`:''}`:`<b>Гость ${j.v}</b>${j.name?` <span style="color:var(--mag)">· ${j.name}</span>`:''}`}<br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div></div>`).join(''):'<p class="sub">Пока нет событий.</p>';})()}</div>
   </div>
   <div class="grid2">
@@ -1075,6 +1085,8 @@ function vAccounts(){
 }
 
 boot();try{translateDOM(document.querySelector('.top'));paintLangSw();}catch(e){}
+// авто-обновление «кто на сайте» на дашборде/аналитике
+setInterval(()=>{try{if(!db)return;if(cur!=='dash'&&cur!=='stats')return;const ae=document.activeElement;if(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))return;KEEP_SCROLL=true;loadEvents();}catch(e){}},20000);
 </script>
 </body>
 </html>

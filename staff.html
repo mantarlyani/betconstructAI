@@ -69,6 +69,7 @@ const db=(window.supabase&&window.supabase.createClient)?window.supabase.createC
 const $=s=>document.querySelector(s);
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');setTimeout(()=>el.classList.remove('on'),2200);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function shortCode(v){let h=0;const s=String(v);for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0;}return h.toString(36).toUpperCase().slice(0,6).padStart(6,'0');}
 function now(){return new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
 
 let S={id:'',name:'',role:'',login:''};
@@ -114,8 +115,13 @@ function todayShifts(){const d=new Date().toISOString().slice(0,10);return shift
 function fmtT(t){return t?new Date(t).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'—';}
 function durMs(s){const a=new Date(s.online_at).getTime();const b=s.offline_at?new Date(s.offline_at).getTime():Date.now();return Math.max(0,b-a);}
 function fmtDur(ms){const m=Math.floor(ms/60000);return (Math.floor(m/60))+'ч '+(m%60)+'м';}
-function liveVisitors(){const cut=Date.now()-5*60000;const seen={};const out=[];events.forEach(e=>{const t=new Date(e.created_at).getTime();if(t<cut)return;const k=e.session_id||e.visitor_anon;if(!k||seen[k])return;seen[k]=1;out.push({id:k,last:e.target||e.type||'—',tm:fmtT(e.created_at)});});return out;}
-function journeys(){const by={};events.slice().reverse().forEach(e=>{const k=e.session_id||e.visitor_anon;if(!k)return;(by[k]=by[k]||{v:k,path:[],tm:''});if(e.target)by[k].path.push(e.target);by[k].tm=e.created_at;});return Object.values(by).sort((a,b)=>new Date(b.tm)-new Date(a.tm)).slice(0,6).map(j=>({v:String(j.v).slice(0,6),path:j.path.slice(-6),tm:fmtT(j.tm)}));}
+function liveVisitors(){const cut=Date.now()-5*60000;const seen={},info={},path={};
+  events.forEach(e=>{const v=e.visitor_anon||e.session_id;if(!v)return;if(e.meta){if(e.meta.name&&!(info[v]&&info[v].name)){info[v]=info[v]||{};info[v].name=String(e.meta.name);}if(e.meta.contact&&!(info[v]&&info[v].contact)){info[v]=info[v]||{};info[v].contact=String(e.meta.contact);}}});
+  events.forEach(e=>{const v=e.visitor_anon||e.session_id;if(!v)return;const t=new Date(e.created_at).getTime();const act=e.target||e.type;const isPing=(e.type==='ping'||act==='beat');
+    if(t>=cut&&!seen[v])seen[v]={last:isPing?'на сайте':act,at:e.created_at};
+    if(!isPing){path[v]=path[v]||[];if(path[v].length<8)path[v].push(act);}});
+  return Object.keys(seen).map(k=>({id:k,last:seen[k].last,tm:fmtT(seen[k].at),name:(info[k]&&info[k].name)||'',contact:(info[k]&&info[k].contact)||'',path:(path[k]||[]).slice().reverse()}));}
+function journeys(){const by={};events.slice().reverse().forEach(e=>{const k=e.visitor_anon||e.session_id;if(!k)return;(by[k]=by[k]||{v:shortCode(k),path:[],tm:''});const act=e.target||e.type;if(act&&e.type!=='ping'&&act!=='beat')by[k].path.push(act);by[k].tm=e.created_at;});return Object.values(by).sort((a,b)=>new Date(b.tm)-new Date(a.tm)).slice(0,6).map(j=>({v:j.v,path:j.path.slice(-6),tm:fmtT(j.tm)}));}
 
 function saveDeal(d){if(!db)return;db.from('deals').upsert({id:d.id,client:d.client,resp:d.resp,ssales:d.ssales,pm:d.pm,am:d.am,stage:d.stage,status:d.status,agr:d.agr,flow:d.flow,steps:d.steps}).then(({error})=>{if(error)toast('Сделка: '+error.message);});}
 
@@ -180,7 +186,7 @@ function vOverview(){
 function vOnline(){
   const lv=liveVisitors();const js=journeys();
   return `<h2>Кто сейчас на сайте</h2><p class="sub">Онлайн-посетители (активность за 5 мин) и их пути. Нажмите «Чат», чтобы подключиться.</p>
-  <div class="card"><h3>👀 Онлайн (${lv.length})</h3>${lv.length?lv.map(v=>`<div class="fbar"><span style="flex:1">Гость ${esc(String(v.id).slice(0,6))} · <span class="sub">${esc(v.last)}</span></span><span class="sub">${v.tm}</span><button class="btn sm" onclick="goS('chat')">Чат</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте.</p>'}</div>
+  <div class="card"><h3>👀 Онлайн (${lv.length})</h3>${lv.length?lv.map(v=>`<div class="fbar" style="align-items:flex-start"><div style="flex:1"><b>${esc(v.name||('Гость '+shortCode(v.id)))}</b>${v.contact?` <span style="color:var(--mag);font-size:12px">· ${esc(v.contact)}</span>`:''} <span class="st ap" style="font-size:9px">● на сайте</span><br><span class="sub">${((v.path&&v.path.length)?v.path:[v.last]).map(p=>`<span class="tag">${esc(p)}</span>`).join(' ')}</span></div><button class="btn sm" onclick="dmVisitor('${v.id}','${esc(v.name||'').replace(/'/g,'')}')">Написать</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте.</p>'}</div>
   <div class="card"><h3>🧭 Последние пути посетителей</h3>${js.length?js.map(j=>`<div class="fbar"><div style="flex:1"><b>Гость ${esc(j.v)}</b><br>${j.path.map(p=>`<span class="tag">${esc(p)}</span>`).join(' ')}</div><span class="sub">${j.tm}</span></div>`).join(''):'<p class="sub">Пока нет событий.</p>'}</div>`;
 }
 
@@ -315,6 +321,13 @@ function vChat(){
 function paintChat(){const b=$('#cbox');if(b){b.innerHTML=threadMsgs.map(amsgHTML).join('')||'<p class="sub">Сообщений пока нет.</p>';b.scrollTop=b.scrollHeight;}}
 async function loadMsgs(paintOnly){if(!db||!activeThread)return;const {data}=await db.from('thread_messages').select('*').eq('thread_id',activeThread).order('created_at',{ascending:true}).limit(300);if(data){threadMsgs=data;paintOnly?paintChat():paintBody();}}
 function openThread(id){activeThread=id;threadMsgs=[];paintBody();loadMsgs();}
+async function dmVisitor(anon,name){if(!db){toast('База недоступна');return;}
+  let th=null;const {data}=await db.from('threads').select('*').eq('kind','visitor').eq('guest_key',anon).limit(1);
+  if(data&&data.length)th=data[0];
+  if(!th){const ins=await db.from('threads').insert({kind:'visitor',guest_key:anon,title:name||('Гость '+shortCode(anon))}).select('*').single();th=ins.data;}
+  const {data:all}=await db.from('threads').select('*').order('last_at',{ascending:false}).limit(100);if(all)threads=all;
+  goS('chat');if(th)openThread(th.id);}
+setInterval(async()=>{try{if(!db||cur!=='online')return;const ae=document.activeElement;if(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))return;const {data}=await db.from('events').select('visitor_anon,session_id,type,target,meta,created_at').order('created_at',{ascending:false}).limit(400);if(data){events=data;if(cur==='online')renderApp();}}catch(e){}},20000);
 function closeThread(){stopPoll();activeThread=null;paintBody();}
 function startPoll(){if(poll)clearInterval(poll);loadMsgs(true);poll=setInterval(()=>loadMsgs(true),3500);}
 function stopPoll(){if(poll){clearInterval(poll);poll=null;}}

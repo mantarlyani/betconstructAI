@@ -289,6 +289,17 @@ window.deviceFp=null;
 // то же устройство пересчитывает тот же код -> используем его как основной id, чтобы не плодить дубли гостей.
 (async()=>{try{const FP=await import('https://openfpcdn.io/fingerprintjs/v4');const agent=await FP.load();const r=await agent.get();if(r&&r.visitorId){const fid='fp_'+r.visitorId;window.deviceFp=r.visitorId;anonId=fid;try{localStorage.setItem('bc_anon',fid);}catch(e){}}}catch(e){}})();
 const sessionId=String(Date.now());
+// heartbeat: держим визитора «на сайте», пока вкладка открыта
+setInterval(()=>{try{if(document.visibilityState!=='hidden')track('ping','beat');}catch(e){}},45000);
+// фоновое уведомление: менеджер написал визитору, даже если чат закрыт
+let _bgThread=null,_bgSeen=0;
+async function bgChatWatch(){if(!db)return;try{
+  if(!_bgThread){const {data}=await db.from('threads').select('id').eq('guest_key',guestKey()).eq('kind','visitor').limit(1);if(data&&data.length)_bgThread=data[0].id;}
+  if(!_bgThread)return;
+  const {data:m}=await db.from('thread_messages').select('created_at').eq('thread_id',_bgThread).eq('role','staff').order('created_at',{ascending:false}).limit(1);
+  if(m&&m.length){const n=new Date(m[0].created_at).getTime();if(_bgSeen&&n>_bgSeen&&!document.getElementById('cbox')){try{toast('💬 Менеджер написал вам — откройте «Чат»');}catch(e){}}_bgSeen=Math.max(_bgSeen,n);}
+}catch(e){}}
+setInterval(bgChatWatch,6000);
 async function track(type,target,meta){if(!db)return;try{await db.from('events').insert({visitor_anon:anonId,session_id:sessionId,type,target,meta:meta||null});}catch(e){}}
 const val=id=>{const el=document.getElementById(id);return el?(el.value||''):'';};
 const chk=id=>{const el=document.getElementById(id);return el?!!el.checked:false;};
@@ -767,7 +778,7 @@ function cmsgHTML(m){const media=m.url?(m.kind==='video'?`<video src="${m.url}" 
 function paintChat(){const b=$('#cbox');if(b){b.innerHTML=chatMsgs.map(cmsgHTML).join('');b.scrollTop=b.scrollHeight;}}
 // --- Живой чат визитора с менеджером (общий тред + polling) ---
 let chatThreadId=null, chatPoll=null;
-function guestKey(){try{let k=localStorage.getItem('bc_gkey');if(!k){k='g_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem('bc_gkey',k);}return k;}catch(e){return 'g_anon';}}
+function guestKey(){return anonId||'g_anon';}
 async function initVisitorChat(){
   if(!db)return;
   try{
