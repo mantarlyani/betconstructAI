@@ -128,6 +128,7 @@
 <script>
 const $=s=>document.querySelector(s);
 let LANG='ru';try{LANG=localStorage.getItem('bc_alang')||'ru';}catch(e){}
+let KEEP_SCROLL=false;
 function trStr(s){if(LANG==='ru'||!window.I18N)return s;const d=window.I18N[String(s).trim()];return d&&d[LANG]?d[LANG]:s;}
 function paintLangSw(){document.querySelectorAll('.langsw a').forEach(a=>{a.style.opacity=a.dataset.l===LANG?'1':'.45';a.style.textDecoration=a.dataset.l===LANG?'underline':'none';});}
 function setLang(l){LANG=l;try{localStorage.setItem('bc_alang',l);}catch(e){}if(typeof renderTabs==='function')renderTabs();if(typeof render==='function')render();try{translateDOM(document.querySelector('.top'));}catch(e){}paintLangSw();}
@@ -303,7 +304,7 @@ function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===
 function go(t){if(t!=='chat'&&t!=='staff')chatBackStaff=null;cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();loadEvents();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();}
 
 /* ---------- VIEWS ---------- */
-function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);translateDOM(document.body);paintLangSw();}
+function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();if(KEEP_SCROLL){KEEP_SCROLL=false;}else{window.scrollTo(0,0);}translateDOM(document.body);paintLangSw();}
 
 function vDash(){
   const pend=apps.filter(a=>a.status==='pending').length;
@@ -541,11 +542,11 @@ async function openDeal(id){activeDeal=id;dealComms=[];dealAcctId=null;render();
 function closeDeal(){activeDeal=null;render();}
 function gotoAcct(id){go('accts');openAcct(id);}
 function dealActor(d){return (d.resp||'Система').split(' ')[0];}
-function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=stageIdx(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i].k;d.steps.push({n:'Стадия → '+STAGES[i].n,by:dealActor(d),at:now()});saveDeal(d);render();toast('Стадия: '+STAGES[i].n);}
-function setDealPerson(id,field,val){const d=deals.find(x=>x.id===id);d[field]=val;const lbl={resp:'Sales',ssales:'Service Sales',pm:'PM',am:'Account Manager'}[field];d.steps.push({n:lbl+': '+(val||'снят'),by:dealActor(d),at:now()});saveDeal(d);render();toast(lbl+': '+(val||'не назначен'));}
-function toggleFlow(id,i){const d=deals.find(x=>x.id===id);d.flow[i]=!d.flow[i];d.steps.push({n:(d.flow[i]?'✓ ':'✗ ')+FLOW[i].t,by:dealActor(d),at:now()});if(i===2&&d.flow[2]&&!d._rr){d._rr=true;addResourceRequest(d);}if(i===3&&d.flow[3]&&!d._kick){d._kick=true;createKickoff(d);}saveDeal(d);render();}
+function moveStage(id,dir){const d=deals.find(x=>x.id===id);const i=stageIdx(d.stage)+dir;if(i<0||i>=STAGES.length)return;d.stage=STAGES[i].k;d.steps.push({n:'Стадия → '+STAGES[i].n,by:dealActor(d),at:now()});saveDeal(d);KEEP_SCROLL=true;render();toast('Стадия: '+STAGES[i].n);}
+function setDealPerson(id,field,val){const d=deals.find(x=>x.id===id);d[field]=val;const lbl={resp:'Sales',ssales:'Service Sales',pm:'PM',am:'Account Manager'}[field];d.steps.push({n:lbl+': '+(val||'снят'),by:dealActor(d),at:now()});saveDeal(d);KEEP_SCROLL=true;render();toast(lbl+': '+(val||'не назначен'));}
+function toggleFlow(id,i){const d=deals.find(x=>x.id===id);d.flow[i]=!d.flow[i];d.steps.push({n:(d.flow[i]?'✓ ':'✗ ')+FLOW[i].t,by:dealActor(d),at:now()});if(i===2&&d.flow[2]&&!d._rr){d._rr=true;addResourceRequest(d);}if(i===3&&d.flow[3]&&!d._kick){d._kick=true;createKickoff(d);}saveDeal(d);KEEP_SCROLL=true;render();}
 function toggleAgr(id,key){const d=deals.find(x=>x.id===id);d.agr[key]=!d.agr[key];d.steps.push({n:(key==='signed'?'Договор':'Setup fee')+': '+(d.agr[key]?'да':'нет'),by:dealActor(d),at:now()});saveDeal(d);render();}
-function setDealStatus(id,st){const d=deals.find(x=>x.id===id);d.status=st;d.steps.push({n:'Статус → '+(st==='lost'?'Потеряно':st==='hold'?'На паузе':'В работе'),by:dealActor(d),at:now()});saveDeal(d);render();toast('Статус обновлён');}
+function setDealStatus(id,st){const d=deals.find(x=>x.id===id);d.status=st;d.steps.push({n:'Статус → '+(st==='lost'?'Потеряно':st==='hold'?'На паузе':'В работе'),by:dealActor(d),at:now()});saveDeal(d);KEEP_SCROLL=true;render();toast('Статус обновлён');}
 
 function vStats(){
   const max=Math.max(...analytics.sections.map(s=>s[1]));
@@ -903,7 +904,7 @@ async function addResourceRequest(d){
   ];
   await db.from('tasks').insert(rows);toast('Созданы запросы ресурсов (PM + Service Sales)');loadTasks();
 }
-async function moveTask(id,dir){const tk=taskData.find(x=>x.id===id);if(!tk)return;const i=tstatIdx(tk.status)+dir;if(i<0||i>=TSTATUS.length)return;if(db)await db.from('tasks').update({status:TSTATUS[i][0]}).eq('id',id);loadTasks();}
+async function moveTask(id,dir){const tk=taskData.find(x=>x.id===id);if(!tk)return;const i=tstatIdx(tk.status)+dir;if(i<0||i>=TSTATUS.length)return;if(db)await db.from('tasks').update({status:TSTATUS[i][0]}).eq('id',id);KEEP_SCROLL=true;loadTasks();}
 async function setTaskAssignee(id,val){if(db)await db.from('tasks').update({assignee:val}).eq('id',id);loadTasks();}
 async function delTask(id){if(!db)return;if(!confirm('Удалить задачу?'))return;await db.from('tasks').delete().eq('id',id);loadTasks();}
 function tkCard(tk){
