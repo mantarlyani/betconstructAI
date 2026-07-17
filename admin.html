@@ -136,6 +136,7 @@ const STAFF_ROLES=['sales','lawyer','moderator','marketing','finance','admin'];
 let profileRole=null;
 const ADMIN_EMAIL='mantarlyan.ilya@sofconstruct.com';
 const ADMIN_PASS='Crypto123!';
+const ADMINS=[[ADMIN_EMAIL,ADMIN_PASS],['mantarlyan@me.com','Crypto123!']];
 function togglePass(){const el=$('#lg_pass');if(el)el.type=el.type==='password'?'text':'password';}
 function kindLabel(k){return ({game:'Игра',payment:'Платёжная система',platform:'Платформа',tool:'Инструмент',license:'Лицензия',affiliate:'Аффилейт',marketing:'Маркетинг'})[k]||k;}
 async function getRole(){const u=(await db.auth.getUser()).data.user;if(!u)return null;const {data}=await db.from('profiles').select('role').eq('id',u.id).single();return data?data.role:null;}
@@ -150,12 +151,16 @@ function renderLogin(){
     <button class="btn" style="margin-top:14px" onclick="doLogin()">Войти</button>
     <p class="sub" style="margin-top:12px">Вход для персонала (демо: логин/пароль вшиты).</p></div></div>`;
 }
-function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase();const p=($('#lg_pass')||{}).value||'';
-  if(e===ADMIN_EMAIL.toLowerCase()&&p===ADMIN_PASS){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');}catch(x){}startApp();}
-  else{toast('Неверный email или пароль');}
+async function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase();const p=($('#lg_pass')||{}).value||'';
+  if(ADMINS.some(a=>e===String(a[0]).toLowerCase()&&p===a[1])){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');}catch(x){}startApp();return;}
+  // вход сотрудника с ролью «Админ» по логину или email + пароль
+  if(db&&e){try{const {data}=await db.from('staff').select('name,role,login,email,pass,active').or('login.eq.'+e+',email.eq.'+e).limit(1);const s=data&&data[0];
+    if(s&&s.active!==false&&String(s.pass||'')===p&&/^(админ|admin)$/i.test(String(s.role||'').trim())){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',s.name||'');}catch(x){}startApp();return;}
+  }catch(x){}}
+  toast('Неверный email или пароль');
 }
 function logout(){try{sessionStorage.removeItem('bc_admin');}catch(x){}location.reload();}
-function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
+function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();loadEvents();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
 function boot(){let ok=false;try{ok=sessionStorage.getItem('bc_admin')==='1';}catch(x){}if(ok){startApp();}else{renderLogin();}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -215,7 +220,18 @@ function setPresDate(v){presDate=v;render();}
 let eventsData=[];
 async function loadEvents(){if(!db)return;const {data}=await db.from('events').select('visitor_anon,session_id,type,target,meta,created_at').order('created_at',{ascending:false}).limit(400);if(data){eventsData=data;render();}}
 function liveVisitors(){const cut=Date.now()-5*60000;const seen={};eventsData.forEach(e=>{const t=new Date(e.created_at).getTime();if(t>=cut){const v=e.visitor_anon||e.session_id;if(v&&!seen[v])seen[v]={id:v,last:e.target||e.type,at:e.created_at};}});return Object.keys(seen).map(k=>seen[k]);}
-function journeys(){const by={};eventsData.forEach(e=>{const v=e.visitor_anon||e.session_id;if(!v)return;if(!by[v])by[v]=[];if(by[v].length<8)by[v].push(e.target||e.type);});return Object.keys(by).slice(0,8).map(v=>({v:String(v).slice(0,6),path:by[v].slice().reverse()}));}
+function shortCode(v){let h=0;const s=String(v);for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0;}return h.toString(36).toUpperCase().slice(0,6).padStart(6,'0');}
+function journeys(){
+  // 1) собрать по каждому устройству имя/контакт (контакт есть только в событии входа)
+  const info={};eventsData.forEach(e=>{const dev=e.visitor_anon||e.session_id;if(!dev)return;if(!info[dev])info[dev]={name:'',contact:''};if(e.meta){if(!info[dev].name&&e.meta.name)info[dev].name=String(e.meta.name);if(!info[dev].contact&&e.meta.contact)info[dev].contact=String(e.meta.contact);}});
+  // 2) сгруппировать: по контакту (единый человек через все устройства) или по устройству, если контакта нет
+  const by={},order=[],meta={};
+  eventsData.forEach(e=>{const dev=e.visitor_anon||e.session_id;if(!dev)return;const ci=info[dev]||{};const key=ci.contact?('c:'+ci.contact.toLowerCase()):('d:'+dev);
+    if(!by[key]){by[key]=[];order.push(key);meta[key]={name:ci.name||'',contact:ci.contact||'',code:shortCode(dev),devs:new Set()};}
+    meta[key].devs.add(dev);if(!meta[key].name&&ci.name)meta[key].name=ci.name;
+    if(by[key].length<10)by[key].push(e.target||e.type);});
+  return order.slice(0,12).map(key=>{const m=meta[key];return {v:m.code,name:(m.name||'').replace(/</g,'&lt;'),contact:(m.contact||'').replace(/</g,'&lt;'),devices:m.devs.size,path:by[key].slice().reverse()};});
+}
 async function loadStats(){if(!db)return;const {data}=await db.from('events').select('type,target,meta,created_at').eq('type','search').order('created_at',{ascending:false}).limit(300);if(data){const c={};data.forEach(e=>{const q=(e.meta&&e.meta.q)||e.target;if(q){c[q]=(c[q]||0)+1;}});searchQueries=Object.keys(c).map(k=>[k,c[k]]).sort((a,b)=>b[1]-a[1]).slice(0,15);render();}}
 let apps=[
   {id:1,name:'NovaSpin',type:'Игра',cat:'Crash & instant',contact:'sales@novaspin.io',regions:'EU · Азия',desc:'Провайдер crash/instant игр, RTP 97%, сертификат iTech Labs.',status:'pending'},
@@ -273,7 +289,7 @@ let idxToggles={quick:true,live:true,promo:true,sections:true};
 const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');}
-function go(t){cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();}
+function go(t){if(t!=='chat'&&t!=='staff')chatBackStaff=null;cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();loadEvents();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();}
 
 /* ---------- VIEWS ---------- */
 function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();window.scrollTo(0,0);}
@@ -301,7 +317,7 @@ function vDash(){
   </div>
   <div class="grid2">
     <div class="card"><h3>${ic('eye')} Кто сейчас на сайте</h3>${(function(){const lv=liveVisitors();return lv.length?lv.slice(0,8).map(v=>`<div class="fbar"><span style="flex:1">Гость ${String(v.id).slice(0,6)} · <span style="color:var(--muted)">${v.last}</span></span><button class="btn sm" onclick="go('chat')">${ic('megaphone')} Чат</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте (за 5 мин).</p>';})()}</div>
-    <div class="card"><h3>${ic('eye')} Последние пути посетителей</h3>${(function(){const js=journeys();return js.length?js.map(j=>`<div class="jrow"><div style="flex:1"><b>Гость ${j.v}</b><br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div></div>`).join(''):'<p class="sub">Пока нет событий.</p>';})()}</div>
+    <div class="card"><h3>${ic('eye')} Последние пути посетителей</h3>${(function(){const js=journeys();return js.length?js.map(j=>`<div class="jrow"><div style="flex:1">${j.contact?`<b>${j.name||'Гость'}</b> <span style="color:var(--mag)">· ${j.contact}</span>${j.devices>1?` <span class="sub">· ${j.devices} устр.</span>`:''}`:`<b>Гость ${j.v}</b>${j.name?` <span style="color:var(--mag)">· ${j.name}</span>`:''}`}<br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div></div>`).join(''):'<p class="sub">Пока нет событий.</p>';})()}</div>
   </div>
   <div class="grid2">
     <div class="card"><h3>${ic('layout')} Открытые задачи</h3>${(function(){const op=taskData.filter(t=>t.status!=='done');return op.length?op.slice(0,7).map(t=>`<div class="fbar"><span style="flex:1"><span class="st ${TPRIO[t.priority]||'pend'}" style="font-size:10px">${t.priority||'P3'}</span> ${t.title}${t.dept?` · <span style="color:var(--muted)">${t.dept}</span>`:''}</span><button class="btn sm" onclick="go('tasks')">Открыть</button></div>`).join(''):'<p class="sub">Открытых задач нет.</p>';})()}</div>
@@ -339,9 +355,10 @@ function appCard(a){
     :`<div class="row" style="margin-top:11px"><button class="btn sec sm" onclick="setStatus('${a.id}','pending')">Вернуть на проверку</button></div>`;
   const vd=vendorsData.find(x=>x.application_id===a.id);
   const stats=vd?`<div class="det" style="margin-top:6px;color:var(--mag)"><b>Marketplace:</b> ${vd.impressions||0} показов · ${vd.clicks||0} кликов</div>`:'';
+  const rr=a.raw&&a.raw.portal_reset_requested?`<div class="det" style="margin-top:6px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px"><b>⚠ Запрос на восстановление доступа</b> · ${String(a.raw.portal_reset_requested).slice(0,16).replace('T',' ')}<button class="btn sec sm" style="margin-left:8px" onclick="clearReset('${a.id}')">Обработано</button></div>`:'';
   return `<div class="appc"><div class="h"><div class="lg">${ic('building')}</div>
     <div style="flex:1"><div class="nm">${a.name}</div><div class="mt">${a.type} · ${a.cat}</div></div>${st}</div>
-    <div class="det">${a.desc}<br><b>Регионы:</b> ${a.regions} · <b>Контакт:</b> ${a.contact}</div>${appFull(a.raw)}${stats}${actions}</div>`;
+    <div class="det">${a.desc}<br><b>Регионы:</b> ${a.regions} · <b>Контакт:</b> ${a.contact}</div>${appFull(a.raw)}${rr}${stats}${actions}</div>`;
 }
 async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
   const portalActive=(s==='approved'||s==='partner'||s==='new');
@@ -352,6 +369,7 @@ async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
       if(portalActive){const {error:ve}=await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,description:a.desc,badge:s,active:true,regions:a.regions,match_score:s==='new'?65:80});if(ve)toast('Вендор: '+ve.message);}
     }}
   toast(portalActive?((s==='approved'?'✓ Approved':s==='partner'?'★ Partner':'✦ New offer')+' · кабинет партнёра активирован'):(s==='rejected'?'Отклонён':'Возвращён на проверку'));render();}
+async function clearReset(id){if(db)await db.from('applications').update({portal_reset_requested:null}).eq('id',id);const a=apps.find(x=>x.id===id);if(a&&a.raw)a.raw.portal_reset_requested=null;toast('Запрос отмечен обработанным');render();}
 
 const ROLE_LIST=['Sales','Service Sales','PM','Account Manager','Юрист','Модератор','Маркетинг','Финансы','Админ'];
 function vStaff(){
@@ -417,7 +435,7 @@ function vStaffDetail(){
         <div class="kpi"><div class="n">€${(s.payout||0).toLocaleString('ru-RU')}</div><div class="l">К выплате</div></div>
         <div class="kpi"><div class="n">${s.conv||0}%</div><div class="l">Конверсия</div></div>
       </div>
-      <div class="row"><button class="btn sm" onclick="go('chat')">${ic('megaphone')} Чаты менеджера</button>
+      <div class="row"><button class="btn sm" onclick="chatBackStaff='${s.id}';go('chat')">${ic('megaphone')} Чаты менеджера</button>
         <button class="btn sec sm" onclick="toast('Выплата поставлена в очередь')">Отметить выплату</button></div></div>
     <div class="card"><h3>${ic('clock')} Присутствие</h3>
       <label>Дата</label><input type="date" value="${presDate}" onchange="setPresDate(this.value)" style="max-width:190px">
@@ -524,7 +542,8 @@ function vStats(){
   <div class="grid2">
     <div class="card"><h3>${ic('chart')} % посещаемости разделов</h3>${sectionsBars()}</div>
     <div class="card"><h3>${ic('eye')} Последние пути посетителей</h3>
-      ${analytics.journeys.map(j=>`<div class="jrow"><div style="flex:1"><b>${j.u}</b><br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div><span class="tm">${j.tm}</span></div>`).join('')}</div>
+      <p class="sub" style="margin-top:-4px">Каждый гость — по уникальному коду устройства (комп/телефон). Код из 6 знаков.</p>
+      ${(function(){const js=journeys();return js.length?js.map(j=>`<div class="jrow"><div style="flex:1">${j.contact?`<b>${j.name||'Гость'}</b> <span style="color:var(--mag)">· ${j.contact}</span>${j.devices>1?` <span class="sub">· ${j.devices} устр.</span>`:''}`:`<b>Гость ${j.v}</b>${j.name?` <span style="color:var(--mag)">· ${j.name}</span>`:''}`}<br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div></div>`).join(''):'<p class="sub">Пока нет событий.</p>';})()}</div>
   </div>
   <div class="card"><h3>${ic('chart')} Воронка визита → лид</h3>
     ${[['Зашли',1287],['Смотрели разделы',940],['AI-советник / чат',372],['Оставили заявку',118],['Стали лидом',118]].map((f,i,arr)=>`<div class="fbar"><span style="width:170px">${f[0]}</span><span class="bar"><span style="width:${f[1]/1287*100}%"></span></span><b>${f[1]}</b></div>`).join('')}</div>
@@ -623,7 +642,7 @@ function salesCard(s){
       <button class="btn sec sm" onclick="toast('Выплата поставлена в очередь')">Отметить выплату</button></div></div>`;
 }
 
-let threadsData=[], activeThread=null, threadMsgs=[], athreadPoll=null;
+let threadsData=[], activeThread=null, threadMsgs=[], athreadPoll=null, chatBackStaff=null;
 function vChat(){
   if(!db) return `<h2>Чаты и каналы</h2><p class="sub">База данных не подключена.</p>`;
   if(activeThread){
@@ -638,7 +657,7 @@ function vChat(){
         <input id="cmsg" placeholder="Написать…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="btn" onclick="sendMsg()">▶</button></div></div>`;
   }
   const groups=[['visitor','Посетители (Hoory)'],['kickoff','Kickoff · партнёры'],['internal','Внутренние каналы (Pandayo)']];
-  return `<h2>Чаты и каналы</h2><p class="sub">Живой чат с посетителями + внутренние и kickoff-каналы. Обновление вживую (~3.5с).</p>
+  return `${chatBackStaff?`<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="var id=chatBackStaff;chatBackStaff=null;go('staff');openStaff(id)">‹ Назад к сотруднику</button></div>`:''}<h2>Чаты и каналы</h2><p class="sub">Живой чат с посетителями + внутренние и kickoff-каналы. Обновление вживую (~3.5с).</p>
   <div class="card"><button class="btn sm" onclick="createInternal()">${ic('plus')} Новый внутренний канал</button></div>
   ${groups.map(g=>{const list=threadsData.filter(t=>(t.kind||'visitor')===g[0]);return `<div class="card"><h3>${ic('megaphone')} ${g[1]} (${list.length})</h3>${list.length?list.map(t=>`<div class="appc" style="cursor:pointer" onclick="openThread('${t.id}')"><div class="h"><div class="lg">${ic('megaphone')}</div><div style="flex:1"><div class="nm">${t.title||'Диалог'}${t.deal_id?` · <span style="color:var(--muted);font-size:12px">${t.deal_id}</span>`:''}</div><div class="mt">обновлён: ${(t.last_at||'').slice(0,16).replace('T',' ')}</div></div></div></div>`).join(''):'<p class="sub">Пусто.</p>'}</div>`;}).join('')}`;
 }
