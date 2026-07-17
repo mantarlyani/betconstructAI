@@ -284,6 +284,10 @@ const SB_URL='https://smddtvaewmmpuyvtuscb.supabase.co';
 const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
 const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
 let anonId=null;try{anonId=localStorage.getItem('bc_anon');if(!anonId){anonId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random());localStorage.setItem('bc_anon',anonId);}}catch(e){anonId=String(Date.now());}
+window.deviceFp=null;
+// Стабильный отпечаток устройства (FingerprintJS, бесплатный). Переживает очистку кэша и инкогнито:
+// то же устройство пересчитывает тот же код -> используем его как основной id, чтобы не плодить дубли гостей.
+(async()=>{try{const FP=await import('https://openfpcdn.io/fingerprintjs/v4');const agent=await FP.load();const r=await agent.get();if(r&&r.visitorId){const fid='fp_'+r.visitorId;window.deviceFp=r.visitorId;anonId=fid;try{localStorage.setItem('bc_anon',fid);}catch(e){}}}catch(e){}})();
 const sessionId=String(Date.now());
 async function track(type,target,meta){if(!db)return;try{await db.from('events').insert({visitor_anon:anonId,session_id:sessionId,type,target,meta:meta||null});}catch(e){}}
 const val=id=>{const el=document.getElementById(id);return el?(el.value||''):'';};
@@ -1009,7 +1013,7 @@ function regFields(){
   const kyb=regRole!=='buyer'?`<div class="disc">${ic('shield')} ${t('kyb')}</div>`:'';
   return fld('fName','name')+fld('fCompany','company')+fld('fEmail','email','email')+fld('fPhone','phone')+fld('fCountry','country')+fld('fPass','pass','password')
     +extra+kyb+`<button class="btn" onclick="submitReg()">${ic('check')} ${t('submitReg')}</button>
-    <div class="regfoot" onclick="toast('•')">${t('haveAcc')}</div>`;
+    <div class="regfoot" style="cursor:pointer;color:var(--mag);font-weight:600" onclick="location.href='/partner.html'">${t('haveAcc')}</div>`;
 }
 function register(){
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
@@ -1048,7 +1052,7 @@ function submitEntry(){
   if(!c.trim()){toast(t('entryContact'));return;}
   window.USER=n.trim();
   try{localStorage.setItem('bc_guest',JSON.stringify({name:n.trim(),contact:c.trim(),ts:Date.now()}));}catch(e){}
-  if(db){db.from('visitors').upsert({anon_id:anonId,device:{ua:navigator.userAgent,lang:navigator.language,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,screen:screen.width+'x'+screen.height,name:n.trim(),contact:c.trim()}},{onConflict:'anon_id'}).then(()=>{});track('entry','login',{name:n.trim(),contact:c.trim()});}
+  if(db){db.from('visitors').upsert({anon_id:anonId,device:{ua:navigator.userAgent,lang:navigator.language,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,screen:screen.width+'x'+screen.height,fp:window.deviceFp||null,name:n.trim(),contact:c.trim()}},{onConflict:'anon_id'}).then(()=>{});track('entry','login',{name:n.trim(),contact:c.trim()});}
   render('home');
 }
 

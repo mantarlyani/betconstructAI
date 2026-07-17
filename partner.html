@@ -95,6 +95,7 @@ function renderLogin(){
       <label>Email или телефон</label><input id="p_login" placeholder="name@company.com или +374…" onkeydown="if(event.key==='Enter')pLogin()">
       <label>Пароль</label><input id="p_pass" type="password" placeholder="пароль из заявки" onkeydown="if(event.key==='Enter')pLogin()">
       <button class="btn" style="width:100%;margin-top:14px" onclick="pLogin()">Войти</button>
+      <div style="text-align:center;margin-top:10px"><span onclick="pForgot()" style="color:var(--mag);font-size:13px;cursor:pointer">Забыли логин или пароль?</span></div>
     </div>
     <p class="sub">Нет заявки? <a href="/" style="color:var(--mag)">Подайте продукт на модерацию</a></p>
   </div>`;
@@ -112,6 +113,17 @@ async function pLogin(){
   if(!match){toast('Неверный логин/пароль или кабинет ещё не активирован');return;}
   P.email=(match.email||login);try{sessionStorage.setItem('bc_partner',P.email);}catch(e){}
   await loadAll();
+}
+async function pForgot(){
+  const login=prompt('Укажите email или телефон из вашей заявки — мы передадим менеджеру запрос на восстановление доступа:');
+  if(login===null)return;const q=String(login).trim().toLowerCase();
+  if(!q){toast('Введите email или телефон');return;}
+  if(!db){toast('База недоступна');return;}
+  const {data}=await db.from('applications').select('id,email,phone').limit(500);
+  const match=(data||[]).find(a=>(a.email||'').toLowerCase()===q || normPhone(a.phone)===normPhone(q));
+  if(!match){toast('Заявка с таким контактом не найдена. Обратитесь к вашему менеджеру.');return;}
+  await db.from('applications').update({portal_reset_requested:new Date().toISOString()}).eq('id',match.id);
+  toast('Запрос отправлен. Менеджер восстановит доступ и свяжется с вами.');
 }
 function logout(){try{sessionStorage.removeItem('bc_partner');}catch(e){}P={email:'',companies:[],apps:[],vendors:[],leads:[],agreements:[],threads:[]};stopPoll();activeThread=null;renderLogin();}
 
