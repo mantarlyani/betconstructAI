@@ -61,6 +61,36 @@
   .mtab th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
   .mtab td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
   .mtab tr:last-child td{border-bottom:none}
+  /* мобильный «карточный» режим для таблиц — каждая строка становится карточкой, всё видно без горизонтального скролла */
+  @media(max-width:640px){
+    table.cardtab{font-size:13px}
+    table.cardtab tbody{display:block}
+    table.cardtab tr:first-child{display:none} /* прячем шапку таблицы */
+    table.cardtab tr{display:block;border:1px solid var(--line);border-radius:12px;padding:4px 13px;margin-bottom:11px;background:var(--card)}
+    table.cardtab td{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);white-space:normal;min-height:40px;text-align:right}
+    table.cardtab tr td:last-child{border-bottom:none}
+    table.cardtab td::before{content:attr(data-label);color:var(--muted);font-size:11px;font-weight:600;flex:0 0 auto;text-align:left}
+    table.cardtab td[data-label=""]::before{display:none}
+    table.cardtab td:first-child{border-bottom:2px solid var(--line);font-size:16px;padding-top:8px;text-align:left}
+    table.cardtab td:first-child::before{display:none}
+    table.cardtab td select{width:auto;max-width:62%}
+  }
+  /* меню аккаунта в шапке */
+  .acctwrap{position:relative;display:none}
+  .acctbtn{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;max-width:170px}
+  .acctbtn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acctav{width:23px;height:23px;border-radius:50%;background:#faf2f6;color:var(--mag);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+  .acctpop{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(20,22,50,.13);min-width:214px;padding:6px;display:none;z-index:40}
+  .acctpop.on{display:block}
+  .acctpop .hd{padding:9px 11px;border-bottom:1px solid var(--line);margin-bottom:4px}
+  .acctpop .hd b{display:block;font-size:13px}.acctpop .hd span{font-size:11.5px;color:var(--muted);word-break:break-all}
+  .acctpop a{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text)}
+  .acctpop a:hover{background:var(--bg)}.acctpop a.danger{color:var(--red)}
+  @media(max-width:560px){
+    .top{flex-wrap:wrap;gap:8px 10px;padding:10px 14px}
+    .who{margin-left:auto;gap:8px}
+    .acctbtn{max-width:130px}
+  }
   .docgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:13px;margin-top:13px}
   .doccard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
   .docimg{width:100%;height:130px;object-fit:cover;display:block;background:var(--bg)}
@@ -118,7 +148,10 @@
 <div class="top">
   <div class="wm"><span class="b">Bet</span>Construct<span class="a">AI</span></div>
   <span class="chip-admin">ADMIN</span>
-  <div class="who"><span class="langsw" style="display:inline-flex;gap:1px;align-items:center;margin-right:6px"><a data-l="ru" onclick="setLang('ru')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">RU</a><a data-l="en" onclick="setLang('en')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">EN</a><a data-l="hy" onclick="setLang('hy')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">HY</a></span><span>Персонал</span><button class="btn sec sm" onclick="logout()">Выйти</button></div>
+  <div class="who"><span class="langsw" style="display:inline-flex;gap:1px;align-items:center;margin-right:6px"><a data-l="ru" onclick="setLang('ru')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">RU</a><a data-l="en" onclick="setLang('en')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">EN</a><a data-l="hy" onclick="setLang('hy')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">HY</a></span><div class="acctwrap"><button class="acctbtn" onclick="toggleAcctMenu(event)"><span class="acctav" id="acctAv">А</span><span class="nm" id="acctName">Админ</span><span style="color:var(--muted)">▾</span></button>
+    <div class="acctpop" id="acctPop"><div class="hd"><b id="acctName2">Админ</b><span id="acctEmail"></span></div>
+      <a onclick="switchAccount()"><span aria-hidden="true">↻</span> Сменить аккаунт</a>
+      <a class="danger" onclick="logout()"><span aria-hidden="true">⎋</span> Выйти</a></div></div></div>
 </div>
 <div class="tabs" id="tabs"></div>
 <main id="main"></main>
@@ -136,7 +169,8 @@ function translateDOM(root){if(LANG==='ru'||!window.I18N)return;root=root||docum
   const wk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);const ns=[];while(wk.nextNode())ns.push(wk.currentNode);
   ns.forEach(n=>{const pn=n.parentNode;if(pn&&skip[pn.nodeName])return;const raw=n.nodeValue;const key=raw.trim();if(!key)return;const d=window.I18N[key];if(d&&d[LANG])n.nodeValue=raw.replace(key,d[LANG]);});
   root.querySelectorAll('[placeholder]').forEach(el=>{const d=window.I18N[(el.getAttribute('placeholder')||'').trim()];if(d&&d[LANG])el.setAttribute('placeholder',d[LANG]);});
-  root.querySelectorAll('[title]').forEach(el=>{const d=window.I18N[(el.getAttribute('title')||'').trim()];if(d&&d[LANG])el.setAttribute('title',d[LANG]);});}
+  root.querySelectorAll('[title]').forEach(el=>{const d=window.I18N[(el.getAttribute('title')||'').trim()];if(d&&d[LANG])el.setAttribute('title',d[LANG]);});
+  root.querySelectorAll('[data-label]').forEach(el=>{const d=window.I18N[(el.getAttribute('data-label')||'').trim()];if(d&&d[LANG])el.setAttribute('data-label',d[LANG]);});}
 function toast(t){const e=$('#toast');e.textContent=trStr(t);e.classList.add('show');clearTimeout(window._t);window._t=setTimeout(()=>e.classList.remove('show'),2200);}
 function now(){return new Date().toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
 /* ---------- Supabase + auth ---------- */
@@ -164,15 +198,19 @@ function renderLogin(){
   try{translateDOM(document.body);paintLangSw();}catch(e){}
 }
 async function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase();const p=($('#lg_pass')||{}).value||'';
-  if(ADMINS.some(a=>e===String(a[0]).toLowerCase()&&p===a[1])){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');}catch(x){}startApp();return;}
+  if(ADMINS.some(a=>e===String(a[0]).toLowerCase()&&p===a[1])){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name','Администратор');sessionStorage.setItem('bc_admin_email',e);}catch(x){}startApp();return;}
   // вход сотрудника с ролью «Админ» по логину или email + пароль
   if(db&&e){try{const {data}=await db.from('staff').select('name,role,login,email,pass,active').or('login.eq.'+e+',email.eq.'+e).limit(1);const s=data&&data[0];
-    if(s&&s.active!==false&&String(s.pass||'')===p&&/^(админ|admin)$/i.test(String(s.role||'').trim())){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',s.name||'');}catch(x){}startApp();return;}
+    if(s&&s.active!==false&&String(s.pass||'')===p&&/^(админ|admin)$/i.test(String(s.role||'').trim())){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',s.name||'');sessionStorage.setItem('bc_admin_email',s.email||e);}catch(x){}startApp();return;}
   }catch(x){}}
   toast('Неверный email или пароль');
 }
-function logout(){try{sessionStorage.removeItem('bc_admin');}catch(x){}location.reload();}
-function startApp(){document.querySelector('.tabs').style.display='flex';renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();loadEvents();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
+function logout(){try{sessionStorage.removeItem('bc_admin');sessionStorage.removeItem('bc_admin_name');sessionStorage.removeItem('bc_admin_email');}catch(x){}location.reload();}
+function switchAccount(){logout();} /* возврат к экрану входа для входа под другим аккаунтом */
+function toggleAcctMenu(ev){if(ev){ev.stopPropagation();}const p=$('#acctPop');if(p)p.classList.toggle('on');}
+document.addEventListener('click',function(e){const p=$('#acctPop');if(p&&p.classList.contains('on')&&!(e.target.closest&&e.target.closest('.acctwrap')))p.classList.remove('on');});
+function paintAcct(){let nm='',em='';try{nm=sessionStorage.getItem('bc_admin_name')||'';em=sessionStorage.getItem('bc_admin_email')||'';}catch(x){}if(!nm)nm=em||'Админ';const a=$('#acctName'),a2=$('#acctName2'),el=$('#acctEmail'),av=$('#acctAv'),aw=document.querySelector('.acctwrap');if(a)a.textContent=nm;if(a2)a2.textContent=nm;if(el)el.textContent=em;if(av)av.textContent=(nm.trim()[0]||'А').toUpperCase();if(aw)aw.style.display='inline-block';}
+function startApp(){document.querySelector('.tabs').style.display='flex';paintAcct();renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();loadEvents();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
 function boot(){let ok=false;try{ok=sessionStorage.getItem('bc_admin')==='1';}catch(x){}if(ok){startApp();}else{renderLogin();}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -416,15 +454,15 @@ function vStaff(){
   <div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
     <h3 style="margin:0">${ic('users')} Команда (${flt.length})</h3>
     <select onchange="staffFilter=this.value;render()" style="max-width:200px"><option value="">Все отделы</option>${ROLE_LIST.map(r=>`<option ${r===staffFilter?'selected':''}>${r}</option>`).join('')}</select></div>
-    <div style="overflow-x:auto"><table class="mtab"><tr><th>Имя</th><th>Роль</th><th>Email</th><th>Сеть</th><th>Логин / пароль</th><th>Доступ</th><th></th></tr>
+    <div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Имя</th><th>Роль</th><th>Email</th><th>Сеть</th><th>Логин / пароль</th><th>Доступ</th><th></th></tr>
     ${flt.map(s=>`<tr>
-      <td><b style="color:var(--mag);cursor:pointer" title="Click to see more about contact" onclick="openStaff('${s.id}')">${s.name}</b> <span style="color:var(--muted);font-size:11px">ⓘ</span></td>
-      <td>${s.id?`<select onchange="setStaffRole('${s.id}',this.value)">${ROLE_LIST.map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>`:`<span class="pill">${s.role}</span>`}</td>
-      <td>${s.email?`<span style="font-size:12px;color:var(--ink)">${s.email}</span>`:'<span style="font-size:12px;color:var(--muted)">—</span>'}</td>
-      <td>${isOnlineNow(s.name)?'<span style="color:var(--green);font-weight:700">●</span>':'<span style="color:var(--muted)">○</span>'}</td>
-      <td class="mono" style="font-size:11px">${s.login} · ${s.pass||''} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Новый пароль">↻</button>`:''}</td>
-      <td>${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
-      <td>${s.id?`<button class="btn r sm" onclick="delStaff('${s.id}')">${ic('x')}</button>`:''}</td></tr>`).join('')}
+      <td data-label="Имя"><b style="color:var(--mag);cursor:pointer" title="Click to see more about contact" onclick="openStaff('${s.id}')">${s.name}</b> <span style="color:var(--muted);font-size:11px">ⓘ</span></td>
+      <td data-label="Роль">${s.id?`<select onchange="setStaffRole('${s.id}',this.value)">${ROLE_LIST.map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>`:`<span class="pill">${s.role}</span>`}</td>
+      <td data-label="Email">${s.email?`<span style="font-size:12px;color:var(--ink)">${s.email}</span>`:'<span style="font-size:12px;color:var(--muted)">—</span>'}</td>
+      <td data-label="Сеть">${isOnlineNow(s.name)?'<span style="color:var(--green);font-weight:700">● в сети</span>':'<span style="color:var(--muted)">○ офлайн</span>'}</td>
+      <td class="mono" data-label="Логин / пароль" style="font-size:11px">${s.login} · ${s.pass||''} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Новый пароль">↻</button>`:''}</td>
+      <td data-label="Доступ">${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
+      <td data-label="">${s.id?`<button class="btn r sm" onclick="delStaff('${s.id}')">${ic('x')} Удалить</button>`:''}</td></tr>`).join('')}
     </table></div></div>`;
 }
 function vStaffDetail(){
@@ -592,7 +630,7 @@ function mktAnalytics(){
   const byB={};rows.forEach(r=>{const k=r.badge||'other';(byB[k]=byB[k]||{n:0,imp:0,clk:0,leads:0});byB[k].n++;byB[k].imp+=r.imp;byB[k].clk+=r.clk;byB[k].leads+=r.leads;});
   const partSummary=Object.keys(byB).map(k=>`<div class="fbar"><span style="flex:1"><span class="st ${k==='partner'?'pt':k==='approved'?'ap':k==='new'?'nw':'pend'}">${badgeRu(k)}</span> · ${byB[k].n}</span><span style="white-space:nowrap;color:var(--muted)">${byB[k].imp} показов · ${byB[k].clk} кликов · ${byB[k].leads} лид.</span></div>`).join('');
   const head=`<tr><th>Продукт / услуга</th><th>Тип</th><th>Показы</th><th>Клики</th><th>CTR</th><th>В корзину</th><th>Демо</th><th>Лиды</th><th>Конв.</th></tr>`;
-  const body=rows.map(r=>`<tr><td><b>${r.name}</b><br><span style="color:var(--muted);font-size:11px">${r.cat}</span></td><td><span class="st ${r.badge==='partner'?'pt':r.badge==='approved'?'ap':r.badge==='new'?'nw':'pend'}" style="font-size:10px">${badgeRu(r.badge)}</span></td><td>${r.imp}</td><td>${r.clk}</td><td>${r.ctr}%</td><td>${r.cart}</td><td>${r.demo}</td><td><b>${r.leads}</b></td><td>${r.conv}%</td></tr>`).join('');
+  const body=rows.map(r=>`<tr><td data-label="Продукт / услуга"><b>${r.name}</b><br><span style="color:var(--muted);font-size:11px">${r.cat}</span></td><td data-label="Тип"><span class="st ${r.badge==='partner'?'pt':r.badge==='approved'?'ap':r.badge==='new'?'nw':'pend'}" style="font-size:10px">${badgeRu(r.badge)}</span></td><td data-label="Показы">${r.imp}</td><td data-label="Клики">${r.clk}</td><td data-label="CTR">${r.ctr}%</td><td data-label="В корзину">${r.cart}</td><td data-label="Демо">${r.demo}</td><td data-label="Лиды"><b>${r.leads}</b></td><td data-label="Конв.">${r.conv}%</td></tr>`).join('');
   return `<div class="grid2">
     <div class="card"><h3>${ic('chart')} Итоги Marketplace</h3>
       <div class="fbar"><span style="flex:1">Показы</span><b>${tot.imp}</b></div>
@@ -603,7 +641,7 @@ function mktAnalytics(){
     <div class="card"><h3>${ic('users')} По типу партнёра</h3>${partSummary||'<p class="sub">—</p>'}</div>
   </div>
   <div class="card"><h3>${ic('chart')} Продукты и услуги — воронка показ → клик → лид</h3>
-    <div style="overflow-x:auto"><table class="mtab">${head}${body}</table></div>
+    <div style="overflow-x:auto"><table class="mtab cardtab">${head}${body}</table></div>
     <p class="sub" style="margin-top:8px">CTR = клики/показы · Конв. = лиды/клики. Данные реальные: показы и клики из Marketplace, корзина и демо — из заявок посетителей.</p></div>`;
 }
 
@@ -635,7 +673,7 @@ function vSales(){
     ${leadsData.length?leadsData.slice(0,25).map(l=>{const ac=acctOwnerFor(l);const own=ac&&ac.owner?`<span class="st pt" style="margin-left:6px">ведёт ${ac.owner}</span>`:(ac?`<span class="st nw" style="margin-left:6px">клиент без владельца</span>`:'');return `<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b> <span class="st ${l.source==='cart'?'pt':'ap'}" style="margin-left:6px">${l.source==='cart'?'корзина':'демо'}</span>${own}<br><span style="color:var(--muted);font-size:12px">${l.vendor&&l.product?l.product+' · ':''}${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><span class="tm">${l.created_at?new Date(l.created_at).toLocaleString('ru-RU'):''}</span></div>`;}).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
   <div class="card"><h3>${ic('star')} Рейтинг по сменам (график чат-смен)</h3>
     <p class="sub" style="margin-top:-4px">Всего смен и смен по выходным. Day 09:00–18:00 · Evening 18:01–01:59 · Night 02:00–08:59.</p>
-    ${(function(){const rk=staff.filter(s=>(s.shifts_total||0)>0).sort((a,b)=>(b.shifts_total||0)-(a.shifts_total||0));const mx=Math.max(1,...rk.map(s=>s.shifts_total||0));return rk.length?`<div style="overflow-x:auto"><table class="mtab"><tr><th>#</th><th>Сотрудник</th><th>Всего смен</th><th>Выходные</th><th></th></tr>${rk.map((s,i)=>`<tr><td>${i+1}</td><td><b>${s.name}</b></td><td>${s.shifts_total}</td><td>${s.shifts_weekend||0}</td><td style="width:40%"><span class="bar"><span style="width:${(s.shifts_total/mx*100)}%"></span></span></td></tr>`).join('')}</table></div>`:'<p class="sub">Нет данных по сменам. Выполните <b>add_shift_ranks.sql</b> в Supabase.</p>';})()}</div>
+    ${(function(){const rk=staff.filter(s=>(s.shifts_total||0)>0).sort((a,b)=>(b.shifts_total||0)-(a.shifts_total||0));const mx=Math.max(1,...rk.map(s=>s.shifts_total||0));return rk.length?`<div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Сотрудник</th><th>Всего смен</th><th>Выходные</th><th></th></tr>${rk.map((s,i)=>`<tr><td data-label="Сотрудник"><b>#${i+1} · ${s.name}</b></td><td data-label="Всего смен">${s.shifts_total}</td><td data-label="Выходные">${s.shifts_weekend||0}</td><td data-label="" style="width:40%"><span class="bar"><span style="width:${(s.shifts_total/mx*100)}%"></span></span></td></tr>`).join('')}</table></div>`:'<p class="sub">Нет данных по сменам. Выполните <b>add_shift_ranks.sql</b> в Supabase.</p>';})()}</div>
   <div class="card"><h3>${ic('clock')} Присутствие сотрудников</h3>
     <p class="sub" style="margin-top:-4px">Только просмотр. Отмечать вход/выход можно в карточке сотрудника (Сотрудники → имя).</p>
     <label>Дата</label><input type="date" value="${presDate}" onchange="setPresDate(this.value)" style="max-width:190px">
@@ -1075,12 +1113,12 @@ function vAccounts(){
     </div>
     <button class="btn" style="margin-top:12px" onclick="createAccount()">${ic('check')} Добавить</button></div>
   <div class="card"><h3>${ic('users')} Реестр (${acctData.length})</h3>
-    <div style="overflow-x:auto"><table class="mtab"><tr><th>Компания</th><th>Тип</th><th>Контакт</th><th>Email / тел</th><th>Владелец</th><th>Источник</th><th></th></tr>
-    ${acctData.length?acctData.map(a=>`<tr><td><b style="color:var(--mag);cursor:pointer" onclick="openAcct('${a.id}')">${a.name||'—'}</b></td>
-      <td>${a.kind==='partner'?'<span class="st pt">Партнёр</span>':a.kind==='prospect'?'<span class="st nw">Лид</span>':'<span class="st ap">Клиент</span>'}</td>
-      <td>${a.contact_name||'—'}</td><td style="font-size:11px">${a.email||''}${a.phone?('<br>'+a.phone):''}</td>
-      <td>${acctOwnerSel(a)}</td><td>${a.source||'—'}</td>
-      <td><button class="btn r sm" onclick="delAccount('${a.id}')">${ic('x')}</button></td></tr>`).join(''):'<tr><td colspan="7" class="sub" style="padding:12px">Реестр пуст. Импортируйте файл или добавьте вручную.</td></tr>'}
+    <div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Компания</th><th>Тип</th><th>Контакт</th><th>Email / тел</th><th>Владелец</th><th>Источник</th><th></th></tr>
+    ${acctData.length?acctData.map(a=>`<tr><td data-label="Компания"><b style="color:var(--mag);cursor:pointer" onclick="openAcct('${a.id}')">${a.name||'—'}</b></td>
+      <td data-label="Тип">${a.kind==='partner'?'<span class="st pt">Партнёр</span>':a.kind==='prospect'?'<span class="st nw">Лид</span>':'<span class="st ap">Клиент</span>'}</td>
+      <td data-label="Контакт">${a.contact_name||'—'}</td><td data-label="Email / тел" style="font-size:11px">${a.email||''}${a.phone?('<br>'+a.phone):''}</td>
+      <td data-label="Владелец">${acctOwnerSel(a)}</td><td data-label="Источник">${a.source||'—'}</td>
+      <td data-label=""><button class="btn r sm" onclick="delAccount('${a.id}')">${ic('x')} Удалить</button></td></tr>`).join(''):'<tr><td colspan="7" data-label="" class="sub" style="padding:12px">Реестр пуст. Импортируйте файл или добавьте вручную.</td></tr>'}
     </table></div></div>`;
 }
 
