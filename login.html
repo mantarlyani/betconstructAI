@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Вход — BetConstructAI</title>
+<style>
+  :root{--mag:#A60063;--mag-dk:#7a0049;--bg:#f6f2f5;--card:#fff;--line:#e7e2e8;--text:#1b191d;--muted:#7d7280;--blue:#2f6bd6;--red:#d63d38}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column}
+  .lang{display:flex;justify-content:flex-end;gap:2px;padding:14px 16px}
+  .lang a{cursor:pointer;padding:4px 9px;font-size:12px;font-weight:700;color:var(--muted);border-radius:8px}
+  .lang a.on{background:#faf2f6;color:var(--mag)}
+  .center{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px 60px}
+  .box{width:100%;max-width:380px}
+  .wm{text-align:center;font-size:24px;font-weight:800;margin-bottom:4px}.wm .b{color:var(--mag)}.wm .a{color:var(--blue)}
+  .sub{text-align:center;color:var(--muted);font-size:13.5px;margin-bottom:24px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;box-shadow:0 8px 30px rgba(90,20,60,.07)}
+  label{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin:14px 0 6px}
+  label:first-child{margin-top:0}
+  input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:15px;font-family:inherit;color:var(--text);background:var(--card)}
+  input:focus{outline:none;border-color:var(--mag)}
+  .pw{position:relative}.pw .eye{position:absolute;right:12px;top:11px;cursor:pointer;color:var(--muted);font-size:13px;user-select:none}
+  .btn{width:100%;margin-top:18px;background:var(--mag);color:#fff;border:none;border-radius:11px;padding:13px;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn:active{transform:scale(.99)}.btn[disabled]{opacity:.6;cursor:default}
+  .err{color:var(--red);font-size:13px;margin-top:12px;min-height:16px;text-align:center}
+  .userlink{text-align:center;margin-top:18px}
+  .userlink a{color:var(--blue);font-weight:600;font-size:13.5px;text-decoration:none}
+  .foot{text-align:center;color:var(--muted);font-size:11.5px;margin-top:22px}
+</style>
+</head>
+<body>
+<div class="lang">
+  <a data-l="ru" class="on" onclick="setL('ru')">РУ</a>
+  <a data-l="en" onclick="setL('en')">EN</a>
+  <a data-l="hy" onclick="setL('hy')">ՀՅ</a>
+</div>
+<div class="center"><div class="box">
+  <div class="wm"><span class="b">Bet</span>Construct<span class="a">AI</span></div>
+  <div class="sub" id="t_sub">Вход для команды: администраторы и сотрудники</div>
+  <div class="card">
+    <label id="t_login_l">Email или логин</label>
+    <input id="lg" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com">
+    <label id="t_pass_l">Пароль</label>
+    <div class="pw">
+      <input id="pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <span class="eye" id="t_eye" onclick="togglePw()">показать</span>
+    </div>
+    <button class="btn" id="t_btn" onclick="doLogin()">Войти</button>
+    <div class="err" id="err"></div>
+  </div>
+  <div class="userlink"><a href="/" id="t_user">Обычный пользователь? Открыть приложение →</a></div>
+  <div class="foot">© 2026 BetConstructAI</div>
+</div></div>
+
+<script>
+var T={
+  ru:{sub:'Вход для команды: администраторы и сотрудники',login:'Email или логин',pass:'Пароль',btn:'Войти',show:'показать',hide:'скрыть',user:'Обычный пользователь? Открыть приложение →',
+      fill:'Введите логин и пароль',wrong:'Неверный логин или пароль',neterr:'Нет связи с сервером, попробуйте позже',wait:'Входим…'},
+  en:{sub:'Team sign-in: admins and staff',login:'Email or login',pass:'Password',btn:'Sign in',show:'show',hide:'hide',user:'Regular user? Open the app →',
+      fill:'Enter login and password',wrong:'Wrong login or password',neterr:'No server connection, try later',wait:'Signing in…'},
+  hy:{sub:'Մուտք թիմի համար՝ ադմիններ և աշխատակիցներ',login:'Էլ. փոստ կամ լոգին',pass:'Գաղտնաբառ',btn:'Մուտք',show:'ցույց տալ',hide:'թաքցնել',user:'Սովորական օգտատե՞ր: Բացել հավելվածը →',
+      fill:'Մուտքագրեք լոգինը և գաղտնաբառը',wrong:'Սխալ լոգին կամ գաղտնաբառ',neterr:'Սերվերի կապ չկա, փորձեք ավելի ուշ',wait:'Մուտք...'}
+};
+var L='ru';
+function setL(l){L=l;var t=T[l];document.documentElement.lang=l;
+  document.getElementById('t_sub').textContent=t.sub;
+  document.getElementById('t_login_l').textContent=t.login;
+  document.getElementById('t_pass_l').textContent=t.pass;
+  document.getElementById('t_btn').textContent=t.btn;
+  document.getElementById('t_user').textContent=t.user;
+  document.getElementById('t_eye').textContent=(document.getElementById('pw').type==='password')?t.show:t.hide;
+  document.querySelectorAll('.lang a').forEach(function(a){a.classList.toggle('on',a.getAttribute('data-l')===l);});
+  try{localStorage.setItem('bc_alang',l);}catch(e){}
+}
+function togglePw(){var p=document.getElementById('pw');p.type=(p.type==='password')?'text':'password';document.getElementById('t_eye').textContent=(p.type==='password')?T[L].show:T[L].hide;}
+var busy=false;
+async function doLogin(){
+  if(busy)return;
+  var login=(document.getElementById('lg').value||'').trim().toLowerCase();
+  var pass=document.getElementById('pw').value||'';
+  var err=document.getElementById('err');err.textContent='';
+  if(!login||!pass){err.textContent=T[L].fill;return;}
+  busy=true;var btn=document.getElementById('t_btn');btn.disabled=true;btn.textContent=T[L].wait;
+  try{
+    var r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:login,pass:pass})});
+    var d=r.ok?await r.json():null;
+    if(d&&d.ok&&d.dest==='admin'){
+      try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',(d.profile&&d.profile.name)||'Администратор');sessionStorage.setItem('bc_admin_email',(d.profile&&d.profile.email)||login);}catch(e){}
+      location.href='/admin.html';return;
+    }
+    if(d&&d.ok&&d.dest==='staff'){
+      try{sessionStorage.setItem('bc_staff',JSON.stringify(d.profile||{}));}catch(e){}
+      location.href='/staff.html';return;
+    }
+    err.textContent=T[L].wrong;
+  }catch(e){err.textContent=T[L].neterr;}
+  busy=false;btn.disabled=false;btn.textContent=T[L].btn;
+}
+(function(){var s;try{s=localStorage.getItem('bc_alang');}catch(e){}if(s==='en'||s==='hy')setL(s);document.getElementById('lg').focus();})();
+</script>
+</body>
+</html>
