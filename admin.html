@@ -185,7 +185,7 @@ const ADMINS=[[ADMIN_EMAIL,ADMIN_PASS],['mantarlyan@me.com','Crypto123!']];
 function togglePass(){const el=$('#lg_pass');if(el)el.type=el.type==='password'?'text':'password';}
 function kindLabel(k){return ({game:'Игра',payment:'Платёжная система',platform:'Платформа',tool:'Инструмент',license:'Лицензия',affiliate:'Аффилейт',marketing:'Маркетинг'})[k]||k;}
 async function getRole(){const u=(await db.auth.getUser()).data.user;if(!u)return null;const {data}=await db.from('profiles').select('role').eq('id',u.id).single();return data?data.role:null;}
-async function loadApps(){if(!db)return;const {data,error}=await db.from('applications').select('*').order('created_at',{ascending:false});if(error){toast('Чтение заявок: '+error.message);return;}if(data){apps=data.map(a=>({id:a.id,name:a.company,type:kindLabel(a.kind),cat:a.category||a.product_name||'',contact:a.email,regions:a.regions||'',desc:a.description||a.value_prop||'',raw:a,status:a.status}));render();}}
+async function loadApps(){if(!db)return;const {data,error}=await db.from('applications').select('id,company,kind,category,product_name,value_prop,features,model,price,languages,currencies,compliance,site,email,phone,contact_name,signer_name,regions,description,status,portal_active,portal_reset_requested,created_at').order('created_at',{ascending:false});if(error){toast('Чтение заявок: '+error.message);return;}if(data){apps=data.map(a=>({id:a.id,name:a.company,type:kindLabel(a.kind),cat:a.category||a.product_name||'',contact:a.email,regions:a.regions||'',desc:a.description||a.value_prop||'',raw:a,status:a.status}));render();}}
 function renderLogin(){
   document.querySelector('.tabs').style.display='none';
   $('#main').innerHTML=`<div style="max-width:360px;margin:60px auto"><div class="card"><h3>${ic('shield')} Вход для персонала</h3>
@@ -202,12 +202,8 @@ async function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLower
   try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'admin',login:e,pass:p})});
     if(r.ok){const d=await r.json();if(d&&d.ok&&d.profile){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',d.profile.name||'Администратор');sessionStorage.setItem('bc_admin_email',d.profile.email||e);}catch(x){}startApp();return;}}
   }catch(err){}
-  // B) запасной путь (старый) — на время перехода, если сервер недоступен/не настроен
+  // B) запасной путь: только вшитые админы (пароли staff в браузере больше не читаем)
   if(ADMINS.some(a=>e===String(a[0]).toLowerCase()&&p===a[1])){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name','Администратор');sessionStorage.setItem('bc_admin_email',e);}catch(x){}startApp();return;}
-  // вход сотрудника с ролью «Админ» по логину или email + пароль
-  if(db&&e){try{const {data}=await db.from('staff').select('name,role,login,email,pass,active').or('login.eq.'+e+',email.eq.'+e).limit(1);const s=data&&data[0];
-    if(s&&s.active!==false&&String(s.pass||'')===p&&/^(админ|admin)$/i.test(String(s.role||'').trim())){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',s.name||'');sessionStorage.setItem('bc_admin_email',s.email||e);}catch(x){}startApp();return;}
-  }catch(x){}}
   toast('Неверный email или пароль');
 }
 function logout(){try{sessionStorage.removeItem('bc_admin');sessionStorage.removeItem('bc_admin_name');sessionStorage.removeItem('bc_admin_email');}catch(x){}location.reload();}
@@ -240,7 +236,7 @@ async function loadVendors(){if(!db)return;const {data}=await db.from('vendors')
 async function loadLeads(){if(!db)return;const {data}=await db.from('leads').select('*').order('created_at',{ascending:false}).limit(200);if(data){leadsData=data;render();}}
 let shiftsData=[], presDate=new Date().toISOString().slice(0,10);
 async function loadShifts(){if(!db)return;const {data}=await db.from('shifts').select('*').order('online_at',{ascending:false}).limit(500);if(data){shiftsData=data;render();}}
-async function loadStaff(){if(!db)return;const {data}=await db.from('staff').select('*').order('created_at',{ascending:true});if(data&&data.length){staff=data.map(r=>({id:r.id,name:r.name,role:r.role,login:r.login,pass:r.pass,active:r.active!==false,status:'offline',shifts_total:r.shifts_total||0,shifts_weekend:r.shifts_weekend||0,email:r.email||'',phone:r.phone||'',whatsapp:r.whatsapp||'',telegram:r.telegram||'',gmail_connected:!!r.gmail_connected}));render();}}
+async function loadStaff(){if(!db)return;const {data}=await db.from('staff').select('id,name,role,login,active,shifts_total,shifts_weekend,email,phone,whatsapp,telegram,gmail_connected,created_at').order('created_at',{ascending:true});if(data&&data.length){staff=data.map(r=>({id:r.id,name:r.name,role:r.role,login:r.login,active:r.active!==false,status:'offline',shifts_total:r.shifts_total||0,shifts_weekend:r.shifts_weekend||0,email:r.email||'',phone:r.phone||'',whatsapp:r.whatsapp||'',telegram:r.telegram||'',gmail_connected:!!r.gmail_connected}));render();}}
 async function sendClientMail(){const g=id=>($('#'+id)&&$('#'+id).value)||'';const a=acctData.find(x=>x.id===activeAcct)||{};
   const own=staff.find(s=>s.name===a.owner);
   if(!own||!own.id){toast('У аккаунта нет владельца-сотрудника');return;}
@@ -459,13 +455,13 @@ function vStaff(){
   <div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
     <h3 style="margin:0">${ic('users')} Команда (${flt.length})</h3>
     <select onchange="staffFilter=this.value;render()" style="max-width:200px"><option value="">Все отделы</option>${ROLE_LIST.map(r=>`<option ${r===staffFilter?'selected':''}>${r}</option>`).join('')}</select></div>
-    <div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Имя</th><th>Роль</th><th>Email</th><th>Сеть</th><th>Логин / пароль</th><th>Доступ</th><th></th></tr>
+    <div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Имя</th><th>Роль</th><th>Email</th><th>Сеть</th><th>Логин</th><th>Доступ</th><th></th></tr>
     ${flt.map(s=>`<tr>
       <td data-label="Имя"><b style="color:var(--mag);cursor:pointer" title="Click to see more about contact" onclick="openStaff('${s.id}')">${s.name}</b> <span style="color:var(--muted);font-size:11px">ⓘ</span></td>
       <td data-label="Роль">${s.id?`<select onchange="setStaffRole('${s.id}',this.value)">${ROLE_LIST.map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>`:`<span class="pill">${s.role}</span>`}</td>
       <td data-label="Email">${s.email?`<span style="font-size:12px;color:var(--ink)">${s.email}</span>`:'<span style="font-size:12px;color:var(--muted)">—</span>'}</td>
       <td data-label="Сеть">${isOnlineNow(s.name)?'<span style="color:var(--green);font-weight:700">● в сети</span>':'<span style="color:var(--muted)">○ офлайн</span>'}</td>
-      <td class="mono" data-label="Логин / пароль" style="font-size:11px">${s.login} · ${s.pass||''} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Новый пароль">↻</button>`:''}</td>
+      <td class="mono" data-label="Логин" style="font-size:11px">${s.login} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Сгенерировать новый пароль">↻ пароль</button>`:''}</td>
       <td data-label="Доступ">${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
       <td data-label="">${s.id?`<button class="btn r sm" onclick="delStaff('${s.id}')">${ic('x')} Удалить</button>`:''}</td></tr>`).join('')}
     </table></div></div>`;
