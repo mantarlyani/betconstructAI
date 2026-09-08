@@ -539,7 +539,7 @@ function renderTop(){
 function renderBot(){const el=document.getElementById('botbar');if(el)el.style.display='none';}
 function home(){
   return header()+`
-  <div class="welcome"><div class="s">${t('hi')}${window.USER?', <b style="color:var(--text)">'+window.USER+'</b>':''} 👋</div>
+  <div class="welcome"><div class="s">${t('hi')}${window.USER?', <b style="color:var(--text)">'+window.USER+'</b>':''} 👋${window.USER?` <a onclick="logoutGuest()" style="cursor:pointer;color:var(--mag);font-size:12px;font-weight:600;margin-left:8px;white-space:nowrap;text-decoration:underline">${lang==='ru'?'Выйти':lang==='en'?'Log out':'Դուրս գալ'}</a>`:''}</div>
     <div class="tag1">Leading iGaming Platform Provider</div>
     <div class="tag2">Experience the solutions first-hand</div></div>
   <div class="wrap"><div class="search" onclick="go('search')">${ic('search')} ${t('searchPh')}</div></div>
@@ -909,7 +909,7 @@ function more(){
     <div class="pcat"><div class="body" style="display:block;border:none">
       ${iRow('trophy','Loyalty Program',"go('loyalty')")}
       ${linkRows(items)}
-      ${iRow('user',lang==='ru'?'Сменить пользователя':lang==='en'?'Switch user':'Փոխել օգտատիրոջը',"logoutGuest()")}
+      ${iRow('user',lang==='ru'?'Выйти / сменить пользователя':lang==='en'?'Log out / switch user':'Դուրս գալ',"logoutGuest()")}
     </div></div></div>`;
 }
 function logoutGuest(){try{localStorage.removeItem('bc_guest');}catch(e){}window.USER=null;render('entry');}
