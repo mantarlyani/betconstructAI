@@ -47,8 +47,8 @@ export default async function handler(req, res) {
   } catch (e) {}
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
-  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash'];
-  let lastErr = 'unknown';
+  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-2.5-pro'];
+  const errs = [];
   for (const model of MODELS) {
     try {
       const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key;
@@ -66,13 +66,27 @@ export default async function handler(req, res) {
         && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
         && data.candidates[0].content.parts[0].text;
       if (text) return res.status(200).json({ text, model });
-      lastErr = (data && data.error && data.error.message)
+      const em = (data && data.error && data.error.message)
         || (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason)
         || (data && data.promptFeedback && data.promptFeedback.blockReason)
         || ('HTTP ' + r.status);
+      errs.push(model + ' → ' + em);
     } catch (e) {
-      lastErr = String(e);
+      errs.push(model + ' → ' + String(e));
     }
   }
-  return res.status(200).json({ text: 'Не удалось получить ответ.', error: String(lastErr).slice(0, 400) });
+  // все модели не сработали — узнаём, что вообще доступно этому ключу
+  let available = '';
+  try {
+    const lm = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + key);
+    const lmj = await lm.json();
+    if (lmj && lmj.models) {
+      available = lmj.models
+        .filter(m => (m.supportedGenerationMethods || []).indexOf('generateContent') !== -1)
+        .map(m => m.name).join(', ');
+    } else if (lmj && lmj.error) {
+      available = 'ListModels error: ' + lmj.error.message;
+    }
+  } catch (e) { available = 'ListModels failed: ' + String(e); }
+  return res.status(200).json({ text: 'Не удалось получить ответ.', errors: errs, availableModels: String(available).slice(0, 800) });
 }
