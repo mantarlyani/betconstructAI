@@ -71,7 +71,7 @@ function uniq(a){return [...new Set(a.filter(Boolean))];}
 async function loadAll(){
   if(!db)return;
   const email=P.email;
-  const {data:apps}=await db.from('applications').select('*').eq('email',email);
+  const {data:apps}=await db.from('applications').select('id,company,kind,category,product_name,value_prop,features,model,price,languages,currencies,compliance,site,email,phone,contact_name,regions,description,status,portal_active,portal_reset_requested,created_at').eq('email',email);
   P.apps=apps||[];
   P.companies=uniq(P.apps.map(a=>a.company));
   const appIds=P.apps.map(a=>a.id).filter(Boolean);
@@ -112,17 +112,13 @@ async function pLogin(){
   if(!login){toast('Введите email или телефон');return;}
   if(!pass){toast('Введите пароль');return;}
   toast('Входим…');
-  // A) серверная проверка — пароль не читается в браузере
+  // вход только через сервер — пароль в браузере не читается
   try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'partner',login,pass})});
-    if(r.ok){const d=await r.json();if(d&&d.ok&&d.profile){P.email=(d.profile.email||login);try{sessionStorage.setItem('bc_partner',P.email);}catch(e){}await loadAll();return;}}
-  }catch(err){}
-  // B) запасной путь (старый) — на время перехода
-  if(!db){toast('База недоступна');return;}
-  const {data}=await db.from('applications').select('*').eq('portal_active',true).eq('portal_pass',pass);
-  const match=(data||[]).find(a=>(a.email||'').toLowerCase()===login || normPhone(a.phone)===normPhone(login));
-  if(!match){toast('Неверный логин/пароль или кабинет ещё не активирован');return;}
-  P.email=(match.email||login);try{sessionStorage.setItem('bc_partner',P.email);}catch(e){}
-  await loadAll();
+    if(r.ok){const d=await r.json();
+      if(d&&d.ok&&d.profile){P.email=(d.profile.email||login);try{sessionStorage.setItem('bc_partner',P.email);}catch(e){}await loadAll();return;}
+      toast('Неверный логин/пароль или кабинет ещё не активирован');return;}
+    toast('Ошибка входа, попробуйте позже');
+  }catch(err){toast('Нет связи с сервером входа');}
 }
 async function pForgot(){
   const login=prompt('Укажите email или телефон из вашей заявки — мы передадим менеджеру запрос на восстановление доступа:');
