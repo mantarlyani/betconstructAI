@@ -47,7 +47,7 @@ export default async function handler(req, res) {
   } catch (e) {}
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
-  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-2.5-pro'];
+  const MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash-lite', 'gemini-pro-latest', 'gemini-flash-lite-latest'];
   const errs = [];
   for (const model of MODELS) {
     try {
