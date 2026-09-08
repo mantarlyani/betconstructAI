@@ -198,6 +198,11 @@ function renderLogin(){
   try{translateDOM(document.body);paintLangSw();}catch(e){}
 }
 async function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase();const p=($('#lg_pass')||{}).value||'';
+  // A) серверная проверка входа — пароль не читается в браузере
+  try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'admin',login:e,pass:p})});
+    if(r.ok){const d=await r.json();if(d&&d.ok&&d.profile){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',d.profile.name||'Администратор');sessionStorage.setItem('bc_admin_email',d.profile.email||e);}catch(x){}startApp();return;}}
+  }catch(err){}
+  // B) запасной путь (старый) — на время перехода, если сервер недоступен/не настроен
   if(ADMINS.some(a=>e===String(a[0]).toLowerCase()&&p===a[1])){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name','Администратор');sessionStorage.setItem('bc_admin_email',e);}catch(x){}startApp();return;}
   // вход сотрудника с ролью «Админ» по логину или email + пароль
   if(db&&e){try{const {data}=await db.from('staff').select('name,role,login,email,pass,active').or('login.eq.'+e+',email.eq.'+e).limit(1);const s=data&&data[0];
