@@ -21,6 +21,11 @@
   .tabs{display:flex;gap:6px;overflow-x:auto;padding:12px 18px 0}
   .tabs button{background:none;border:none;padding:9px 13px;border-radius:10px 10px 0 0;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;font-size:14px}
   .tabs button.on{background:#fff;color:var(--mag);border:1px solid var(--line);border-bottom:none}
+  @media(max-width:480px){
+    .wrap{padding:14px 12px}
+    .top{padding:10px 14px;gap:8px}
+    .kpis{grid-template-columns:1fr 1fr}
+  }
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
   .card h3{margin:0 0 11px;font-size:15px}
   h2{font-size:20px;margin:4px 0 2px}.sub{color:var(--muted);font-size:13.5px;margin:0 0 14px}
