@@ -285,9 +285,29 @@ const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
 const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
 let anonId=null;try{anonId=localStorage.getItem('bc_anon');if(!anonId){anonId=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random());localStorage.setItem('bc_anon',anonId);}}catch(e){anonId=String(Date.now());}
 window.deviceFp=null;
-// Стабильный отпечаток устройства (FingerprintJS, бесплатный). Переживает очистку кэша и инкогнито:
-// то же устройство пересчитывает тот же код -> используем его как основной id, чтобы не плодить дубли гостей.
-(async()=>{try{const FP=await import('https://openfpcdn.io/fingerprintjs/v4');const agent=await FP.load();const r=await agent.get();if(r&&r.visitorId){const fid='fp_'+r.visitorId;window.deviceFp=r.visitorId;anonId=fid;try{localStorage.setItem('bc_anon',fid);}catch(e){}}}catch(e){}})();
+/* ---------- GDPR / согласие на трекинг ---------- */
+// Аналитику и отпечаток устройства включаем ТОЛЬКО с согласия пользователя.
+function hasConsent(){try{return localStorage.getItem('bc_consent')==='all';}catch(e){return false;}}
+// Стабильный отпечаток устройства (FingerprintJS) — запускаем только после согласия.
+function initFingerprint(){(async()=>{try{const FP=await import('https://openfpcdn.io/fingerprintjs/v4');const agent=await FP.load();const r=await agent.get();if(r&&r.visitorId){const fid='fp_'+r.visitorId;window.deviceFp=r.visitorId;anonId=fid;try{localStorage.setItem('bc_anon',fid);}catch(e){}}}catch(e){}})();}
+function setConsent(v){try{localStorage.setItem('bc_consent',v);}catch(e){}const b=document.getElementById('gdpr');if(b)b.remove();if(v==='all'){initFingerprint();try{track('page','consent',{v:'all'});}catch(e){}}}
+function showConsentBanner(){let s=null;try{s=localStorage.getItem('bc_consent');}catch(e){}if(s||document.getElementById('gdpr'))return;
+  const L=(typeof lang!=='undefined'?lang:'ru');
+  const T=({ru:{t:'Мы используем куки и аналитику, чтобы улучшать сервис. Отпечаток устройства и аналитику включаем только с вашего согласия.',a:'Принять',e:'Только необходимое'},
+    en:{t:'We use cookies and analytics to improve the service. Device fingerprinting and analytics run only with your consent.',a:'Accept',e:'Essential only'},
+    hy:{t:'Մենք օգտագործում ենք քուքիներ և վերլուծություն՝ ծառայությունը բարելավելու համար։ Սարքի նույնականացումն ու վերլուծությունը միանում են միայն ձեր համաձայնությամբ։',a:'Ընդունել',e:'Միայն անհրաժեշտը'}})[L]||{t:'',a:'OK',e:'—'};
+  const d=document.createElement('div');d.id='gdpr';
+  d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#1c1420;color:#efe7ef;border-top:1px solid #3a2c38;box-shadow:0 -6px 24px rgba(0,0,0,.28);padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px))';
+  d.innerHTML='<div style="max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px">'
+    +'<div style="flex:1;min-width:220px;font-size:13px;line-height:1.5">'+T.t+'</div>'
+    +'<div style="display:flex;gap:9px;flex-wrap:wrap">'
+    +'<button onclick="setConsent(\'essential\')" style="background:transparent;color:#efe7ef;border:1px solid #574a56;border-radius:10px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer">'+T.e+'</button>'
+    +'<button onclick="setConsent(\'all\')" style="background:#A60063;color:#fff;border:none;border-radius:10px;padding:9px 17px;font-size:13px;font-weight:700;cursor:pointer">'+T.a+'</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+}
+if(hasConsent())initFingerprint();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',showConsentBanner);else showConsentBanner();
 const sessionId=String(Date.now());
 // heartbeat: держим визитора «на сайте», пока вкладка открыта
 setInterval(()=>{try{if(document.visibilityState!=='hidden')track('ping','beat');}catch(e){}},45000);
@@ -300,7 +320,7 @@ async function bgChatWatch(){if(!db)return;try{
   if(m&&m.length){const n=new Date(m[0].created_at).getTime();if(_bgSeen&&n>_bgSeen&&!document.getElementById('cbox')){try{toast('💬 Менеджер написал вам — откройте «Чат»');}catch(e){}}_bgSeen=Math.max(_bgSeen,n);}
 }catch(e){}}
 setInterval(bgChatWatch,6000);
-async function track(type,target,meta){if(!db)return;try{await db.from('events').insert({visitor_anon:anonId,session_id:sessionId,type,target,meta:meta||null});}catch(e){}}
+async function track(type,target,meta){if(!db||!hasConsent())return;try{await db.from('events').insert({visitor_anon:anonId,session_id:sessionId,type,target,meta:meta||null});}catch(e){}}
 const val=id=>{const el=document.getElementById(id);return el?(el.value||''):'';};
 const chk=id=>{const el=document.getElementById(id);return el?!!el.checked:false;};
 const SERVERS=[['🇳🇱','Нидерланды'],['🇩🇪','Германия'],['🇨🇼','Кюрасао'],['🇨🇾','Кипр'],['🇬🇧','Великобритания']];
@@ -1063,7 +1083,7 @@ function submitEntry(){
   if(!c.trim()){toast(t('entryContact'));return;}
   window.USER=n.trim();
   try{localStorage.setItem('bc_guest',JSON.stringify({name:n.trim(),contact:c.trim(),ts:Date.now()}));}catch(e){}
-  if(db){db.from('visitors').upsert({anon_id:anonId,device:{ua:navigator.userAgent,lang:navigator.language,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,screen:screen.width+'x'+screen.height,fp:window.deviceFp||null,name:n.trim(),contact:c.trim()}},{onConflict:'anon_id'}).then(()=>{});track('entry','login',{name:n.trim(),contact:c.trim()});}
+  if(db){if(hasConsent())db.from('visitors').upsert({anon_id:anonId,device:{ua:navigator.userAgent,lang:navigator.language,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,screen:screen.width+'x'+screen.height,fp:window.deviceFp||null,name:n.trim(),contact:c.trim()}},{onConflict:'anon_id'}).then(()=>{});track('entry','login',{name:n.trim(),contact:c.trim()});}
   render('home');
 }
 
