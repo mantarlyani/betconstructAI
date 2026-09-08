@@ -111,8 +111,13 @@ async function pLogin(){
   const pass=(($('#p_pass')||{}).value||'');
   if(!login){toast('Введите email или телефон');return;}
   if(!pass){toast('Введите пароль');return;}
-  if(!db){toast('База недоступна');return;}
   toast('Входим…');
+  // A) серверная проверка — пароль не читается в браузере
+  try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'partner',login,pass})});
+    if(r.ok){const d=await r.json();if(d&&d.ok&&d.profile){P.email=(d.profile.email||login);try{sessionStorage.setItem('bc_partner',P.email);}catch(e){}await loadAll();return;}}
+  }catch(err){}
+  // B) запасной путь (старый) — на время перехода
+  if(!db){toast('База недоступна');return;}
   const {data}=await db.from('applications').select('*').eq('portal_active',true).eq('portal_pass',pass);
   const match=(data||[]).find(a=>(a.email||'').toLowerCase()===login || normPhone(a.phone)===normPhone(login));
   if(!match){toast('Неверный логин/пароль или кабинет ещё не активирован');return;}
