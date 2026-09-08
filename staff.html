@@ -142,8 +142,13 @@ function renderLogin(){
 async function sLogin(){
   const login=(($('#s_login')||{}).value||'').trim().toLowerCase();const pass=(($('#s_pass')||{}).value||'');
   if(!login||!pass){toast('Введите логин и пароль');return;}
-  if(!db){toast('База недоступна');return;}
   toast('Входим…');
+  // A) серверная проверка — пароль не читается в браузере
+  try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'staff',login,pass})});
+    if(r.ok){const d=await r.json();if(d&&d.ok&&d.profile){S=d.profile;try{sessionStorage.setItem('bc_staff',JSON.stringify(S));}catch(e){}await loadAll();return;}}
+  }catch(err){}
+  // B) запасной путь (старый) — на время перехода
+  if(!db){toast('База недоступна');return;}
   const {data}=await db.from('staff').select('*').eq('login',login).eq('active',true);
   const m=(data||[]).find(x=>x.pass===pass);
   if(!m){toast('Неверный логин или пароль');return;}
