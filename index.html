@@ -745,7 +745,6 @@ function partner(){
   return header()+`<div class="page"><div class="back" onclick="go('market')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('briefcase')} Стать партнёром</h2>
     <p class="sub">Разместите продукт или игру на BetConstructAI. После модерации он появится в Marketplace и в AI-рекомендациях оператору.</p>
-    <a href="/partner.html" style="display:inline-block;color:var(--mag);font-weight:600;font-size:13.5px;margin-bottom:8px">Уже партнёр? Войти в кабинет →</a>
     <div class="fsec">1 · Юридические данные (KYB)</div>
     ${pf('Юр. название компании','company','ООО «...» / Ltd')}
     ${pf('Страна регистрации','country')}
@@ -840,7 +839,6 @@ function affiliate(){
   return header()+`<div class="page"><div class="back" onclick="go('market')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('megaphone')} Аффилейт / Маркетинг</h2>
     <p class="sub">Зарегистрируйтесь как аффилейт или маркетинг-агентство и предлагайте операторам услуги продвижения. После модерации — листинг в Marketplace.</p>
-    <a href="/partner.html" style="display:inline-block;color:var(--mag);font-weight:600;font-size:13.5px;margin-bottom:8px">Уже партнёр? Войти в кабинет →</a>
     <div class="fsec">1 · Кто вы</div>
     ${pf('Компания / название команды','afcompany')}
     ${pfs('Тип','aftype',['Affiliate-сеть','Трафик-команда','Маркетинг-агентство','Инфлюенсер / Стример'])}
@@ -1044,7 +1042,7 @@ function regFields(){
   const kyb=regRole!=='buyer'?`<div class="disc">${ic('shield')} ${t('kyb')}</div>`:'';
   return fld('fName','name')+fld('fCompany','company')+fld('fEmail','email','email')+fld('fPhone','phone')+fld('fCountry','country')+fld('fPass','pass','password')
     +extra+kyb+`<button class="btn" onclick="submitReg()">${ic('check')} ${t('submitReg')}</button>
-    <div class="regfoot" style="cursor:pointer;color:var(--mag);font-weight:600" onclick="location.href='/partner.html'">${t('haveAcc')}</div>`;
+    <div class="regfoot" style="cursor:pointer;color:var(--mag);font-weight:600" onclick="location.href='/login'">${t('haveAcc')}</div>`;
 }
 function register(){
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
@@ -1073,7 +1071,7 @@ function entry(){
       <label>${t('entryContact')}</label><input id="en_contact" autocomplete="off" placeholder="name@mail.com / +374…">
       <button class="btn" onclick="submitEntry()">${ic('check')} ${t('entryBtn')}</button>
     </div>
-    <div style="margin-top:18px"><span onclick="location.href='admin.html'" style="color:var(--blue);font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">${ic('shield')} Войти в систему · у меня есть аккаунт →</span></div>
+    <div style="margin-top:18px"><span onclick="location.href='/login'" style="color:var(--blue);font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px">${ic('shield')} Войти в систему · у меня есть аккаунт →</span></div>
     </div>`;
 }
 function submitEntry(){
