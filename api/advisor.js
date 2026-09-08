@@ -47,21 +47,32 @@ export default async function handler(req, res) {
   } catch (e) {}
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
-  try {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + key;
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt(lang, context) }] },
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4 }
-      })
-    });
-    const data = await r.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Не удалось получить ответ.';
-    return res.status(200).json({ text });
-  } catch (e) {
-    return res.status(500).json({ error: String(e) });
+  const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash'];
+  let lastErr = 'unknown';
+  for (const model of MODELS) {
+    try {
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + key;
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt(lang, context) }] },
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.4 }
+        })
+      });
+      const data = await r.json();
+      const text = data && data.candidates && data.candidates[0] && data.candidates[0].content
+        && data.candidates[0].content.parts && data.candidates[0].content.parts[0]
+        && data.candidates[0].content.parts[0].text;
+      if (text) return res.status(200).json({ text, model });
+      lastErr = (data && data.error && data.error.message)
+        || (data && data.candidates && data.candidates[0] && data.candidates[0].finishReason)
+        || (data && data.promptFeedback && data.promptFeedback.blockReason)
+        || ('HTTP ' + r.status);
+    } catch (e) {
+      lastErr = String(e);
+    }
   }
+  return res.status(200).json({ text: 'Не удалось получить ответ.', error: String(lastErr).slice(0, 400) });
 }
