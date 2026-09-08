@@ -369,14 +369,14 @@ function vDash(){
   <div class="grid2">
     <div class="card"><h3>${ic('chart')} Самые посещаемые разделы</h3>${sectionsBars()}</div>
     <div class="card"><h3>${ic('shield')} Ждут модерации</h3>
-      ${apps.filter(a=>a.status==='pending').map(a=>`<div class="fbar"><span style="flex:1">${a.name} · <span class="muted" style="color:var(--muted)">${a.type}</span></span><button class="btn sm" onclick="go('mod')">Открыть</button></div>`).join('')||'<p class="sub">Нет новых заявок</p>'}</div>
+      ${apps.filter(a=>a.status==='pending').map(a=>`<div class="fbar"><span style="flex:1">${esc(a.name)} · <span class="muted" style="color:var(--muted)">${a.type}</span></span><button class="btn sm" onclick="go('mod')">Открыть</button></div>`).join('')||'<p class="sub">Нет новых заявок</p>'}</div>
   </div>
   <div class="grid2">
     <div class="card"><h3>${ic('users')} Кто в сети</h3>${(function(){const on=staff.filter(s=>isOnlineNow(s.name)||s.status==='online');return on.length?on.map(s=>`<div class="fbar"><span style="flex:1">${s.name} <span class="pill">${s.role}</span></span><span style="color:var(--green);font-weight:700">● в сети</span></div>`).join(''):'<p class="sub">Никого нет в сети.</p>';})()}</div>
-    <div class="card"><h3>${ic('crm')} Входящие лиды</h3>${leadsData.length?leadsData.slice(0,6).map(l=>`<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b><br><span style="color:var(--muted);font-size:12px">${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><button class="btn sm" onclick="go('crm')">Открыть</button></div>`).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
+    <div class="card"><h3>${ic('crm')} Входящие лиды</h3>${leadsData.length?leadsData.slice(0,6).map(l=>`<div class="fbar"><div style="flex:1"><b>${esc(l.vendor||l.product||'—')}</b><br><span style="color:var(--muted);font-size:12px">${esc(l.visitor_name||'Гость')}${l.contact?(' · '+esc(l.contact)):''}</span></div><button class="btn sm" onclick="go('crm')">Открыть</button></div>`).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
   </div>
   <div class="grid2">
-    <div class="card"><h3>${ic('eye')} Кто сейчас на сайте</h3>${(function(){const lv=liveVisitors();return lv.length?lv.slice(0,10).map(v=>`<div class="fbar" style="align-items:flex-start"><div style="flex:1"><b>${v.name||('Гость '+shortCode(v.id))}</b>${v.contact?` <span style="color:var(--mag);font-size:12px">· ${v.contact}</span>`:''} <span class="st ap" style="font-size:9px">● на сайте</span><br><span style="color:var(--muted);font-size:11.5px">${((v.path&&v.path.length)?v.path:[v.last]).map(p=>`<span class="tag">${p}</span>`).join(' ')}</span></div><button class="btn sm" onclick="dmVisitor('${v.id}','${(v.name||'').replace(/'/g,'')}')">${ic('megaphone')} Написать</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте (за 5 мин).</p>';})()}</div>
+    <div class="card"><h3>${ic('eye')} Кто сейчас на сайте</h3>${(function(){const lv=liveVisitors();return lv.length?lv.slice(0,10).map(v=>`<div class="fbar" style="align-items:flex-start"><div style="flex:1"><b>${esc(v.name||('Гость '+shortCode(v.id)))}</b>${v.contact?` <span style="color:var(--mag);font-size:12px">· ${esc(v.contact)}</span>`:''} <span class="st ap" style="font-size:9px">● на сайте</span><br><span style="color:var(--muted);font-size:11.5px">${((v.path&&v.path.length)?v.path:[v.last]).map(p=>`<span class="tag">${esc(p)}</span>`).join(' ')}</span></div><button class="btn sm" onclick="dmVisitor('${v.id}','${(v.name||'').replace(/'/g,'')}')">${ic('megaphone')} Написать</button></div>`).join(''):'<p class="sub">Сейчас никого нет на сайте (за 5 мин).</p>';})()}</div>
     <div class="card"><h3>${ic('eye')} Последние пути посетителей</h3>${(function(){const js=journeys();return js.length?js.map(j=>`<div class="jrow"><div style="flex:1">${j.contact?`<b>${j.name||'Гость'}</b> <span style="color:var(--mag)">· ${j.contact}</span>${j.devices>1?` <span class="sub">· ${j.devices} устр.</span>`:''}`:`<b>Гость ${j.v}</b>${j.name?` <span style="color:var(--mag)">· ${j.name}</span>`:''}`}<br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div></div>`).join(''):'<p class="sub">Пока нет событий.</p>';})()}</div>
   </div>
   <div class="grid2">
@@ -398,7 +398,7 @@ function vMod(){
 function appFull(raw){
   if(!raw)return '';
   const F=[['product_name','Продукт'],['value_prop','Ценность'],['features','Функции'],['model','Модель'],['price','Цена'],['languages','Языки'],['currencies','Валюты'],['compliance','Комплаенс'],['site','Сайт'],['email','Email (логин кабинета)'],['phone','Телефон (логин кабинета)'],['contact_name','Контактное лицо']];
-  const rows=F.filter(f=>raw[f[0]]).map(f=>`<div style="padding:5px 0;border-top:1px solid var(--line)"><b>${f[1]}:</b> ${String(raw[f[0]])}</div>`).join('');
+  const rows=F.filter(f=>raw[f[0]]).map(f=>`<div style="padding:5px 0;border-top:1px solid var(--line)"><b>${f[1]}:</b> ${esc(raw[f[0]])}</div>`).join('');
   return `<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--mag);font-weight:600;font-size:13px">Подробнее</summary><div class="det" style="margin-top:6px">${rows||'Доп. полей нет.'}</div></details>`;
 }
 function appCard(a){
@@ -417,8 +417,8 @@ function appCard(a){
   const stats=vd?`<div class="det" style="margin-top:6px;color:var(--mag)"><b>Marketplace:</b> ${vd.impressions||0} показов · ${vd.clicks||0} кликов</div>`:'';
   const rr=a.raw&&a.raw.portal_reset_requested?`<div class="det" style="margin-top:6px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px"><b>⚠ Запрос на восстановление доступа</b> · ${String(a.raw.portal_reset_requested).slice(0,16).replace('T',' ')}<button class="btn sec sm" style="margin-left:8px" onclick="clearReset('${a.id}')">Обработано</button></div>`:'';
   return `<div class="appc"><div class="h"><div class="lg">${ic('building')}</div>
-    <div style="flex:1"><div class="nm">${a.name}</div><div class="mt">${a.type} · ${a.cat}</div></div>${st}</div>
-    <div class="det">${a.desc}<br><b>Регионы:</b> ${a.regions} · <b>Контакт:</b> ${a.contact}</div>${appFull(a.raw)}${rr}${stats}${actions}</div>`;
+    <div style="flex:1"><div class="nm">${esc(a.name)}</div><div class="mt">${a.type} · ${esc(a.cat)}</div></div>${st}</div>
+    <div class="det">${esc(a.desc)}<br><b>Регионы:</b> ${esc(a.regions)} · <b>Контакт:</b> ${esc(a.contact)}</div>${appFull(a.raw)}${rr}${stats}${actions}</div>`;
 }
 async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
   const portalActive=(s==='approved'||s==='partner'||s==='new');
@@ -502,7 +502,7 @@ function vStaffDetail(){
       ${presenceCard(s,true)}</div>
   </div>
   <div class="grid2">
-    <div class="card"><h3>${ic('crm')} Лиды (${myLeads.length})</h3>${myLeads.length?myLeads.slice(0,12).map(l=>`<div class="fbar"><span style="flex:1"><b>${l.product||l.vendor||'—'}</b><br><span class="sub" style="font-size:11.5px">${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></span><span class="st ${l.source==='cart'?'pt':'nw'}" style="font-size:10px">${l.source==='cart'?'корзина':'демо'}</span></div>`).join(''):'<p class="sub">Нет лидов.</p>'}</div>
+    <div class="card"><h3>${ic('crm')} Лиды (${myLeads.length})</h3>${myLeads.length?myLeads.slice(0,12).map(l=>`<div class="fbar"><span style="flex:1"><b>${esc(l.product||l.vendor||'—')}</b><br><span class="sub" style="font-size:11.5px">${esc(l.visitor_name||'Гость')}${l.contact?(' · '+esc(l.contact)):''}</span></span><span class="st ${l.source==='cart'?'pt':'nw'}" style="font-size:10px">${l.source==='cart'?'корзина':'демо'}</span></div>`).join(''):'<p class="sub">Нет лидов.</p>'}</div>
     <div class="card"><h3>${ic('crm')} Сделки (${myDeals.length})</h3>${myDeals.length?myDeals.map(d=>`<div class="fbar" style="cursor:pointer" onclick="go('crm');openDeal('${d.id}')"><span style="flex:1"><b>${d.client}</b> <span class="sub">${d.id}</span></span><span class="pill">${stageName(d.stage)}</span></div>`).join(''):'<p class="sub">Нет сделок.</p>'}</div>
   </div>
   <div class="card"><h3>${ic('megaphone')} Почтовая переписка по сделкам (${emails.length})</h3>
@@ -670,7 +670,7 @@ function vSales(){
     <div class="card"><h3>${ic('chart')} Топ запрашиваемых продуктов</h3>${topProd.length?topProd.map(p=>`<div class="fbar"><span style="flex:1">${p[0]}</span><b>${p[1]}</b></div>`).join(''):'<p class="sub">Нет данных.</p>'}</div>
   </div>
   <div class="card"><h3>${ic('crm')} Входящие лиды</h3>
-    ${leadsData.length?leadsData.slice(0,25).map(l=>{const ac=acctOwnerFor(l);const own=ac&&ac.owner?`<span class="st pt" style="margin-left:6px">ведёт ${ac.owner}</span>`:(ac?`<span class="st nw" style="margin-left:6px">клиент без владельца</span>`:'');return `<div class="fbar"><div style="flex:1"><b>${l.vendor||l.product||'—'}</b> <span class="st ${l.source==='cart'?'pt':'ap'}" style="margin-left:6px">${l.source==='cart'?'корзина':'демо'}</span>${own}<br><span style="color:var(--muted);font-size:12px">${l.vendor&&l.product?l.product+' · ':''}${l.visitor_name||'Гость'}${l.contact?(' · '+l.contact):''}</span></div><span class="tm">${l.created_at?new Date(l.created_at).toLocaleString('ru-RU'):''}</span></div>`;}).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
+    ${leadsData.length?leadsData.slice(0,25).map(l=>{const ac=acctOwnerFor(l);const own=ac&&ac.owner?`<span class="st pt" style="margin-left:6px">ведёт ${ac.owner}</span>`:(ac?`<span class="st nw" style="margin-left:6px">клиент без владельца</span>`:'');return `<div class="fbar"><div style="flex:1"><b>${esc(l.vendor||l.product||'—')}</b> <span class="st ${l.source==='cart'?'pt':'ap'}" style="margin-left:6px">${l.source==='cart'?'корзина':'демо'}</span>${own}<br><span style="color:var(--muted);font-size:12px">${l.vendor&&l.product?esc(l.product)+' · ':''}${esc(l.visitor_name||'Гость')}${l.contact?(' · '+esc(l.contact)):''}</span></div><span class="tm">${l.created_at?new Date(l.created_at).toLocaleString('ru-RU'):''}</span></div>`;}).join(''):'<p class="sub">Пока нет лидов.</p>'}</div>
   <div class="card"><h3>${ic('star')} Рейтинг по сменам (график чат-смен)</h3>
     <p class="sub" style="margin-top:-4px">Всего смен и смен по выходным. Day 09:00–18:00 · Evening 18:01–01:59 · Night 02:00–08:59.</p>
     ${(function(){const rk=staff.filter(s=>(s.shifts_total||0)>0).sort((a,b)=>(b.shifts_total||0)-(a.shifts_total||0));const mx=Math.max(1,...rk.map(s=>s.shifts_total||0));return rk.length?`<div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Сотрудник</th><th>Всего смен</th><th>Выходные</th><th></th></tr>${rk.map((s,i)=>`<tr><td data-label="Сотрудник"><b>#${i+1} · ${s.name}</b></td><td data-label="Всего смен">${s.shifts_total}</td><td data-label="Выходные">${s.shifts_weekend||0}</td><td data-label="" style="width:40%"><span class="bar"><span style="width:${(s.shifts_total/mx*100)}%"></span></span></td></tr>`).join('')}</table></div>`:'<p class="sub">Нет данных по сменам. Выполните <b>add_shift_ranks.sql</b> в Supabase.</p>';})()}</div>
@@ -721,7 +721,8 @@ function vChat(){
   <div class="card"><button class="btn sm" onclick="createInternal()">${ic('plus')} Новый внутренний канал</button></div>
   ${groups.map(g=>{const list=threadsData.filter(t=>(t.kind||'visitor')===g[0]);return `<div class="card"><h3>${ic('megaphone')} ${g[1]} (${list.length})</h3>${list.length?list.map(t=>`<div class="appc" style="cursor:pointer" onclick="openThread('${t.id}')"><div class="h"><div class="lg">${ic('megaphone')}</div><div style="flex:1"><div class="nm">${t.title||'Диалог'}${t.deal_id?` · <span style="color:var(--muted);font-size:12px">${t.deal_id}</span>`:''}</div><div class="mt">обновлён: ${(t.last_at||'').slice(0,16).replace('T',' ')}</div></div></div></div>`).join(''):'<p class="sub">Пусто.</p>'}</div>`;}).join('')}`;
 }
-function amsgHTML(m){const side=m.role==='staff'?'s':'v';const media=m.file_url?(m.file_type==='image'?`<a href="${m.file_url}" target="_blank"><img src="${m.file_url}" class="chatimg" alt=""></a>`:m.file_type==='video'?`<video src="${m.file_url}" class="chatimg" controls preload="metadata"></video>`:`<a href="${m.file_url}" target="_blank" style="color:inherit">📎 файл</a>`):'';return `<div class="msg ${side}">${media}${m.text?`<div>${m.text}</div>`:''}<div class="mt2">${(m.created_at||'').slice(11,16)}${m.sender?(' · '+m.sender):''}</div></div>`;}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function amsgHTML(m){const side=m.role==='staff'?'s':'v';const media=m.file_url?(m.file_type==='image'?`<a href="${m.file_url}" target="_blank"><img src="${m.file_url}" class="chatimg" alt=""></a>`:m.file_type==='video'?`<video src="${m.file_url}" class="chatimg" controls preload="metadata"></video>`:`<a href="${m.file_url}" target="_blank" style="color:inherit">📎 файл</a>`):'';return `<div class="msg ${side}">${media}${m.text?`<div>${esc(m.text)}</div>`:''}<div class="mt2">${(m.created_at||'').slice(11,16)}${m.sender?(' · '+esc(m.sender)):''}</div></div>`;}
 function paintAThread(){const b=$('#athreadbox');if(b){b.innerHTML=threadMsgs.map(amsgHTML).join('')||'<p class="sub">Сообщений пока нет.</p>';b.scrollTop=b.scrollHeight;}}
 async function loadThreads(){if(!db)return;const {data}=await db.from('threads').select('*').order('last_at',{ascending:false}).limit(100);if(data){threadsData=data;if(!activeThread)render();}}
 async function loadAThreadMsgs(paintOnly){if(!db||!activeThread)return;const {data}=await db.from('thread_messages').select('*').eq('thread_id',activeThread).order('created_at',{ascending:true}).limit(300);if(data){threadMsgs=data;paintOnly?paintAThread():render();}}
@@ -1057,7 +1058,7 @@ function vAcctDetail(){
   const list=commFilter?acctComms.filter(m=>m.channel===commFilter):acctComms;
   const chans=['','email','whatsapp','telegram','chat','call','note'];
   return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeAcct()">‹ Все аккаунты</button></div>
-  <div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><h3 style="margin:0">${a.name||'—'}</h3><span class="sub">${a.kind==='partner'?'Партнёр':a.kind==='prospect'?'Лид':'Клиент'}${a.owner?(' · ведёт '+a.owner):' · без владельца'}</span></div></div></div>
+  <div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><h3 style="margin:0">${esc(a.name||'—')}</h3><span class="sub">${a.kind==='partner'?'Партнёр':a.kind==='prospect'?'Лид':'Клиент'}${a.owner?(' · ведёт '+esc(a.owner)):' · без владельца'}</span></div></div></div>
   <div class="grid2">
     <div class="card"><h3>${ic('users')} Контакты (${acctContacts.length})</h3>
       ${acctContacts.map(c=>`<div class="fbar"><div style="flex:1"><b>${c.name}</b>${c.position?(' · '+c.position):''}<br><span class="sub" style="font-size:11.5px">${[c.email&&('✉ '+c.email),c.phone&&('📞 '+c.phone),c.whatsapp&&('🟢 '+c.whatsapp),c.telegram&&('✈ '+c.telegram)].filter(Boolean).join(' · ')||'—'}</span></div><button class="btn r sm" onclick="delContact('${c.id}')">${ic('x')}</button></div>`).join('')||'<p class="sub">Контактов нет.</p>'}
@@ -1114,10 +1115,10 @@ function vAccounts(){
     <button class="btn" style="margin-top:12px" onclick="createAccount()">${ic('check')} Добавить</button></div>
   <div class="card"><h3>${ic('users')} Реестр (${acctData.length})</h3>
     <div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Компания</th><th>Тип</th><th>Контакт</th><th>Email / тел</th><th>Владелец</th><th>Источник</th><th></th></tr>
-    ${acctData.length?acctData.map(a=>`<tr><td data-label="Компания"><b style="color:var(--mag);cursor:pointer" onclick="openAcct('${a.id}')">${a.name||'—'}</b></td>
+    ${acctData.length?acctData.map(a=>`<tr><td data-label="Компания"><b style="color:var(--mag);cursor:pointer" onclick="openAcct('${a.id}')">${esc(a.name||'—')}</b></td>
       <td data-label="Тип">${a.kind==='partner'?'<span class="st pt">Партнёр</span>':a.kind==='prospect'?'<span class="st nw">Лид</span>':'<span class="st ap">Клиент</span>'}</td>
-      <td data-label="Контакт">${a.contact_name||'—'}</td><td data-label="Email / тел" style="font-size:11px">${a.email||''}${a.phone?('<br>'+a.phone):''}</td>
-      <td data-label="Владелец">${acctOwnerSel(a)}</td><td data-label="Источник">${a.source||'—'}</td>
+      <td data-label="Контакт">${esc(a.contact_name||'—')}</td><td data-label="Email / тел" style="font-size:11px">${esc(a.email||'')}${a.phone?('<br>'+esc(a.phone)):''}</td>
+      <td data-label="Владелец">${acctOwnerSel(a)}</td><td data-label="Источник">${esc(a.source||'—')}</td>
       <td data-label=""><button class="btn r sm" onclick="delAccount('${a.id}')">${ic('x')} Удалить</button></td></tr>`).join(''):'<tr><td colspan="7" data-label="" class="sub" style="padding:12px">Реестр пуст. Импортируйте файл или добавьте вручную.</td></tr>'}
     </table></div></div>`;
 }
