@@ -964,7 +964,7 @@ async function loadMarketData(){
   try{
     const v=await db.from('vendors').select('*').limit(300);
     if(v&&v.data&&v.data.length){MKT_DATA.vendors=v.data.filter(x=>x.active!==false).map(x=>({id:x.id,name:x.name||x.product_name||x.company,category:x.category||x.type||'',desc:x.description||x.value_prop||'',regions:x.regions||'',status:x.badge||x.status||(x.active?'approved':''),impr:x.impressions||0}));}
-    const a=await db.from('applications').select('*').limit(300);
+    const a=await db.from('applications').select('company,contact_name,category,kind,regions,status,product_name,description,value_prop').limit(300);
     if(a&&a.data&&a.data.length){
       MKT_DATA.partners=a.data.map(x=>({company:x.company,contact:x.contact_name,category:x.category||x.kind||'',regions:x.regions||'',status:x.status||'pending'}));
       const prods=a.data.filter(x=>x.product_name||x.description).map(x=>({name:x.product_name||x.company,category:x.category||x.kind||'',desc:x.description||x.value_prop||'',regions:x.regions||'',status:x.status||'pending',company:x.company}));
