@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Политика приватности — BetConstructAI</title>
+<style>
+  :root{--mag:#A60063;--mag-dk:#7a0049;--bg:#f6f2f5;--card:#fff;--line:#e7e2e8;--text:#1b191d;--muted:#726a76;--blue:#2f6bd6}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.62}
+  .top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  .top .in{max-width:760px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .wm{font-size:17px;font-weight:800}.wm .b{color:var(--mag)}.wm .a{color:var(--blue)}
+  .back{margin-left:auto;font-size:13px;color:var(--mag);text-decoration:none;font-weight:600}
+  .lang{display:inline-flex;gap:2px}
+  .lang a{cursor:pointer;padding:3px 8px;font-size:12px;font-weight:700;color:var(--muted);border-radius:7px}
+  .lang a.on{background:#faf2f6;color:var(--mag)}
+  main{max-width:760px;margin:0 auto;padding:30px 18px 80px}
+  h1{font-size:27px;line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
+  .upd{color:var(--muted);font-size:13px;margin:0 0 26px}
+  h2{font-size:18px;margin:30px 0 8px;letter-spacing:-.01em}
+  p,li{color:#2f2a33}
+  ul{padding-left:20px;margin:8px 0}
+  li{margin:5px 0}
+  a{color:var(--mag-dk)}
+  .note{background:#faf2f6;border:1px solid #f0d8e6;border-radius:12px;padding:14px 16px;font-size:13.5px;color:var(--mag-dk);margin:22px 0}
+  .foot{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+  [hidden]{display:none!important}
+  code{background:#f0eaf0;border-radius:5px;padding:1px 6px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <span class="wm"><span class="b">Bet</span>Construct<span class="a">AI</span></span>
+  <span class="lang"><a id="l-ru" class="on" onclick="setL('ru')">RU</a><a id="l-en" onclick="setL('en')">EN</a></span>
+  <a class="back" href="/">← <span data-ru="На сайт" data-en="Back to site">На сайт</span></a>
+</div></div>
+
+<main>
+<!-- ============ RU ============ -->
+<div id="ru">
+  <h1>Политика приватности</h1>
+  <p class="upd">Последнее обновление: 8 сентября 2026</p>
+
+  <p>Настоящая Политика описывает, какие данные собирает платформа <strong>BetConstructAI</strong> (B2B-маркетплейс iGaming-решений), с какой целью и как вы можете этим управлять.</p>
+
+  <h2>1. Какие данные мы собираем</h2>
+  <p><strong>Только с вашего согласия</strong> (кнопка «Принять» в баннере):</p>
+  <ul>
+    <li><strong>Идентификатор устройства</strong> — стабильный код (технология FingerprintJS), чтобы не создавать дубли одного посетителя.</li>
+    <li><strong>События использования</strong> — просмотры страниц, клики, добавления в «корзину интересов», запросы демо, обращения к AI-советнику, поисковые запросы.</li>
+    <li><strong>Технические данные</strong> — тип браузера, язык, часовой пояс, разрешение экрана.</li>
+  </ul>
+  <p><strong>Когда вы указываете их сами</strong> (для связи):</p>
+  <ul>
+    <li><strong>Имя и контакт</strong> (email или телефон) — при гостевом входе, в заявке или для связи с менеджером.</li>
+    <li><strong>Содержимое переписки</strong> с менеджером в чате.</li>
+    <li><strong>Данные заявки партнёра/аффилейта</strong> — компания, регионы, описание продукта и т.п.</li>
+  </ul>
+
+  <h2>2. Зачем мы их используем</h2>
+  <ul>
+    <li>Связать вас с менеджером и обработать вашу заявку или запрос.</li>
+    <li>Подобрать решения через AI-советника под ваш запрос.</li>
+    <li>Улучшать сервис и понимать, что полезно посетителям (аналитика).</li>
+  </ul>
+
+  <h2>3. Правовое основание</h2>
+  <p>Аналитика и идентификатор устройства — на основании <strong>вашего согласия</strong>. Обработка вашего имени, контакта и переписки — для <strong>исполнения вашего запроса</strong> (связь с вами) и на основании законного интереса вести деловое общение.</p>
+
+  <h2>4. Согласие и как отказаться</h2>
+  <ul>
+    <li>При первом визите показываем баннер. <strong>«Только необходимое»</strong> — аналитика и идентификатор устройства не включаются.</li>
+    <li>Изменить решение можно, очистив данные сайта в браузере (тогда баннер появится снова).</li>
+    <li>Базовая работа сайта и чат доступны без согласия на аналитику.</li>
+  </ul>
+
+  <h2>5. Кому передаём (обработчики)</h2>
+  <ul>
+    <li><strong>Supabase</strong> — хранение данных.</li>
+    <li><strong>FingerprintJS</strong> — идентификатор устройства (только с согласия).</li>
+    <li><strong>Vercel</strong> — хостинг сайта.</li>
+    <li><strong>Google (Gmail)</strong> — только для сотрудников (двусторонняя рабочая почта); посетителей напрямую не касается.</li>
+  </ul>
+  <p>Мы не продаём ваши данные третьим лицам.</p>
+
+  <h2>6. Хранение</h2>
+  <p>Мы храним данные столько, сколько необходимо для указанных целей, и удаляем их по вашему запросу.</p>
+
+  <h2>7. Ваши права</h2>
+  <p>Вы можете запросить: доступ к вашим данным, исправление, удаление, отзыв согласия, возражение против обработки и перенос данных. Для этого напишите нам (см. «Контакты»).</p>
+
+  <h2>8. Удаление аккаунта и данных</h2>
+  <p>Чтобы удалить свой аккаунт и связанные данные, отправьте запрос на контактный адрес ниже — мы удалим их в разумный срок.</p>
+
+  <h2>9. Контакты</h2>
+  <p>По вопросам приватности: <a href="mailto:privacy@betconstructai.com">privacy@betconstructai.com</a></p>
+
+  <div class="note">⚠️ Это рабочая версия. Перед публичным релизом и подачей в App Store / Google Play её должен проверить юрист, а контактный адрес — заменить на реальный.</div>
+</div>
+
+<!-- ============ EN ============ -->
+<div id="en" hidden>
+  <h1>Privacy Policy</h1>
+  <p class="upd">Last updated: 8 September 2026</p>
+
+  <p>This Policy explains what data the <strong>BetConstructAI</strong> platform (a B2B iGaming solutions marketplace) collects, why, and how you can control it.</p>
+
+  <h2>1. Data we collect</h2>
+  <p><strong>Only with your consent</strong> (the “Accept” button in the banner):</p>
+  <ul>
+    <li><strong>Device identifier</strong> — a stable code (FingerprintJS) so we don’t duplicate the same visitor.</li>
+    <li><strong>Usage events</strong> — page views, clicks, “interest cart” additions, demo requests, AI-advisor queries, searches.</li>
+    <li><strong>Technical data</strong> — browser type, language, time zone, screen resolution.</li>
+  </ul>
+  <p><strong>When you provide it yourself</strong> (to get in touch):</p>
+  <ul>
+    <li><strong>Name and contact</strong> (email or phone) — at guest sign-in, in an application, or to reach a manager.</li>
+    <li><strong>Chat content</strong> with a manager.</li>
+    <li><strong>Partner/affiliate application data</strong> — company, regions, product description, etc.</li>
+  </ul>
+
+  <h2>2. Why we use it</h2>
+  <ul>
+    <li>To connect you with a manager and process your request or application.</li>
+    <li>To recommend solutions via the AI advisor based on your request.</li>
+    <li>To improve the service and understand what helps visitors (analytics).</li>
+  </ul>
+
+  <h2>3. Legal basis</h2>
+  <p>Analytics and the device identifier rely on <strong>your consent</strong>. Processing your name, contact and chat is to <strong>fulfil your request</strong> (to reach you) and under the legitimate interest of conducting business communication.</p>
+
+  <h2>4. Consent and how to opt out</h2>
+  <ul>
+    <li>We show a banner on your first visit. <strong>“Essential only”</strong> means analytics and the device identifier are not enabled.</li>
+    <li>You can change your mind by clearing site data in your browser (the banner reappears).</li>
+    <li>Core site features and chat work without consent to analytics.</li>
+  </ul>
+
+  <h2>5. Who we share with (processors)</h2>
+  <ul>
+    <li><strong>Supabase</strong> — data storage.</li>
+    <li><strong>FingerprintJS</strong> — device identifier (with consent only).</li>
+    <li><strong>Vercel</strong> — website hosting.</li>
+    <li><strong>Google (Gmail)</strong> — staff only (two-way work email); does not directly involve visitors.</li>
+  </ul>
+  <p>We do not sell your data to third parties.</p>
+
+  <h2>6. Retention</h2>
+  <p>We keep data for as long as needed for the stated purposes and delete it upon your request.</p>
+
+  <h2>7. Your rights</h2>
+  <p>You may request access, correction, deletion, withdrawal of consent, objection to processing, and data portability. To do so, contact us (see “Contact”).</p>
+
+  <h2>8. Account and data deletion</h2>
+  <p>To delete your account and related data, send a request to the contact address below — we will delete it within a reasonable time.</p>
+
+  <h2>9. Contact</h2>
+  <p>For privacy matters: <a href="mailto:privacy@betconstructai.com">privacy@betconstructai.com</a></p>
+
+  <div class="note">⚠️ This is a working draft. Before public release and App Store / Google Play submission it should be reviewed by a lawyer, and the contact address replaced with a real one.</div>
+</div>
+
+<div class="foot">© 2026 BetConstructAI · <a href="/">betconstructai.com</a></div>
+</main>
+
+<script>
+function setL(l){
+  document.getElementById('ru').hidden=(l!=='ru');
+  document.getElementById('en').hidden=(l!=='en');
+  document.getElementById('l-ru').classList.toggle('on',l==='ru');
+  document.getElementById('l-en').classList.toggle('on',l==='en');
+  document.documentElement.lang=l;
+  document.querySelectorAll('[data-ru]').forEach(function(el){el.textContent=el.getAttribute('data-'+l)||el.textContent;});
+  try{localStorage.setItem('bc_priv_lang',l);}catch(e){}
+}
+// язык из ?lang= или из сохранённого выбора приложения
+(function(){
+  var q=new URLSearchParams(location.search).get('lang');
+  var saved;try{saved=localStorage.getItem('bc_alang')||localStorage.getItem('bc_priv_lang');}catch(e){}
+  var l=(q==='en'||q==='ru')?q:(saved==='en'?'en':'ru');
+  setL(l);
+})();
+</script>
+</body>
+</html>
