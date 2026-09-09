@@ -181,13 +181,14 @@ const SB_URL='https://smddtvaewmmpuyvtuscb.supabase.co';
 const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
 const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
 const STAFF_ROLES=['sales','lawyer','moderator','marketing','finance','admin'];
-let profileRole=null;
+let profileRole=null;let AUTHED=false;
 // Вход через Supabase Auth (email+пароль). Роль берётся из profiles по auth.uid().
 function togglePass(){const el=$('#lg_pass');if(el)el.type=el.type==='password'?'text':'password';}
 function kindLabel(k){return ({game:'Игра',payment:'Платёжная система',platform:'Платформа',tool:'Инструмент',license:'Лицензия',affiliate:'Аффилейт',marketing:'Маркетинг'})[k]||k;}
 async function getRole(){const u=(await db.auth.getUser()).data.user;if(!u)return null;const {data}=await db.from('profiles').select('role').eq('id',u.id).single();return data?data.role:null;}
 async function loadApps(){if(!db)return;const {data,error}=await db.from('applications').select('id,company,kind,category,product_name,value_prop,features,model,price,languages,currencies,compliance,site,email,phone,contact_name,signer_name,regions,description,status,portal_active,portal_reset_requested,created_at').order('created_at',{ascending:false});if(error){toast('Чтение заявок: '+error.message);return;}if(data){apps=data.map(a=>({id:a.id,name:a.company,type:kindLabel(a.kind),cat:a.category||a.product_name||'',contact:a.email,regions:a.regions||'',desc:a.description||a.value_prop||'',raw:a,status:a.status}));render();}}
 function renderLogin(){
+  AUTHED=false;
   document.querySelector('.tabs').style.display='none';
   $('#main').innerHTML=`<div style="max-width:360px;margin:60px auto"><div class="card"><h3>${ic('shield')} Вход для персонала</h3>
     <label>Email</label><input id="lg_email" type="email" autocomplete="username" placeholder="you@company.com">
@@ -242,7 +243,7 @@ function switchAccount(){logout();} /* возврат к экрану входа
 function toggleAcctMenu(ev){if(ev){ev.stopPropagation();}const p=$('#acctPop');if(p)p.classList.toggle('on');}
 document.addEventListener('click',function(e){const p=$('#acctPop');if(p&&p.classList.contains('on')&&!(e.target.closest&&e.target.closest('.acctwrap')))p.classList.remove('on');});
 function paintAcct(){const nm=(BCU&&BCU.name)||'Админ';const em=(BCU&&BCU.email)||'';const a=$('#acctName'),a2=$('#acctName2'),el=$('#acctEmail'),av=$('#acctAv'),aw=document.querySelector('.acctwrap');if(a)a.textContent=nm;if(a2)a2.textContent=nm;if(el)el.textContent=em;if(av)av.textContent=((nm||'А').trim()[0]||'А').toUpperCase();if(aw)aw.style.display='inline-block';}
-function startApp(){document.querySelector('.tabs').style.display='flex';paintAcct();renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();loadEvents();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
+function startApp(){AUTHED=true;document.querySelector('.tabs').style.display='flex';paintAcct();renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();loadEvents();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
 async function boot(){const ok=await applySession();if(ok){startApp();}else{renderLogin();}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -396,7 +397,7 @@ function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===
 function go(t){if(t!=='chat'&&t!=='staff')chatBackStaff=null;cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();loadEvents();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();}
 
 /* ---------- VIEWS ---------- */
-function render(){$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();if(KEEP_SCROLL){KEEP_SCROLL=false;}else{window.scrollTo(0,0);}translateDOM(document.body);paintLangSw();}
+function render(){if(!AUTHED)return;$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();if(KEEP_SCROLL){KEEP_SCROLL=false;}else{window.scrollTo(0,0);}translateDOM(document.body);paintLangSw();}
 
 function vDash(){
   const pend=apps.filter(a=>a.status==='pending').length;
@@ -1188,7 +1189,7 @@ function vAccounts(){
 
 boot();try{translateDOM(document.querySelector('.top'));paintLangSw();}catch(e){}
 // авто-обновление «кто на сайте» на дашборде/аналитике
-setInterval(()=>{try{if(!db)return;if(cur!=='dash'&&cur!=='stats')return;const ae=document.activeElement;if(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))return;KEEP_SCROLL=true;loadEvents();}catch(e){}},20000);
+setInterval(()=>{try{if(!AUTHED||!db)return;if(cur!=='dash'&&cur!=='stats')return;const ae=document.activeElement;if(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))return;KEEP_SCROLL=true;loadEvents();}catch(e){}},20000);
 </script>
 </body>
 </html>
