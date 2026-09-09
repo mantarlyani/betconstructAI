@@ -55,7 +55,11 @@
   <div class="foot">© 2026 BetConstructAI</div>
 </div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+var SB_URL='https://smddtvaewmmpuyvtuscb.supabase.co';
+var SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
+var db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
 var T={
   ru:{sub:'Вход для команды: администраторы и сотрудники',login:'Email или логин',pass:'Пароль',btn:'Войти',show:'показать',hide:'скрыть',user:'Обычный пользователь? Открыть приложение →',
       fill:'Введите логин и пароль',wrong:'Неверный логин или пароль',neterr:'Нет связи с сервером, попробуйте позже',wait:'Входим…'},
@@ -84,20 +88,30 @@ async function doLogin(){
   var err=document.getElementById('err');err.textContent='';
   if(!login||!pass){err.textContent=T[L].fill;return;}
   busy=true;var btn=document.getElementById('t_btn');btn.disabled=true;btn.textContent=T[L].wait;
+  function done(){busy=false;btn.disabled=false;btn.textContent=T[L].btn;}
+  // 1) Supabase Auth (админы; далее и сотрудники). Логин должен быть email.
+  if(db && login.indexOf('@')>-1){
+    try{
+      var sa=await db.auth.signInWithPassword({email:login,password:pass});
+      if(!sa.error && sa.data && sa.data.user){
+        var pr=await db.from('profiles').select('role').eq('id',sa.data.user.id).single();
+        var role=pr.data&&pr.data.role?String(pr.data.role):'visitor';
+        if(role==='admin'){location.href='/admin.html';return;}
+        if(/^(sales|lawyer|moderator|marketing|finance)$/.test(role)){location.href='/staff.html';return;}
+        await db.auth.signOut(); // авторизован, но не сотрудник
+      }
+    }catch(e){}
+  }
+  // 2) старый серверный вход для сотрудников (пока не переведены на Supabase)
   try{
     var r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:login,pass:pass})});
     var d=r.ok?await r.json():null;
-    if(d&&d.ok&&d.dest==='admin'){
-      try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',(d.profile&&d.profile.name)||'Администратор');sessionStorage.setItem('bc_admin_email',(d.profile&&d.profile.email)||login);}catch(e){}
-      location.href='/admin.html';return;
-    }
     if(d&&d.ok&&d.dest==='staff'){
       try{sessionStorage.setItem('bc_staff',JSON.stringify(d.profile||{}));}catch(e){}
       location.href='/staff.html';return;
     }
-    err.textContent=T[L].wrong;
-  }catch(e){err.textContent=T[L].neterr;}
-  busy=false;btn.disabled=false;btn.textContent=T[L].btn;
+    err.textContent=T[L].wrong;done();
+  }catch(e){err.textContent=T[L].neterr;done();}
 }
 (function(){var s;try{s=localStorage.getItem('bc_alang');}catch(e){}if(s==='en'||s==='hy')setL(s);document.getElementById('lg').focus();})();
 </script>

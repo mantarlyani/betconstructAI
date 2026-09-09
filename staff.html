@@ -360,7 +360,7 @@ function vProfile(){
 // ---------- BOOT ----------
 (function(){
   let s=null;try{s=JSON.parse(sessionStorage.getItem('bc_staff')||'null');}catch(x){}
-  if(s&&s.name){S=s;loadAll();}else renderLogin();
+  if(s&&s.name){S=s;loadAll();}else location.replace('/login');
 })();
 </script>
 </body>

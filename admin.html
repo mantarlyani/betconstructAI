@@ -244,7 +244,7 @@ function toggleAcctMenu(ev){if(ev){ev.stopPropagation();}const p=$('#acctPop');i
 document.addEventListener('click',function(e){const p=$('#acctPop');if(p&&p.classList.contains('on')&&!(e.target.closest&&e.target.closest('.acctwrap')))p.classList.remove('on');});
 function paintAcct(){const nm=(BCU&&BCU.name)||'Админ';const em=(BCU&&BCU.email)||'';const a=$('#acctName'),a2=$('#acctName2'),el=$('#acctEmail'),av=$('#acctAv'),aw=document.querySelector('.acctwrap');if(a)a.textContent=nm;if(a2)a2.textContent=nm;if(el)el.textContent=em;if(av)av.textContent=((nm||'А').trim()[0]||'А').toUpperCase();if(aw)aw.style.display='inline-block';}
 function startApp(){AUTHED=true;document.querySelector('.tabs').style.display='flex';paintAcct();renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();loadEvents();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
-async function boot(){const ok=await applySession();if(ok){startApp();}else{renderLogin();}}
+async function boot(){const ok=await applySession();if(ok){startApp();}else{location.replace('/login');}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
   shield:'<path d="M12 3l7 3v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
