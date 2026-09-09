@@ -96,8 +96,8 @@ async function doLogin(){
       if(!sa.error && sa.data && sa.data.user){
         var pr=await db.from('profiles').select('role').eq('id',sa.data.user.id).single();
         var role=pr.data&&pr.data.role?String(pr.data.role):'visitor';
-        if(role==='admin'){location.href='/admin.html';return;}
-        if(/^(sales|lawyer|moderator|marketing|finance)$/.test(role)){location.href='/staff.html';return;}
+        if(role==='admin'){location.href='/admin';return;}
+        if(/^(sales|lawyer|moderator|marketing|finance)$/.test(role)){location.href='/partner';return;}
         await db.auth.signOut(); // авторизован, но не сотрудник
       }
     }catch(e){}
@@ -108,7 +108,7 @@ async function doLogin(){
     var d=r.ok?await r.json():null;
     if(d&&d.ok&&d.dest==='staff'){
       try{sessionStorage.setItem('bc_staff',JSON.stringify(d.profile||{}));}catch(e){}
-      location.href='/staff.html';return;
+      location.href='/partner';return;
     }
     err.textContent=T[L].wrong;done();
   }catch(e){err.textContent=T[L].neterr;done();}
