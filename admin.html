@@ -150,6 +150,7 @@
   <span class="chip-admin">ADMIN</span>
   <div class="who"><span class="langsw" style="display:inline-flex;gap:1px;align-items:center;margin-right:6px"><a data-l="ru" onclick="setLang('ru')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">RU</a><a data-l="en" onclick="setLang('en')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">EN</a><a data-l="hy" onclick="setLang('hy')" style="cursor:pointer;padding:2px 6px;font-size:12px;font-weight:700">HY</a></span><div class="acctwrap"><button class="acctbtn" onclick="toggleAcctMenu(event)"><span class="acctav" id="acctAv">А</span><span class="nm" id="acctName">Админ</span><span style="color:var(--muted)">▾</span></button>
     <div class="acctpop" id="acctPop"><div class="hd"><b id="acctName2">Админ</b><span id="acctEmail"></span></div>
+      <a onclick="changePassPrompt()"><span aria-hidden="true">🔑</span> Сменить пароль</a>
       <a onclick="switchAccount()"><span aria-hidden="true">↻</span> Сменить аккаунт</a>
       <a class="danger" onclick="logout()"><span aria-hidden="true">⎋</span> Выйти</a></div></div></div>
 </div>
@@ -179,9 +180,7 @@ const SB_KEY='sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
 const db=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY):null;
 const STAFF_ROLES=['sales','lawyer','moderator','marketing','finance','admin'];
 let profileRole=null;
-const ADMIN_EMAIL='mantarlyan.ilya@sofconstruct.com';
-const ADMIN_PASS='Crypto123!';
-const ADMINS=[[ADMIN_EMAIL,ADMIN_PASS],['mantarlyan@me.com','Crypto123!']];
+// Вход только через сервер (/api/login). Клиентских логинов/паролей больше нет.
 function togglePass(){const el=$('#lg_pass');if(el)el.type=el.type==='password'?'text':'password';}
 function kindLabel(k){return ({game:'Игра',payment:'Платёжная система',platform:'Платформа',tool:'Инструмент',license:'Лицензия',affiliate:'Аффилейт',marketing:'Маркетинг'})[k]||k;}
 async function getRole(){const u=(await db.auth.getUser()).data.user;if(!u)return null;const {data}=await db.from('profiles').select('role').eq('id',u.id).single();return data?data.role:null;}
@@ -189,24 +188,41 @@ async function loadApps(){if(!db)return;const {data,error}=await db.from('applic
 function renderLogin(){
   document.querySelector('.tabs').style.display='none';
   $('#main').innerHTML=`<div style="max-width:360px;margin:60px auto"><div class="card"><h3>${ic('shield')} Вход для персонала</h3>
-    <label>Email</label><input id="lg_email" type="email" value="${ADMIN_EMAIL}">
+    <label>Email или логин</label><input id="lg_email" type="email" autocomplete="username" placeholder="you@company.com">
     <label>Пароль</label>
-    <div style="position:relative"><input id="lg_pass" type="password" value="${ADMIN_PASS}" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:42px">
+    <div style="position:relative"><input id="lg_pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:42px">
       <span onclick="togglePass()" style="position:absolute;right:12px;top:11px;cursor:pointer;color:var(--muted);font-size:19px">${ic('eye')}</span></div>
     <button class="btn" style="margin-top:14px" onclick="doLogin()">Войти</button>
-    <p class="sub" style="margin-top:12px">Вход для персонала (демо: логин/пароль вшиты).</p></div></div>`;
+    <p class="sub" style="margin-top:12px">Вход для персонала. Пароль проверяется на сервере.</p></div></div>`;
   try{translateDOM(document.body);paintLangSw();}catch(e){}
 }
 async function doLogin(){const e=(($('#lg_email')||{}).value||'').trim().toLowerCase();const p=($('#lg_pass')||{}).value||'';
   // A) серверная проверка входа — пароль не читается в браузере
   try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'admin',login:e,pass:p})});
-    if(r.ok){const d=await r.json();if(d&&d.ok&&d.profile){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',d.profile.name||'Администратор');sessionStorage.setItem('bc_admin_email',d.profile.email||e);}catch(x){}startApp();return;}}
+    if(r.ok){const d=await r.json();if(d&&d.ok&&d.profile){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name',d.profile.name||'Администратор');sessionStorage.setItem('bc_admin_email',d.profile.email||e);sessionStorage.setItem('bc_admin_login',e);}catch(x){}startApp();return;}}
   }catch(err){}
-  // B) запасной путь: только вшитые админы (пароли staff в браузере больше не читаем)
-  if(ADMINS.some(a=>e===String(a[0]).toLowerCase()&&p===a[1])){profileRole='admin';try{sessionStorage.setItem('bc_admin','1');sessionStorage.setItem('bc_admin_name','Администратор');sessionStorage.setItem('bc_admin_email',e);}catch(x){}startApp();return;}
   toast('Неверный email или пароль');
 }
-function logout(){try{sessionStorage.removeItem('bc_admin');sessionStorage.removeItem('bc_admin_name');sessionStorage.removeItem('bc_admin_email');}catch(x){}location.reload();}
+function logout(){try{sessionStorage.removeItem('bc_admin');sessionStorage.removeItem('bc_admin_name');sessionStorage.removeItem('bc_admin_email');sessionStorage.removeItem('bc_admin_login');}catch(x){}location.reload();}
+function changePassPrompt(){const pop=$('#acctPop');if(pop)pop.classList.remove('on');
+  let em='';try{em=sessionStorage.getItem('bc_admin_email')||sessionStorage.getItem('bc_admin_login')||'';}catch(x){}
+  let b=document.getElementById('pwbox');if(!b){b=document.createElement('div');b.id='pwbox';document.body.appendChild(b);}
+  b.style.cssText='position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:9999;background:#fff;border:2px solid var(--mag);border-radius:12px;box-shadow:0 12px 44px rgba(0,0,0,.28);padding:16px 18px;width:min(92vw,360px);font-size:14px';
+  b.innerHTML='<div style="font-weight:800;margin-bottom:4px">Сменить пароль</div>'+
+    '<div style="color:var(--muted);font-size:12px;margin-bottom:8px">'+em+'</div>'+
+    '<label>Новый пароль</label><input id="pw_new" type="password" autocomplete="new-password" style="width:100%">'+
+    '<label>Повторите</label><input id="pw_new2" type="password" autocomplete="new-password" style="width:100%" onkeydown="if(event.key===\'Enter\')saveMyPass()">'+
+    '<div class="row" style="gap:8px;margin-top:12px"><button class="btn" onclick="saveMyPass()">Сохранить</button><button class="btn sec" onclick="document.getElementById(\'pwbox\').remove()">Отмена</button></div>';}
+async function saveMyPass(){const a=($('#pw_new')||{}).value||'';const b=($('#pw_new2')||{}).value||'';
+  if(a.length<6){toast('Пароль минимум 6 символов');return;}
+  if(a!==b){toast('Пароли не совпадают');return;}
+  let id='';try{id=sessionStorage.getItem('bc_admin_login')||sessionStorage.getItem('bc_admin_email')||'';}catch(x){}
+  if(!id){toast('Не удалось определить аккаунт');return;}
+  if(db){const {error,count}=await db.from('staff').update({pass:a},{count:'exact'}).or('login.eq.'+id+',email.eq.'+id);
+    if(error){toast('Ошибка: '+error.message);return;}
+    if(count===0){toast('Аккаунт не найден в базе — пароль здесь не сменить');return;}}
+  const box=document.getElementById('pwbox');if(box)box.remove();
+  toast('Пароль обновлён');}
 function switchAccount(){logout();} /* возврат к экрану входа для входа под другим аккаунтом */
 function toggleAcctMenu(ev){if(ev){ev.stopPropagation();}const p=$('#acctPop');if(p)p.classList.toggle('on');}
 document.addEventListener('click',function(e){const p=$('#acctPop');if(p&&p.classList.contains('on')&&!(e.target.closest&&e.target.closest('.acctwrap')))p.classList.remove('on');});
@@ -252,7 +268,7 @@ let activeStaff=null, staffComms=[], staffFilter='';
 async function openStaff(id){activeStaff=id;staffComms=[];render();loadLeads();loadDeals();if(db){const s=staff.find(x=>x.id===id);if(s){const {data}=await db.from('comm_messages').select('*').eq('staff_name',s.name).order('created_at',{ascending:false}).limit(200);staffComms=data||[];render();}}}
 function closeStaff(){activeStaff=null;render();}
 async function setStaffRole(id,role){if(db)await db.from('staff').update({role}).eq('id',id);toast('Роль обновлена');loadStaff();}
-async function resetStaffPass(id){const p=genPass();if(db)await db.from('staff').update({pass:p}).eq('id',id);toast('Новый пароль: '+p);loadStaff();}
+async function resetStaffPass(id){const p=genPass();const s=staff.find(x=>x.id===id);if(db)await db.from('staff').update({pass:p}).eq('id',id);showCred('Новый пароль'+(s?(' · '+s.name):''),(s&&s.login)||'',p);loadStaff();}
 async function toggleStaffActive(id,curActive){if(db)await db.from('staff').update({active:!curActive}).eq('id',id);toast(curActive?'Доступ отключён':'Доступ включён');loadStaff();}
 async function delStaff(id){if(!db)return;if(!confirm('Удалить сотрудника? Он потеряет доступ в кабинет.'))return;await db.from('staff').delete().eq('id',id);toast('Сотрудник удалён');loadStaff();}
 async function toggleShift(name,role){
@@ -511,11 +527,18 @@ function vStaffDetail(){
 }
 function addStaff(){const n=($('#s_name')||{}).value||'';const r=($('#s_role')||{}).value||'Sales';const em=($('#s_email')||{}).value||'';
   if(!n.trim()){toast('Укажите имя');return;}
-  const login=translit(n.trim());const pass=genPass();
-  if(db){db.from('staff').insert({name:n.trim(),role:r,login,pass,active:true,email:em.trim()||null}).then(({error})=>{if(error)toast('БД: '+error.message);else loadStaff();});}
-  else{staff.unshift({name:n.trim(),role:r,login,pass,status:'offline',active:true,email:em});render();}
-  const nm=$('#s_name');if(nm)nm.value='';const ne=$('#s_email');if(ne)ne.value='';toast('Создан: '+login+' / '+pass+' · вход в кабинете активен');}
+  const login=translit(n.trim());const pass=genPass();const isAdmin=/^(админ|admin)$/i.test(r);
+  function done(){const nm=$('#s_name');if(nm)nm.value='';const ne=$('#s_email');if(ne)ne.value='';showCred((isAdmin?'Админ создан':'Сотрудник создан')+' · '+r,login,pass);}
+  if(db){db.from('staff').insert({name:n.trim(),role:r,login,pass,active:true,email:em.trim()||null}).then(({error})=>{if(error){toast('БД: '+error.message);}else{done();loadStaff();}});}
+  else{staff.unshift({name:n.trim(),role:r,login,pass,status:'offline',active:true,email:em});done();render();}}
 function copyv(v){navigator.clipboard&&navigator.clipboard.writeText(v);toast('Скопировано: '+v);}
+function showCred(title,login,pass){let b=document.getElementById('credbox');if(!b){b=document.createElement('div');b.id='credbox';document.body.appendChild(b);}
+  b.style.cssText='position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:9999;background:#fff;border:2px solid var(--mag);border-radius:12px;box-shadow:0 12px 44px rgba(0,0,0,.28);padding:16px 18px;width:min(92vw,360px);font-size:14px';
+  b.innerHTML='<div style="font-weight:800;margin-bottom:6px">'+title+'</div>'+
+    '<div style="display:flex;align-items:center;gap:8px;margin:7px 0"><span style="color:var(--muted);width:52px">Логин</span><code style="flex:1;word-break:break-all">'+login+'</code><button class="btn sec sm" onclick="copyv(\''+login+'\')">копир.</button></div>'+
+    '<div style="display:flex;align-items:center;gap:8px;margin:7px 0"><span style="color:var(--muted);width:52px">Пароль</span><code style="flex:1;word-break:break-all">'+pass+'</code><button class="btn sec sm" onclick="copyv(\''+pass+'\')">копир.</button></div>'+
+    '<div style="color:var(--muted);font-size:12px;margin-top:8px">Сохраните пароль сейчас — позже его не показать. Вход: /login или admin.html.</div>'+
+    '<button class="btn sm" style="margin-top:10px" onclick="document.getElementById(\'credbox\').remove()">Готово</button>';}
 
 function stageIdx(k){return STAGES.findIndex(s=>s.k===k);}
 function stageName(k){const s=STAGES.find(x=>x.k===k);return s?s.n:k;}
