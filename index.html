@@ -392,7 +392,7 @@ function ic(n){return `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="cu
 const T={
   ru:{hi:'Добро пожаловать',q:'Что сыграем сегодня?',searchPh:'Поиск: игры, спорт, партнёры…',
     aiTitle:'AI-советник',aiDesc:'Опишите задачу — подскажу решение',quick:'Быстрый доступ',liveNow:'Live сейчас',all:'все',
-    wonderD:'Крути колесо — оффер недели',allSections:'Все разделы',
+    promoT:'Запусти казино за 2 недели',wonderD:'Turnkey · Curaçao · Casino Suite',allSections:'Все разделы',
     productsSub:'Демо front-end опции (Partner iFrame / API) и продукты BetConstruct. Нажмите «Подробно» — откроются реальные ссылки.',
     feCat:'Front-end опции (iFrame / API)',bcCat:'Продукты BetConstruct',details:'Подробно',askAI:'Спросить AI-советника',
     liveSub:'Прямые события — тап открывает реальную витрину.',openAllLive:'Открыть все live-события',
@@ -418,7 +418,7 @@ const T={
     mktCats:'Категории',mktFeatured:'Проверенные вендоры',catGames:'Игры',catPay:'Платёжки',catAff:'Аффилейты',catLic:'Лицензии'},
   en:{hi:'Welcome',q:'What shall we play today?',searchPh:'Search: games, sport, partners…',
     aiTitle:'AI advisor',aiDesc:'Describe your task — get a solution',quick:'Quick access',liveNow:'Live now',all:'all',
-    wonderD:'Spin the wheel — offer of the week',allSections:'All sections',
+    promoT:'Launch your casino in 2 weeks',wonderD:'Turnkey · Curaçao · Casino Suite',allSections:'All sections',
     productsSub:'Demo front-end options (Partner iFrame / API) and BetConstruct products. Tap “Details” to open real links.',
     feCat:'Front-end options (iFrame / API)',bcCat:'BetConstruct products',details:'Details',askAI:'Ask the AI advisor',
     liveSub:'Live events — tap opens the real storefront.',openAllLive:'Open all live events',
@@ -444,7 +444,7 @@ const T={
     mktCats:'Categories',mktFeatured:'Verified vendors',catGames:'Games',catPay:'Payments',catAff:'Affiliates',catLic:'Licenses'},
   hy:{hi:'Բարի գալուստ',q:'Ի՞նչ խաղանք այսօր',searchPh:'Որոնում՝ խաղեր, սպորտ, գործընկերներ…',
     aiTitle:'AI խորհրդատու',aiDesc:'Նկարագրիր խնդիրը — կառաջարկեմ լուծում',quick:'Արագ մուտք',liveNow:'Ուղիղ հիմա',all:'բոլորը',
-    wonderD:'Պտտիր անիվը — շաբաթվա առաջարկ',allSections:'Բոլոր բաժինները',
+    promoT:'Գործարկիր քո կազինոն 2 շաբաթում',wonderD:'Turnkey · Curaçao · Casino Suite',allSections:'Բոլոր բաժինները',
     productsSub:'Դեմո front-end տարբերակներ (Partner iFrame / API) և BetConstruct-ի ապրանքներ։ Սեղմիր «Մանրամասն»՝ իրական հղումների համար։',
     feCat:'Front-end տարբերակներ (iFrame / API)',bcCat:'BetConstruct-ի ապրանքներ',details:'Մանրամասն',askAI:'Հարցնել AI խորհրդատուին',
     liveSub:'Ուղիղ իրադարձություններ — սեղմումը բացում է իրական էջը։',openAllLive:'Բացել բոլոր ուղիղ իրադարձությունները',
@@ -548,7 +548,7 @@ function home(){
   </div>
   <div class="h2"><span class="lft">${t('quick')}</span><a onclick="toggleQuick()">${quickOpen?(lang==='ru'?'Свернуть':lang==='en'?'Collapse':'Փակել'):(lang==='ru'?'Ещё':lang==='en'?'More':'Ավելին')} ${quickOpen?'▴':'▾'}</a></div>
   <div class="qa">${(quickOpen?QUICK:QUICK.slice(0,8)).map(q=>`<div class="qtile" onclick="openURL('${q[2]}')">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
-  <div class="promo" onclick="openURL('https://www.betconstruct.com/products')"><div><div class="t">${ic('wheel')} WonderWheel</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
+  <div class="promo" onclick="openURL('https://www.betconstruct.com/products')"><div><div class="t">${ic('sparkles')} ${t('promoT')}</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
   <div style="height:16px"></div>`;
 }
 function vpnCard(){
