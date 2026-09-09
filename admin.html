@@ -298,7 +298,8 @@ function fmtDur(ms){const m=Math.round(ms/60000);const h=Math.floor(m/60);return
 function fmtT(t){return t?new Date(t).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'сейчас';}
 function setPresDate(v){presDate=v;render();}
 let eventsData=[];
-async function loadEvents(){if(!db)return;const {data}=await db.from('events').select('visitor_anon,session_id,type,target,meta,created_at').order('created_at',{ascending:false}).limit(400);if(data){eventsData=data;render();}}
+async function loadEvents(){if(!db)return;const {data}=await db.from('events').select('visitor_anon,session_id,type,target,meta,created_at').order('created_at',{ascending:false}).limit(400);if(data){eventsData=data;computeAnalytics();render();}}
+function computeAnalytics(){const ev=eventsData||[];const today=new Date().toISOString().slice(0,10);const vis=new Set(),tod=new Set(),sec={};ev.forEach(function(e){const v=e.visitor_anon||e.session_id;if(v){vis.add(v);if(String(e.created_at||'').slice(0,10)===today)tod.add(v);}if(e.type==='page'){const t=e.target||'—';sec[t]=(sec[t]||0)+1;}});const tot=Object.values(sec).reduce(function(a,b){return a+b;},0);analytics.visitors=vis.size;analytics.today=tod.size;analytics.sections=Object.entries(sec).sort(function(a,b){return b[1]-a[1];}).slice(0,7).map(function(p){return [p[0],tot?Math.round(p[1]/tot*100):0];});}
 function liveVisitors(){const cut=Date.now()-5*60000;const seen={},info={},path={};
   eventsData.forEach(e=>{const v=e.visitor_anon||e.session_id;if(!v)return;if(e.meta){if(e.meta.name&&!(info[v]&&info[v].name)){info[v]=info[v]||{};info[v].name=String(e.meta.name);}if(e.meta.contact&&!(info[v]&&info[v].contact)){info[v]=info[v]||{};info[v].contact=String(e.meta.contact);}}});
   eventsData.forEach(e=>{const v=e.visitor_anon||e.session_id;if(!v)return;const t=new Date(e.created_at).getTime();const act=e.target||e.type;const isPing=(e.type==='ping'||act==='beat');
@@ -366,7 +367,7 @@ let deals=[]; // реальные сделки грузятся из БД (loadD
 let activeDeal=null;
 async function loadDeals(){if(!db)return;const {data}=await db.from('deals').select('*').order('created_at',{ascending:true});if(data&&data.length){deals=data.map(r=>({id:r.id,client:r.client,resp:r.resp||'',ssales:r.ssales||'',pm:r.pm||'',am:r.am||'',stage:r.stage||'lead',status:r.status||'active',agr:r.agr||{signed:false,paid:false},flow:r.flow||[false,false,false,false,false,false,false],steps:r.steps||[],_rr:!!r.rr_done,_kick:!!r.kick_done}));render();}}
 function saveDeal(d){if(!db)return;db.from('deals').upsert({id:d.id,client:d.client,resp:d.resp,ssales:d.ssales,pm:d.pm,am:d.am,stage:d.stage,status:d.status,agr:d.agr,flow:d.flow,steps:d.steps,rr_done:!!d._rr,kick_done:!!d._kick}).then(({error})=>{if(error)toast('Сделка: '+error.message);});}
-let analytics={visitors:1287,today:143,sections:[['Home',100],['Быстрый доступ',72],['Live',54],['Products',48],['Marketplace',37],['AI-советник',29],['Регистрация',18]],
+let analytics={visitors:0,today:0,sections:[],
   journeys:[
     {u:'Гость #4821',path:['Вход','Home','Быстрый доступ → Live','AI-советник','Регистрация'],tm:'12.07 13:41'},
     {u:'Гость #4820',path:['Вход','Home','Marketplace','Стать партнёром'],tm:'12.07 13:38'},
@@ -388,6 +389,7 @@ function vDash(){
   const pend=apps.filter(a=>a.status==='pending').length;
   const online=staff.filter(s=>s.status==='online').length;
   return `<h2>Дашборд</h2><p class="sub">Сводка платформы на ${now()}</p>
+  ${hintCard('Общая сводка платформы: посетители, заявки, лиды, сделки, команда — всё главное на одном экране.','Показатели считаются автоматически из активности на сайте. После сброса всё по нулям — это норма, цифры пойдут с первых визитов.')}
   <div class="kpis">
     <div class="kpi"><div class="ic">${ic('eye')}</div><div class="n">${analytics.visitors}</div><div class="l">Посетителей всего</div></div>
     <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${analytics.today}</div><div class="l">Сегодня</div></div>
@@ -414,13 +416,15 @@ function vDash(){
     <div class="card"><h3>${ic('crm')} Сделки по стадиям</h3>${STAGES.map(s=>{const n=deals.filter(d=>d.stage===s.k&&d.status==='active').length;return `<div class="fbar"><span style="flex:1">${s.n}</span><b>${n}</b></div>`;}).join('')}</div>
   </div>`;
 }
-function sectionsBars(){const max=Math.max(...analytics.sections.map(s=>s[1]));return analytics.sections.map(s=>`<div class="fbar"><span style="width:120px">${s[0]}</span><span class="bar"><span style="width:${s[1]/max*100}%"></span></span><b>${s[1]}%</b></div>`).join('');}
+function sectionsBars(){if(!analytics.sections.length)return '<p class="sub">Пока нет данных о посещениях.</p>';const max=Math.max(...analytics.sections.map(s=>s[1]))||1;return analytics.sections.map(s=>`<div class="fbar"><span style="width:120px">${s[0]}</span><span class="bar"><span style="width:${s[1]/max*100}%"></span></span><b>${s[1]}%</b></div>`).join('');}
 
+function hintCard(what,tip){return `<div class="card" style="border-left:3px solid var(--mag);background:#faf2f6;padding:12px 14px;margin-bottom:14px"><div style="font-size:13px"><b>Для чего этот раздел:</b> ${what}</div>${tip?`<div style="font-size:12.5px;color:var(--muted);margin-top:5px">💡 ${tip}</div>`:''}</div>`;}
 function vMod(){
   const isAff=a=>a.raw&&(a.raw.kind==='affiliate'||a.raw.kind==='marketing');
   const prod=apps.filter(a=>!isAff(a));
   const aff=apps.filter(isAff);
   return `<h2>Заявки на продукт</h2><p class="sub">Партнёры-производители, ожидающие проверки (KYB). Одобрите и присвойте бейдж.</p>
+  ${hintCard('Заявки партнёров/вендоров на размещение продукта. Здесь ты их проверяешь (KYB) и одобряешь — одобренные попадают в маркетплейс.','Пусто, пока никто не подал заявку. Они приходят с сайта: Маркетплейс → «Разместить продукт».')}
   ${prod.length?prod.map(a=>appCard(a)).join(''):'<p class="sub">Нет заявок на продукт.</p>'}
   <h2 style="margin-top:26px">Аффилейт / Маркетинг</h2><p class="sub">Заявки аффилейтов и маркетинг-агентств.</p>
   ${aff.length?aff.map(a=>appCard(a)).join(''):'<p class="sub">Нет заявок.</p>'}`;
@@ -468,6 +472,7 @@ function vStaff(){
   const online=staff.filter(s=>isOnlineNow(s.name));
   const flt=staffFilter?staff.filter(s=>s.role===staffFilter):staff;
   return `<h2>Сотрудники</h2><p class="sub">Вся команда, кто онлайн, каналы связи. Нажмите на имя — откроется личный кабинет сотрудника с его лидами, сделками и перепиской по сделкам.</p>
+  ${hintCard('Вся команда: роли, доступы, кто онлайн. Отсюда выдаётся вход в кабинет и админку.','Добавь человека в «Новый сотрудник» (для админа выбери роль «Админ») — логин и пароль выдадутся сразу. Любому пароль меняется кнопками ✎ задать / ↻ случайный.')}
   <div class="kpis">
     <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${staff.length}</div><div class="l">Всего в команде</div></div>
     <div class="kpi"><div class="ic">${ic('eye')}</div><div class="n">${onlineCnt}</div><div class="l">Сейчас в сети</div></div>
@@ -559,6 +564,7 @@ function vCrm(){
   const d=activeDeal?deals.find(x=>x.id===activeDeal):null;
   if(d) return dealDetail(d);
   return `<h2>CRM · воронка партнёра (Zoho)</h2><p class="sub">6 стадий вашего пайплайна. Двигайте карточки ◀ ▶, нажмите карточку — операционный флоу из 7 шагов.</p>
+  ${hintCard('Воронка сделок от первого лида до запуска проекта: 6 стадий + 7 операционных шагов с ролями.','Сейчас пусто. Сделки появляются из входящих лидов или создаются вручную — двигай карточки по стадиям.')}
   <div class="kanban">${STAGES.map(st=>{
     const col=deals.filter(x=>x.stage===st.k&&x.status==='active');
     return `<div class="kcol"><div class="khd"><div><div>${st.n}</div><div style="font-weight:400;font-size:10px;color:var(--muted)">${st.sub}</div></div><span class="kn">${col.length}</span></div>${col.map(kCard).join('')||'<div class="kempty">—</div>'}</div>`;
@@ -634,8 +640,9 @@ function toggleAgr(id,key){const d=deals.find(x=>x.id===id);d.agr[key]=!d.agr[ke
 function setDealStatus(id,st){const d=deals.find(x=>x.id===id);d.status=st;d.steps.push({n:'Статус → '+(st==='lost'?'Потеряно':st==='hold'?'На паузе':'В работе'),by:dealActor(d),at:now()});saveDeal(d);KEEP_SCROLL=true;render();toast('Статус обновлён');}
 
 function vStats(){
-  const max=Math.max(...analytics.sections.map(s=>s[1]));
+  const max=analytics.sections.length?Math.max(...analytics.sections.map(s=>s[1])):1;
   return `<h2>Аналитика посетителей</h2><p class="sub">Кто заходил, что нажимал, куда шёл. Всего посетителей: <b>${analytics.visitors}</b>, сегодня: <b>${analytics.today}</b>.</p>
+  ${hintCard('Поведение посетителей: посещаемость разделов, пути гостей, воронка визит → лид.','Сброшено на ноль — цифры считаются из реальных событий и наполнятся сами, как только на сайт пойдёт трафик.')}
   <div class="grid2">
     <div class="card"><h3>${ic('chart')} % посещаемости разделов</h3>${sectionsBars()}</div>
     <div class="card"><h3>${ic('eye')} Последние пути посетителей</h3>
@@ -643,7 +650,7 @@ function vStats(){
       ${(function(){const js=journeys();return js.length?js.map(j=>`<div class="jrow"><div style="flex:1">${j.contact?`<b>${j.name||'Гость'}</b> <span style="color:var(--mag)">· ${j.contact}</span>${j.devices>1?` <span class="sub">· ${j.devices} устр.</span>`:''}`:`<b>Гость ${j.v}</b>${j.name?` <span style="color:var(--mag)">· ${j.name}</span>`:''}`}<br>${j.path.map(p=>`<span class="tag">${p}</span>`).join(' ')}</div></div>`).join(''):'<p class="sub">Пока нет событий.</p>';})()}</div>
   </div>
   <div class="card"><h3>${ic('chart')} Воронка визита → лид</h3>
-    ${[['Зашли',1287],['Смотрели разделы',940],['AI-советник / чат',372],['Оставили заявку',118],['Стали лидом',118]].map((f,i,arr)=>`<div class="fbar"><span style="width:170px">${f[0]}</span><span class="bar"><span style="width:${f[1]/1287*100}%"></span></span><b>${f[1]}</b></div>`).join('')}</div>
+    ${(function(){const ev=eventsData||[];const eE=new Set(),eP=new Set(),eA=new Set(),eL=new Set();ev.forEach(function(e){const v=e.visitor_anon||e.session_id;if(!v)return;eE.add(v);if(e.type==='page')eP.add(v);if(e.type==='ai'||e.type==='chat')eA.add(v);if(e.type==='lead')eL.add(v);});const fn=[['Зашли',eE.size],['Смотрели разделы',eP.size],['AI-советник / чат',eA.size],['Стали лидом',eL.size]];const fm=fn[0][1]||1;return fn.map(function(f){return `<div class="fbar"><span style="width:170px">${f[0]}</span><span class="bar"><span style="width:${f[1]/fm*100}%"></span></span><b>${f[1]}</b></div>`;}).join('');})()}</div>
   <div class="card"><h3>${ic('chart')} Поисковые запросы</h3>${searchQueries.length?searchQueries.map(x=>`<div class="fbar"><span style="flex:1">${x[0]}</span><b>${x[1]}</b></div>`).join(''):'<p class="sub">Пока нет запросов.</p>'}</div>
   ${mktAnalytics()}`;
 }
@@ -755,6 +762,7 @@ function vChat(){
   }
   const groups=[['visitor','Посетители (Hoory)'],['kickoff','Kickoff · партнёры'],['internal','Внутренние каналы (Pandayo)']];
   return `${chatBackStaff?`<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="var id=chatBackStaff;chatBackStaff=null;go('staff');openStaff(id)">‹ Назад к сотруднику</button></div>`:''}<h2>Чаты и каналы</h2><p class="sub">Живой чат с посетителями + внутренние и kickoff-каналы. Обновление вживую (~3.5с).</p>
+  ${hintCard('Живой чат с посетителями сайта плюс внутренние и kickoff-каналы команды.','Обращения появятся, когда гость напишет в чат на сайте. Kickoff-канал по сделке создаётся автоматически на шаге 4 в CRM.')}
   <div class="card"><button class="btn sm" onclick="createInternal()">${ic('plus')} Новый внутренний канал</button></div>
   ${groups.map(g=>{const list=threadsData.filter(t=>(t.kind||'visitor')===g[0]);return `<div class="card"><h3>${ic('megaphone')} ${g[1]} (${list.length})</h3>${list.length?list.map(t=>`<div class="appc" style="cursor:pointer" onclick="openThread('${t.id}')"><div class="h"><div class="lg">${ic('megaphone')}</div><div style="flex:1"><div class="nm">${t.title||'Диалог'}${t.deal_id?` · <span style="color:var(--muted);font-size:12px">${t.deal_id}</span>`:''}</div><div class="mt">обновлён: ${(t.last_at||'').slice(0,16).replace('T',' ')}</div></div></div></div>`).join(''):'<p class="sub">Пусто.</p>'}</div>`;}).join('')}`;
 }
@@ -778,6 +786,7 @@ async function createKickoff(d){if(!db)return;const {data:ex}=await db.from('thr
 
 function vContent(){
   return `<h2>Контент и управление index</h2><p class="sub">Создавайте баннеры и управляйте главной страницей.</p>
+  ${hintCard('Баннеры и переключатели блоков главной страницы (витрины) клиентского приложения.','Включай/выключай блоки тумблерами и создавай баннеры — изменения видны на index.')}
   <div class="card"><h3>${ic('plus')} Новый баннер</h3>
     <div class="grid2"><div><label>Заголовок</label><input id="b_title" placeholder="Заголовок баннера"></div>
       <div><label>Подзаголовок</label><input id="b_sub" placeholder="Короткое описание"></div></div>
@@ -838,6 +847,7 @@ function docPreview(d){
 function vDocs(){
   const list=docFilter?docsData.filter(d=>d.category===docFilter):docsData;
   return `<h2>Документы</h2><p class="sub">Договоры, лицензии, партнёрские файлы, медиа. Хранятся в защищённом бакете.</p>
+  ${hintCard('Единый реестр файлов платформы: договоры, лицензии, медиа — в защищённом хранилище.','Загрузи файл — он попадёт сюда и в бакет «uploads». Подписанные соглашения складываются автоматически.')}
   <div class="card"><h3>${ic('plus')} Загрузить документ</h3>
     <div class="grid2">
       <div><label>Название</label><input id="doc_title" placeholder="Напр. Договор с Provider X"></div>
@@ -938,6 +948,7 @@ function vAgr(){
   const cnt={};AGR_STATUS.forEach(s=>cnt[s[0]]=agrData.filter(a=>a.status===s[0]).length);
   const dealOpts=deals.map(d=>`<option value="${d.id}">${d.id} · ${d.client}</option>`).join('');
   return `<h2>Соглашения · замена DocuSign</h2><p class="sub">Договор → отправка партнёру → подпись → оплата setup fee. Привязка к сделке, автосохранение в «Документы».</p>
+  ${hintCard('Договоры с партнёрами: черновик → отправка → подпись → оплата, с привязкой к сделке (замена DocuSign).','Создай соглашение и привяжи к сделке — партнёр подпишет по ссылке, а копия ляжет в «Документы».')}
   <div class="kpis">${AGR_STATUS.map(s=>`<div class="kpi"><div class="ic">${ic('shield')}</div><div class="n">${cnt[s[0]]||0}</div><div class="l">${s[1]}</div></div>`).join('')}</div>
   <div class="card"><h3>${ic('plus')} Новое соглашение</h3>
     <div class="grid2">
@@ -1010,6 +1021,7 @@ function vTasks(){
   const list=taskDept?taskData.filter(t=>t.dept===taskDept):taskData;
   const dealOpts=deals.map(d=>`<option value="${d.id}">${d.id} · ${d.client}</option>`).join('');
   return `<h2>Задачи · запросы ресурсов (Jira)</h2><p class="sub">Внутренние задачи отделов и запросы PM/Service Sales. Двигайте карточки ◀ ▶ по статусам.</p>
+  ${hintCard('Внутренние задачи отделов и запросы ресурсов между командами (замена Jira).','Создай задачу вверху или отметь шаг 3 «Resource request» в сделке — запросы PM/Service Sales создадутся автоматически.')}
   <div class="card"><h3>${ic('plus')} Новая задача</h3>
     <div class="grid2">
       <div><label>Название</label><input id="tk_title" placeholder="Что нужно сделать"></div>
@@ -1128,6 +1140,7 @@ function vAccounts(){
   if(activeAcct)return vAcctDetail();
   const cl=acctData.filter(a=>a.kind!=='partner'&&a.kind!=='prospect').length,pt=acctData.filter(a=>a.kind==='partner').length,noOwner=acctData.filter(a=>!a.owner).length;
   return `<h2>Аккаунты · чей клиент / партнёр</h2><p class="sub">Единый реестр клиентов и партнёров с закреплённым владельцем. Импортируйте выгрузку из Zoho / DocuSign / Pandayo / Hoory / Jira — и у sales не будет конфликтов «чей это клиент».</p>
+  ${hintCard('Реестр клиентов/партнёров с закреплённым владельцем + вся омниканальная переписка по ним.','Заведи аккаунт вручную или импортируй список — тогда у sales не будет споров «чей это клиент».')}
   <div class="kpis">
     <div class="kpi"><div class="ic">${ic('building')}</div><div class="n">${acctData.length}</div><div class="l">Всего аккаунтов</div></div>
     <div class="kpi"><div class="ic">${ic('users')}</div><div class="n">${cl}</div><div class="l">Клиенты</div></div>
