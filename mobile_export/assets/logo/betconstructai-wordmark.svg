@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="56" viewBox="0 0 300 56" role="img" aria-label="BetConstructAI">
+  <!-- RECREATION of the BetConstructAI text wordmark. No original logo image exists; -->
+  <!-- the real logo is HTML text: <span class="b">Bet</span>Construct<span class="a">AI</span> -->
+  <!-- Colors: Bet=#A60063 (magenta), Construct=#141631 (ink), AI=#2f6bd6 (blue). Weight 800. -->
+  <text x="6" y="39"
+        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+        font-size="34" font-weight="800" letter-spacing="-0.2">
+    <tspan fill="#A60063">Bet</tspan><tspan fill="#141631">Construct</tspan><tspan fill="#2f6bd6">AI</tspan>
+  </text>
+</svg>

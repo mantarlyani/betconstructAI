@@ -64,10 +64,6 @@ export default async function handler(req, res) {
     login = String(b.login || '').trim().toLowerCase();
     pass = String(b.pass || '');
   } catch (e) {}
-  if (kind === '_diag') {
-    const al = adminLogins();
-    return res.status(200).json({ adminLoginsCount: al.length, emailsLower: al.map(a => a[0]), hasSvc: !!SB_SVC });
-  }
   if (!login || !pass) return res.status(400).json({ ok: false, error: 'login and pass required' });
 
   try {
