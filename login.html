@@ -50,6 +50,7 @@
     </div>
     <button class="btn" id="t_btn" onclick="doLogin()">Войти</button>
     <div class="err" id="err"></div>
+    <div style="text-align:center;margin-top:10px"><a onclick="forgotPass()" style="color:var(--muted);font-size:12.5px;cursor:pointer">Забыли пароль?</a></div>
   </div>
   <div class="userlink"><a href="/" id="t_user">Обычный пользователь? Открыть приложение →</a></div>
   <div class="foot">© 2026 BetConstructAI</div>
@@ -80,6 +81,22 @@ function setL(l){L=l;var t=T[l];document.documentElement.lang=l;
   try{localStorage.setItem('bc_alang',l);}catch(e){}
 }
 function togglePw(){var p=document.getElementById('pw');p.type=(p.type==='password')?'text':'password';document.getElementById('t_eye').textContent=(p.type==='password')?T[L].show:T[L].hide;}
+async function forgotPass(){
+  var email=(document.getElementById('lg').value||'').trim().toLowerCase();
+  var err=document.getElementById('err');
+  if(!db){err.style.color='';err.textContent='Недоступно';return;}
+  if(email.indexOf('@')<0){err.style.color='';err.textContent='Введите email в поле выше, затем нажмите «Забыли пароль?»';return;}
+  var r=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/login'});
+  err.style.color=r.error?'':'#2fb877';
+  err.textContent=r.error?('Ошибка: '+r.error.message):('Письмо для сброса пароля отправлено на '+email);
+}
+if(db){db.auth.onAuthStateChange(async function(event){
+  if(event==='PASSWORD_RECOVERY'){
+    var np=prompt('Введите новый пароль (минимум 6 символов):');
+    if(np&&np.length>=6){var u=await db.auth.updateUser({password:np});alert(u.error?('Ошибка: '+u.error.message):'Пароль обновлён — войдите заново');}
+    else if(np){alert('Пароль слишком короткий');}
+  }
+});}
 var busy=false;
 async function doLogin(){
   if(busy)return;
