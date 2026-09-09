@@ -4,6 +4,16 @@ Everything unclear, missing, or assumed while exporting. Items marked **(ASSUMPT
 
 ---
 
+## ✅ Decisions locked by the owner (read first)
+
+These were settled by the product owner during the export — the mobile team **owns** them; they are **not** fixed in this demo:
+
+- **AI advisor → mobile team's responsibility.** The advisor in this repo (Gemini) is broken and returns a canned fallback. The owner decided **not** to fix it here — the mobile team picks the provider (Anthropic Claude Haiku 4.5 or a current model) and implements it, keeping the `{prompt, context, lang} → {text}` contract and the verbatim system prompt in `04_BEHAVIOUR_AND_LOGIC.md §8`. (See Q9.)
+- **Auth + row-level security → mobile team's responsibility.** This demo intentionally runs with **open RLS** (`using(true)`) and **no real auth** — the whole client writes to Supabase directly with the anon key. It **cannot** be tightened in the demo without breaking it; real per-user auth + server-enforced RLS is a mobile-rebuild task. (See Q4, Q6.)
+- **Live database was reset to a clean slate.** All demo/test rows were cleared from the live Supabase (events, leads, deals, threads, applications, vendors, visitors → 0); the team roster (`staff`, 75 rows) was kept. A separate unrelated app (`msagorc_*` tables/functions) that shared the same Supabase project was **removed entirely**. → The mobile team should treat `mock_data/` as the *shape* reference, not as live data to migrate; the live DB now contains only real team accounts. (See Q12, Q13.)
+
+---
+
 ## A. Product scope & roles
 1. **Partner role removed — confirm intent.** `partner.html` and partner login were deleted on the owner's instruction; `applications` still carry `portal_pass` / `portal_active` fields and the CRM text still says "партнёр". **Q:** Is the partner concept gone entirely, or does a partner still exist as a CRM entity without a login? **(ASSUMPTION:** partners exist as deal/account entities but have no self‑service cabinet.)
 2. **Guest vs real account.** The client app has no real user accounts — only a name+contact "guest". **Q:** Does mobile v1 want real end‑user accounts, or keep the frictionless guest model?
