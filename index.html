@@ -522,11 +522,7 @@ function renderTop(){
   const cls=vpn.on?'on':vpn.connecting?'cn':'off';
   const dot=vpn.on?'● ':vpn.connecting?'◐ ':'○ ';
   const el=document.getElementById('topbar');if(!el)return;
-  el.innerHTML=`<div class="vpnbar">
-      <div class="vpL" ${(vpn.on||vpn.connecting)?'onclick="changeServer()"':''}>${ic('shield')} VPN <span class="vst2 ${cls}">${dot}${info}</span></div>
-      <div class="tgl ${vpn.on?'on':''} ${vpn.connecting?'busy':''}" onclick="toggleVpn()"><b></b></div>
-    </div>
-    <div class="top"><div class="wm" onclick="go('home')" style="cursor:pointer">
+  el.innerHTML=`<div class="top"><div class="wm" onclick="go('home')" style="cursor:pointer">
         <svg class="blogo" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg" aria-label="BetConstructAI"><rect x="1" y="1" width="28" height="28" rx="8" fill="#A60063"/><path d="M10.3 8.2h5.1c2.2 0 3.6 1.1 3.6 2.9 0 1.2-.7 2.1-1.8 2.5 1.4.3 2.3 1.3 2.3 2.8 0 2-1.6 3.2-4 3.2h-5.2V8.2Zm4.7 4.7c.9 0 1.5-.5 1.5-1.3 0-.8-.6-1.2-1.5-1.2h-2v2.5h2Zm.3 4.8c1 0 1.6-.5 1.6-1.3 0-.9-.6-1.4-1.7-1.4h-2.2v2.7h2.3Z" fill="#fff"/></svg>
         <span class="wmtext"><span class="b">Bet</span>Construct<span class="a">AI</span></span></div>
       <div class="hright">
@@ -552,8 +548,6 @@ function home(){
   </div>
   <div class="h2"><span class="lft">${t('quick')}</span><a onclick="toggleQuick()">${quickOpen?(lang==='ru'?'Свернуть':lang==='en'?'Collapse':'Փակել'):(lang==='ru'?'Ещё':lang==='en'?'More':'Ավելին')} ${quickOpen?'▴':'▾'}</a></div>
   <div class="qa">${(quickOpen?QUICK:QUICK.slice(0,8)).map(q=>`<div class="qtile" onclick="openURL('${q[2]}')">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
-  <div class="h2"><span class="lft">${ic('dot')} ${t('liveNow')}</span><a onclick="go('live')">${t('all')} ›</a></div>
-  <div class="lscroll">${MATCHES.map(m=>`<div class="lmatch" onclick="go('live')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}</div>
   <div class="promo" onclick="openURL('https://www.vbet.am/en/wonderwheel')"><div><div class="t">${ic('wheel')} WonderWheel</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
   <div style="height:16px"></div>`;
 }
@@ -622,14 +616,8 @@ function live(){
 }
 const MKT_CATS=['Все','Игры','Платёжки','Аффилейты','Лицензии','Платформы'];
 let mktCat='Все';
-const VENDORS=[
-  ['SoftGaming','Игры','Casino Suite · 5000+ слотов','approved',1240,96,'LATAM · EU'],
-  ['CoinsPaid','Платёжки','Crypto gateway · USDT/BTC','approved',980,91,'Global'],
-  ['AdsCompass','Аффилейты','CPA-сеть · LATAM трафик','partner',430,88,'LATAM'],
-  ['Curanet','Лицензии','Curaçao сопровождение','partner',310,84,'Global'],
-  ['NovaSpin','Игры','Crash & instant games','new',120,72,'EU · Азия'],
-  ['TrafficLab','Аффилейты','Трафик Tier-2','new',95,68,'CIS']
-];
+// Демо-вендоры убраны: маркетплейс показывает только реальных вендоров из БД + каталог BetConstruct.
+const VENDORS=[];
 function badgeHTML(b){
   if(b==='approved')return `<span class="vb ap">${ic('check')} Approved by BetConstruct</span>`;
   if(b==='partner')return `<span class="vb pt">${ic('star')} Partner by BetConstruct</span>`;
