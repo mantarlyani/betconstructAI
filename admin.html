@@ -269,6 +269,17 @@ async function openStaff(id){activeStaff=id;staffComms=[];render();loadLeads();l
 function closeStaff(){activeStaff=null;render();}
 async function setStaffRole(id,role){if(db)await db.from('staff').update({role}).eq('id',id);toast('Роль обновлена');loadStaff();}
 async function resetStaffPass(id){const p=genPass();const s=staff.find(x=>x.id===id);if(db)await db.from('staff').update({pass:p}).eq('id',id);showCred('Новый пароль'+(s?(' · '+s.name):''),(s&&s.login)||'',p);loadStaff();}
+function setStaffPassPrompt(id){const s=staff.find(x=>x.id===id);
+  let b=document.getElementById('pwbox');if(!b){b=document.createElement('div');b.id='pwbox';document.body.appendChild(b);}
+  b.style.cssText='position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:9999;background:#fff;border:2px solid var(--mag);border-radius:12px;box-shadow:0 12px 44px rgba(0,0,0,.28);padding:16px 18px;width:min(92vw,360px);font-size:14px';
+  b.innerHTML='<div style="font-weight:800;margin-bottom:4px">Задать пароль'+(s?(' · '+s.name):'')+'</div>'+
+    '<div style="color:var(--muted);font-size:12px;margin-bottom:8px">Логин: '+((s&&s.login)||'')+'</div>'+
+    '<label>Новый пароль</label><input id="sp_new" type="text" autocomplete="off" style="width:100%" placeholder="минимум 6 символов" onkeydown="if(event.key===\'Enter\')saveStaffPass(\''+id+'\')">'+
+    '<div class="row" style="gap:8px;margin-top:12px"><button class="btn" onclick="saveStaffPass(\''+id+'\')">Сохранить</button><button class="btn sec" onclick="document.getElementById(\'pwbox\').remove()">Отмена</button></div>';}
+async function saveStaffPass(id){const a=($('#sp_new')||{}).value||'';if(a.length<6){toast('Пароль минимум 6 символов');return;}
+  const s=staff.find(x=>x.id===id);if(db){const {error}=await db.from('staff').update({pass:a}).eq('id',id);if(error){toast('Ошибка: '+error.message);return;}}
+  const box=document.getElementById('pwbox');if(box)box.remove();
+  showCred('Пароль задан'+(s?(' · '+s.name):''),(s&&s.login)||'',a);loadStaff();}
 async function toggleStaffActive(id,curActive){if(db)await db.from('staff').update({active:!curActive}).eq('id',id);toast(curActive?'Доступ отключён':'Доступ включён');loadStaff();}
 async function delStaff(id){if(!db)return;if(!confirm('Удалить сотрудника? Он потеряет доступ в кабинет.'))return;await db.from('staff').delete().eq('id',id);toast('Сотрудник удалён');loadStaff();}
 async function toggleShift(name,role){
@@ -477,7 +488,7 @@ function vStaff(){
       <td data-label="Роль">${s.id?`<select onchange="setStaffRole('${s.id}',this.value)">${ROLE_LIST.map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>`:`<span class="pill">${s.role}</span>`}</td>
       <td data-label="Email">${s.email?`<span style="font-size:12px;color:var(--ink)">${s.email}</span>`:'<span style="font-size:12px;color:var(--muted)">—</span>'}</td>
       <td data-label="Сеть">${isOnlineNow(s.name)?'<span style="color:var(--green);font-weight:700">● в сети</span>':'<span style="color:var(--muted)">○ офлайн</span>'}</td>
-      <td class="mono" data-label="Логин" style="font-size:11px">${s.login} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Сгенерировать новый пароль">↻ пароль</button>`:''}</td>
+      <td class="mono" data-label="Логин" style="font-size:11px">${s.login} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="setStaffPassPrompt('${s.id}')" title="Вписать конкретный пароль">✎ задать</button> <button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Сгенерировать случайный пароль">↻ случайный</button>`:''}</td>
       <td data-label="Доступ">${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
       <td data-label="">${s.id?`<button class="btn r sm" onclick="delStaff('${s.id}')">${ic('x')} Удалить</button>`:''}</td></tr>`).join('')}
     </table></div></div>`;
