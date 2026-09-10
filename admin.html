@@ -280,8 +280,9 @@ async function sendClientMail(){const g=id=>($('#'+id)&&$('#'+id).value)||'';con
     const j=await r.json();if(j.ok){toast('Письмо отправлено');openAcct(activeAcct);}else{toast('Ошибка: '+(j.error||'send failed'));}
   }catch(e){toast('Ошибка сети');}}
 async function setStaffField(id,field,val){if(db)await db.from('staff').update({[field]:val}).eq('id',id);const s=staff.find(x=>x.id===id);if(s)s[field]=val;toast('Обновлено');}
-let activeStaff=null, staffComms=[], staffFilter='';
-async function openStaff(id){activeStaff=id;staffComms=[];render();loadLeads();loadDeals();if(db){const s=staff.find(x=>x.id===id);if(s){const {data}=await db.from('comm_messages').select('*').eq('staff_name',s.name).order('created_at',{ascending:false}).limit(200);staffComms=data||[];render();}}}
+let activeStaff=null, staffComms=[], staffFilter='', zohoCache={};
+async function loadZoho(email){if(!email)return;if(!zohoCache[email])zohoCache[email]={loading:true};try{const r=await fetch('/api/zoho?email='+encodeURIComponent(email));zohoCache[email]=r.ok?await r.json():{error:'Сервер недоступен'};}catch(e){zohoCache[email]={error:'Нет связи'};}if(activeStaff)render();}
+async function openStaff(id){activeStaff=id;staffComms=[];const sref=staff.find(x=>x.id===id);if(sref&&sref.email)loadZoho(sref.email);render();loadLeads();loadDeals();if(db){const s=staff.find(x=>x.id===id);if(s){const {data}=await db.from('comm_messages').select('*').eq('staff_name',s.name).order('created_at',{ascending:false}).limit(200);staffComms=data||[];render();}}}
 function closeStaff(){activeStaff=null;render();}
 async function setStaffRole(id,role){if(db)await db.from('staff').update({role}).eq('id',id);toast('Роль обновлена');loadStaff();}
 async function resetStaffPass(id){const p=genPass();const s=staff.find(x=>x.id===id);if(db)await db.from('staff').update({pass:p}).eq('id',id);showCred('Новый пароль'+(s?(' · '+s.name):''),(s&&s.login)||'',p);loadStaff();}
@@ -617,6 +618,32 @@ function vStaff(){
       <td data-label="">${s.id?`<button class="btn r sm" onclick="delStaff('${s.id}')">${ic('x')} Удалить</button>`:''}</td></tr>`).join('')}
     </table></div></div>`;
 }
+function zohoCard(s){
+  const email=s&&s.email;
+  const z=email?zohoCache[email]:null;
+  const head=`<div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3 style="margin:0">${ic('crm')} Zoho CRM</h3>${z&&z.connected?'<span class="st ap" style="font-size:10px">● подключено</span>':'<span class="st pt" style="font-size:10px">● демо-данные</span>'}</div>`;
+  if(!email)return `<div class="card">${head}<p class="sub">У сотрудника не указан email — нечего сопоставить с Zoho.</p></div>`;
+  if(!z||z.loading)return `<div class="card">${head}<p class="sub">Загрузка из Zoho…</p></div>`;
+  if(z.error)return `<div class="card">${head}<p class="sub">Ошибка: ${esc(z.error)}</p></div>`;
+  const c=z.counts||{};
+  const sec=(title,rows)=>`<div style="margin-top:12px"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${title}</div>${rows||'<p class="sub">Нет записей.</p>'}</div>`;
+  const deals=(z.deals||[]).map(d=>`<div class="fbar"><span style="flex:1"><b>${esc(d.name||d.Deal_Name||'—')}</b><br><span class="sub" style="font-size:11.5px">${esc(d.stage||d.Stage||'')}${(d.closing||d.Closing_Date)?(' · до '+esc(d.closing||d.Closing_Date)):''}</span></span><b style="white-space:nowrap">€${Number(d.amount||d.Amount||0).toLocaleString('ru-RU')}</b></div>`).join('');
+  const leads=(z.leads||[]).map(l=>`<div class="fbar"><span style="flex:1"><b>${esc(l.company||l.Company||'—')}</b> <span class="sub">${esc(l.name||l.Full_Name||'')}</span></span><span class="pill">${esc(l.status||l.Lead_Status||l.source||'')}</span></div>`).join('');
+  const contacts=(z.contacts||[]).map(k=>`<div class="fbar"><span style="flex:1"><b>${esc(k.name||k.Full_Name||'—')}</b> <span class="sub">${esc(k.company||k.Account_Name||'')}</span></span><span class="sub" style="font-size:11.5px">${esc(k.email||k.Email||'')}</span></div>`).join('');
+  const tasks=(z.tasks||[]).map(t=>`<div class="fbar"><span style="flex:1">${esc(t.subject||t.Subject||'—')}</span><span class="st ${/(Completed|Closed)/i.test(t.status||t.Status||'')?'ap':'nw'}" style="font-size:10px">${esc(t.status||t.Status||'')}${(t.due||t.Due_Date)?(' · '+esc(t.due||t.Due_Date)):''}</span></div>`).join('');
+  return `<div class="card">${head}
+    <p class="sub" style="margin-top:2px">Лиды, сделки, контакты и задачи сотрудника из Zoho CRM (по владельцу ${esc(email)}).${z.connected?'':' Реальные данные появятся после подключения ключей Zoho.'}</p>
+    <div class="kpis">
+      <div class="kpi"><div class="n">${c.leads||0}</div><div class="l">Лиды</div></div>
+      <div class="kpi"><div class="n">${c.deals||0}</div><div class="l">Сделки</div></div>
+      <div class="kpi"><div class="n">${c.contacts||0}</div><div class="l">Контакты</div></div>
+      <div class="kpi"><div class="n">${c.tasks||0}</div><div class="l">Задачи</div></div>
+    </div>
+    ${sec(ic('crm')+' Сделки',deals)}
+    ${sec(ic('crm')+' Лиды',leads)}
+    ${sec(ic('users')+' Контакты',contacts)}
+    ${sec(ic('clock')+' Задачи',tasks)}</div>`;
+}
 function vStaffDetail(){
   const s=staff.find(x=>x.id===activeStaff)||{};
   const myLeads=leadsData.filter(l=>l.owner===s.name);
@@ -633,6 +660,7 @@ function vStaffDetail(){
     </div>
     <div class="row" style="margin-top:12px;align-items:center;gap:10px">
       ${s.gmail_connected?`<span class="st ap">✓ Gmail подключён</span> <span class="sub">${s.email||''}</span> <a class="btn sec sm" href="/api/gmail-auth-start?staff=${s.id}" target="_blank">Переподключить</a>`:`<a class="btn sm" href="/api/gmail-auth-start?staff=${s.id}" target="_blank">✉ Подключить Gmail</a> <span class="sub">двусторонняя синхронизация почты</span>`}</div></div>
+  ${zohoCard(s)}
   <div class="kpis">
     <div class="kpi"><div class="n">${myLeads.length}</div><div class="l">Лиды</div></div>
     <div class="kpi"><div class="n">${myDeals.length}</div><div class="l">Сделки</div></div>
