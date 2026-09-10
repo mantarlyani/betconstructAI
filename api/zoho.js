@@ -97,8 +97,8 @@ async function zohoUsers(token) {
   const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/users?type=AllUsers&per_page=200`, {
     headers: { Authorization: 'Zoho-oauthtoken ' + token }
   });
-  if (!r.ok) return [];
-  try { const d = await r.json(); return (d && d.users) || []; } catch (e) { return []; }
+  if (!r.ok) { let d = {}; try { d = await r.json(); } catch (e) {} return { list: [], error: (d && (d.message || d.code)) || ('HTTP ' + r.status) }; }
+  try { const d = await r.json(); return { list: (d && d.users) || [] }; } catch (e) { return { list: [], error: 'parse' }; }
 }
 
 // Реальная выборка по владельцу (по user id). Возвращает {data, error}.
@@ -122,8 +122,8 @@ export default async function handler(req, res) {
     if (!CID || !SECRET || !RT) return res.status(200).json({ health: true, env, token_ok: false, reason: 'missing_env' });
     try {
       const t = await accessToken();
-      let users = 0; try { users = (await zohoUsers(t)).length; } catch (e) {}
-      return res.status(200).json({ health: true, env, token_ok: true, zoho_users: users });
+      let users = 0, uerr; try { const U = await zohoUsers(t); users = (U.list || []).length; uerr = U.error; } catch (e) { uerr = String(e && e.message || e); }
+      return res.status(200).json({ health: true, env, token_ok: true, zoho_users: users, users_error: uerr });
     } catch (e) {
       return res.status(200).json({ health: true, env, token_ok: false, error: String((e && e.message) || e) });
     }
@@ -156,11 +156,13 @@ export default async function handler(req, res) {
     if (!token) throw new Error('no access_token (проверь refresh token/ключи)');
 
     // Находим пользователя Zoho по email владельца
-    const users = await zohoUsers(token);
+    const U = await zohoUsers(token);
+    const users = U.list || [];
     const me = users.find(u => String(u.email || '').toLowerCase() === email);
     if (!me) {
       return res.status(200).json({
-        connected: true, owner: email, note: 'owner_not_in_zoho',
+        connected: true, owner: email,
+        note: U.error ? ('api_error: ' + U.error) : 'owner_not_in_zoho',
         counts: { leads: 0, deals: 0, contacts: 0, tasks: 0 },
         leads: [], deals: [], contacts: [], tasks: [],
         zoho_users: users.length
