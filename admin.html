@@ -305,7 +305,71 @@ async function toggleShift(name,role){
   else{await db.from('shifts').insert({staff:name,role:role||'Sales'});toast(name+' — вход отмечен');}
   loadShifts();
 }
-function isOnlineNow(name){return shiftsData.some(s=>s.staff===name&&!s.offline_at);}
+/* ---------- График дежурств (из таблицы chat schedule) ---------- */
+const SHIFT_HOURS={day:['09:00','18:00'],evening:['18:01','01:59'],night:['02:00','08:59']};
+const SHIFT_RU={day:'День',evening:'Вечер',night:'Ночь'};
+// [дата, дневная смена, вечерняя, ночная]
+const ROTA=[
+["2026-09-10","Ruzanna Goroyan","Vardan Vardanyan","Emil Kirakosyan"],
+["2026-09-11","Vahagn Hovhannisyan","Gevorg Abovyan","Gevorg Abovyan"],
+["2026-09-12","Suren Ghazaryan","Vardan Vardanyan","Raffi Salman Jafar"],
+["2026-09-13","Armine Martirosyan","Suren Hayrapetyan","Gevorg Abovyan"],
+["2026-09-14","Lara Maryam Djorkaeff","Ofelya Harutyunyan","Ofelya Harutyunyan"],
+["2026-09-15","Armine Martirosyan","Vardan Vardanyan","Raffi Salman Jafar"],
+["2026-09-16","Violeta Potikyan","Emil Kirakosyan","Emil Kirakosyan"],
+["2026-09-17","Suren Ghazaryan","Vardan Vardanyan","Gevorg Abovyan"],
+["2026-09-18","Khoren Khorkhoruni","Emil Kirakosyan","Raffi Salman Jafar"],
+["2026-09-19","Mighrig Ayvazyan","Gevorg Abovyan","Gevorg Abovyan"],
+["2026-09-20","Amalya Danielyan","Suren Hayrapetyan","Raffi Salman Jafar"],
+["2026-09-21","","Emil Kirakosyan","Emil Kirakosyan"],
+["2026-09-22","Amalya Danielyan","Suren Hayrapetyan","Gevorg Abovyan"],
+["2026-09-23","Arpi Mnatsakanyan","Raffi Salman Jafar","Raffi Salman Jafar"],
+["2026-09-24","Seda Hovsepyan","Vardan Vardanyan","Gevorg Abovyan"],
+["2026-09-25","Maria Manukyan","Emil Kirakosyan","Emil Kirakosyan"],
+["2026-09-26","Ani Khachatryan","Raffi Salman Jafar","Raffi Salman Jafar"],
+["2026-09-27","Arinka Ayvazyan","Suren Hayrapetyan","Emil Kirakosyan"],
+["2026-09-28","Davit Tsatinyan","",""],
+["2026-09-29","","Emil Kirakosyan","Raffi Salman Jafar"],
+["2026-09-30","Violeta Potikyan","",""],
+["2026-10-01","Suren Ghazaryan","Raffi Salman Jafar","Raffi Salman Jafar"],
+["2026-10-02","Milena Hakobyan","Emil Kirakosyan","Emil Kirakosyan"],
+["2026-10-03","Kevork Nokhoudian","Suren Hayrapetyan","Raffi Salman Jafar"],
+["2026-10-04","Milena Hakobyan","Gevorg Abovyan","Gevorg Abovyan"],
+["2026-10-05","Lara Maryam Djorkaeff","Emil Kirakosyan","Emil Kirakosyan"],
+["2026-10-06","Sona Khachatryan","Suren Hayrapetyan","Raffi Salman Jafar"],
+["2026-10-07","Kevork Nokhoudian","Vardan Vardanyan","Gevorg Abovyan"],
+["2026-10-08","Seda Hovsepyan","",""],
+["2026-10-09","Amalya Danielyan","",""],
+["2026-10-10","Maria Manukyan","",""],
+["2026-10-11","Anahit Khachatryan","",""],
+["2026-10-12","Kevork Nokhoudian","",""],
+["2026-10-13","Seda Hovsepyan","",""],
+["2026-10-14","Anahit Grigoryan","",""],
+["2026-10-15","Lara Maryam Djorkaeff","",""],
+["2026-10-16","Ruzanna Goroyan","",""],
+["2026-10-18","Khoren Khorkhoruni","",""],
+["2026-10-19","Marianna Vardanyan","",""],
+["2026-10-20","Armine Martirosyan","",""],
+["2026-10-21","Kamsar Badalyan","",""],
+["2026-10-22","Vahagn Hovhannisyan","",""],
+["2026-10-23","Sona Khachatryan","",""],
+["2026-10-24","Milena Hakobyan","",""],
+["2026-10-25","Anahit Khachatryan","",""],
+["2026-10-26","Violeta Potikyan","",""],
+["2026-10-27","Suren Ghazaryan","",""],
+["2026-10-28","Khoren Khorkhoruni","",""],
+["2026-10-29","Mighrig Ayvazyan","",""],
+["2026-10-30","Alexander Grigorian","",""],
+["2026-10-31","Arinka Ayvazyan","",""]
+];
+const ROTA_MAP=(function(){const m={};ROTA.forEach(r=>m[r[0]]={day:r[1],evening:r[2],night:r[3]});return m;})();
+function yerevanNow(){const d=new Date();const u=d.getTime()+d.getTimezoneOffset()*60000;return new Date(u+4*3600000);} // UTC+4, без перехода
+function curShiftKey(mins){if(mins>=540&&mins<=1080)return 'day';if(mins>=1081||mins<=119)return 'evening';return 'night';}
+function dutyState(){const y=yerevanNow();const date=y.toISOString().slice(0,10);const mins=y.getHours()*60+y.getMinutes();const shift=curShiftKey(mins);const row=ROTA_MAP[date]||{};return {date,mins,shift,name:row[shift]||'',row};}
+function onDutyNowName(){return dutyState().name;}
+function isOnlineNow(name){if(shiftsData.some(s=>s.staff===name&&!s.offline_at))return true;return !!name&&onDutyNowName()===name;}
+function upcomingDuty(shift,n){const today=yerevanNow().toISOString().slice(0,10);return ROTA.filter(r=>r[0]>=today&&r[shift==='day'?1:shift==='evening'?2:3]).slice(0,n||10).map(r=>({date:r[0],name:r[shift==='day'?1:shift==='evening'?2:3]}));}
+function fmtDate(d){try{return new Date(d+'T00:00:00').toLocaleDateString('ru-RU',{weekday:'short',day:'2-digit',month:'short'});}catch(e){return d;}}
 function shiftsOn(name,d){return shiftsData.filter(s=>s.staff===name&&(s.online_at||'').slice(0,10)===d);}
 function shiftMs(s){const a=new Date(s.online_at).getTime();const b=s.offline_at?new Date(s.offline_at).getTime():Date.now();return Math.max(0,b-a);}
 function fmtDur(ms){const m=Math.round(ms/60000);const h=Math.floor(m/60);return (h?h+'ч ':'')+(m%60)+'м';}
@@ -496,11 +560,32 @@ function vHistory(){
 }
 
 const ROLE_LIST=['Sales','Service Sales','PM','Account Manager','Юрист','Модератор','Маркетинг','Финансы','Админ'];
+function staffIdByName(n){const s=staff.find(x=>x.name===n);return s?s.id:'';}
+function dutyName(n){if(!n)return '<span class="sub">—</span>';const id=staffIdByName(n);return id?`<b style="color:var(--mag);cursor:pointer" onclick="openStaff('${id}')">${n}</b>`:`<b>${n}</b>`;}
+function dutyCard(){
+  const d=dutyState();
+  const order=['day','evening','night'];
+  const chips=order.map(k=>{
+    const on=k===d.shift, nm=(d.row&&d.row[k])||'';
+    return `<div style="flex:1;min-width:150px;border:1px solid ${on?'var(--mag)':'var(--line,#e7e2e8)'};background:${on?'#faf2f6':'var(--card,#fff)'};border-radius:12px;padding:10px 12px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em">${SHIFT_RU[k]} · ${SHIFT_HOURS[k][0]}–${SHIFT_HOURS[k][1]}${on?' · <span style="color:var(--mag)">сейчас</span>':''}</div>
+      <div style="margin-top:4px;font-size:14.5px">${dutyName(nm)}</div></div>`;
+  }).join('');
+  const nights=upcomingDuty('night',8).filter(x=>x.date>d.date);
+  const nightList=nights.length?nights.map(x=>`<div class="fbar"><span style="flex:1">${fmtDate(x.date)}</span>${dutyName(x.name)}</div>`).join(''):'<p class="sub">Дальше по графику ночных смен нет.</p>';
+  return `<div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h3 style="margin:0">${ic('clock')} Дежурства сегодня</h3>
+      <span class="sub">${fmtDate(d.date)} · Ереван (UTC+4)</span></div>
+    <div class="row" style="gap:10px;flex-wrap:wrap;margin-top:10px">${chips}</div>
+    <h3 style="margin:16px 0 6px;font-size:14px">${ic('clock')} Очередь на ночные дежурства</h3>
+    ${nightList}
+    <p class="sub" style="margin-top:8px">Имя выделено розовым — открывается личный кабинет (скоро: интеграция с Zoho).</p></div>`;
+}
 function vStaff(){
   if(activeStaff)return vStaffDetail();
   const onlineCnt=staff.filter(s=>isOnlineNow(s.name)).length;
   const online=staff.filter(s=>isOnlineNow(s.name));
-  const flt=staffFilter?staff.filter(s=>s.role===staffFilter):staff;
+  const flt=(staffFilter?staff.filter(s=>s.role===staffFilter):staff.slice()).sort((a,b)=>(b.shifts_total||0)-(a.shifts_total||0));
   return `<h2>Сотрудники</h2><p class="sub">Вся команда, кто онлайн, каналы связи. Нажмите на имя — откроется личный кабинет сотрудника с его лидами, сделками и перепиской по сделкам.</p>
   ${hintCard('Вся команда: роли, доступы, кто онлайн. Отсюда выдаётся вход в кабинет и админку.','Добавь человека в «Новый сотрудник» (для админа выбери роль «Админ») — логин и пароль выдадутся сразу. Любому пароль меняется кнопками ✎ задать / ↻ случайный.')}
   <div class="kpis">
@@ -509,6 +594,7 @@ function vStaff(){
     <div class="kpi"><div class="ic">${ic('crm')}</div><div class="n">${staff.filter(s=>s.role==='Sales').length}</div><div class="l">Sales</div></div>
     <div class="kpi"><div class="ic">${ic('shield')}</div><div class="n">${staff.filter(s=>s.active===false).length}</div><div class="l">Доступ отключён</div></div>
   </div>
+  ${dutyCard()}
   <div class="card"><h3>${ic('eye')} Кто сейчас в сети (${online.length})</h3>
     ${online.length?online.map(s=>`<div class="fbar"><span style="flex:1"><b style="color:var(--mag);cursor:pointer" title="Click to see more about contact" onclick="openStaff('${s.id}')">${s.name}</b> <span class="pill">${s.role}</span></span><span style="color:var(--green);font-weight:700">● в сети</span></div>`).join(''):'<p class="sub">Сейчас никого нет в сети.</p>'}</div>
   <div class="card"><h3>${ic('plus')} Новый сотрудник</h3>
@@ -519,11 +605,12 @@ function vStaff(){
   <div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
     <h3 style="margin:0">${ic('users')} Команда (${flt.length})</h3>
     <select onchange="staffFilter=this.value;render()" style="max-width:200px"><option value="">Все отделы</option>${ROLE_LIST.map(r=>`<option ${r===staffFilter?'selected':''}>${r}</option>`).join('')}</select></div>
-    <div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Имя</th><th>Роль</th><th>Email</th><th>Сеть</th><th>Логин</th><th>Доступ</th><th></th></tr>
+    <div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Имя</th><th>Роль</th><th>Email</th><th>Смены</th><th>Сеть</th><th>Логин</th><th>Доступ</th><th></th></tr>
     ${flt.map(s=>`<tr>
       <td data-label="Имя"><b style="color:var(--mag);cursor:pointer" title="Click to see more about contact" onclick="openStaff('${s.id}')">${s.name}</b> <span style="color:var(--muted);font-size:11px">ⓘ</span></td>
       <td data-label="Роль">${s.id?`<select onchange="setStaffRole('${s.id}',this.value)">${ROLE_LIST.map(r=>`<option ${s.role===r?'selected':''}>${r}</option>`).join('')}</select>`:`<span class="pill">${s.role}</span>`}</td>
       <td data-label="Email">${s.email?`<span style="font-size:12px;color:var(--ink)">${s.email}</span>`:'<span style="font-size:12px;color:var(--muted)">—</span>'}</td>
+      <td data-label="Смены"><b>${s.shifts_total||0}</b> <span class="sub" style="font-size:11px">· ${s.shifts_weekend||0} вых.</span></td>
       <td data-label="Сеть">${isOnlineNow(s.name)?'<span style="color:var(--green);font-weight:700">● в сети</span>':'<span style="color:var(--muted)">○ офлайн</span>'}</td>
       <td class="mono" data-label="Логин" style="font-size:11px">${s.login} ${s.id?`<button class="btn sec sm" style="padding:2px 8px" onclick="setStaffPassPrompt('${s.id}')" title="Вписать конкретный пароль">✎ задать</button> <button class="btn sec sm" style="padding:2px 8px" onclick="resetStaffPass('${s.id}')" title="Сгенерировать случайный пароль">↻ случайный</button>`:''}</td>
       <td data-label="Доступ">${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
