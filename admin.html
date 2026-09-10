@@ -631,8 +631,10 @@ function zohoCard(s){
   const leads=(z.leads||[]).map(l=>`<div class="fbar"><span style="flex:1"><b>${esc(l.company||l.Company||'—')}</b> <span class="sub">${esc(l.name||l.Full_Name||'')}</span></span><span class="pill">${esc(l.status||l.Lead_Status||l.source||'')}</span></div>`).join('');
   const contacts=(z.contacts||[]).map(k=>`<div class="fbar"><span style="flex:1"><b>${esc(k.name||k.Full_Name||'—')}</b> <span class="sub">${esc(k.company||k.Account_Name||'')}</span></span><span class="sub" style="font-size:11.5px">${esc(k.email||k.Email||'')}</span></div>`).join('');
   const tasks=(z.tasks||[]).map(t=>`<div class="fbar"><span style="flex:1">${esc(t.subject||t.Subject||'—')}</span><span class="st ${/(Completed|Closed)/i.test(t.status||t.Status||'')?'ap':'nw'}" style="font-size:10px">${esc(t.status||t.Status||'')}${(t.due||t.Due_Date)?(' · '+esc(t.due||t.Due_Date)):''}</span></div>`).join('');
+  const noteMsg=z.note?(z.note==='owner_not_in_zoho'?('⚠ Email не найден среди пользователей Zoho'+(z.zoho_users!=null?(' (всего '+z.zoho_users+')'):'')+' — у сотрудника другой адрес владельца в Zoho, нужен маппинг.'):('⚠ '+esc(z.note))):'';
   return `<div class="card">${head}
     <p class="sub" style="margin-top:2px">Лиды, сделки, контакты и задачи сотрудника из Zoho CRM (по владельцу ${esc(email)}).${z.connected?'':' Реальные данные появятся после подключения ключей Zoho.'}</p>
+    ${noteMsg?`<p class="sub" style="color:var(--red,#d63d38)">${noteMsg}</p>`:''}
     <div class="kpis">
       <div class="kpi"><div class="n">${c.leads||0}</div><div class="l">Лиды</div></div>
       <div class="kpi"><div class="n">${c.deals||0}</div><div class="l">Сделки</div></div>

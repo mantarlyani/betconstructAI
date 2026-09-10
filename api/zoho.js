@@ -82,17 +82,27 @@ async function accessToken() {
   return d.access_token;
 }
 
-// Реальная выборка по владельцу. COQL: where Owner.email = '<email>'.
-async function coql(token, module, email, fields) {
-  const q = `select ${fields} from ${module} where Owner.email = '${email.replace(/'/g, '')}' limit 20`;
+// Список пользователей Zoho → находим id по email владельца.
+async function zohoUsers(token) {
+  const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/users?type=AllUsers&per_page=200`, {
+    headers: { Authorization: 'Zoho-oauthtoken ' + token }
+  });
+  if (!r.ok) return [];
+  try { const d = await r.json(); return (d && d.users) || []; } catch (e) { return []; }
+}
+
+// Реальная выборка по владельцу (по user id). Возвращает {data, error}.
+async function coqlByOwner(token, module, ownerId, fields) {
+  const q = `select ${fields} from ${module} where Owner = '${ownerId}' limit 20`;
   const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/coql`, {
     method: 'POST',
     headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' },
     body: JSON.stringify({ select_query: q })
   });
-  if (!r.ok) return [];
-  const d = await r.json();
-  return (d && d.data) || [];
+  if (r.status === 204) return { data: [] };
+  let d = {}; try { d = await r.json(); } catch (e) {}
+  if (!r.ok) return { data: [], error: (d && (d.message || d.code)) || ('HTTP ' + r.status) };
+  return { data: (d && d.data) || [] };
 }
 
 export default async function handler(req, res) {
@@ -120,16 +130,33 @@ export default async function handler(req, res) {
 
   try {
     const token = await accessToken();
-    const [leads, deals, contacts, tasks] = await Promise.all([
-      coql(token, 'Leads', email, 'Company,Full_Name,Lead_Source,Lead_Status'),
-      coql(token, 'Deals', email, 'Deal_Name,Stage,Amount,Closing_Date'),
-      coql(token, 'Contacts', email, 'Full_Name,Account_Name,Email'),
-      coql(token, 'Tasks', email, 'Subject,Due_Date,Status')
+    if (!token) throw new Error('no access_token (проверь refresh token/ключи)');
+
+    // Находим пользователя Zoho по email владельца
+    const users = await zohoUsers(token);
+    const me = users.find(u => String(u.email || '').toLowerCase() === email);
+    if (!me) {
+      return res.status(200).json({
+        connected: true, owner: email, note: 'owner_not_in_zoho',
+        counts: { leads: 0, deals: 0, contacts: 0, tasks: 0 },
+        leads: [], deals: [], contacts: [], tasks: [],
+        zoho_users: users.length
+      });
+    }
+
+    const [L, D, C, T] = await Promise.all([
+      coqlByOwner(token, 'Leads', me.id, 'Company,Full_Name,Lead_Source,Lead_Status'),
+      coqlByOwner(token, 'Deals', me.id, 'Deal_Name,Stage,Amount,Closing_Date'),
+      coqlByOwner(token, 'Contacts', me.id, 'Full_Name,Account_Name,Email'),
+      coqlByOwner(token, 'Tasks', me.id, 'Subject,Due_Date,Status')
     ]);
+    const leads = L.data, deals = D.data, contacts = C.data, tasks = T.data;
+    const errs = [L.error, D.error, C.error, T.error].filter(Boolean);
     return res.status(200).json({
-      connected: true, owner: email,
+      connected: true, owner: email, owner_id: me.id,
       counts: { leads: leads.length, deals: deals.length, contacts: contacts.length, tasks: tasks.length },
-      leads, deals, contacts, tasks
+      leads, deals, contacts, tasks,
+      note: errs.length ? ('coql_error: ' + errs[0]) : undefined
     });
   } catch (e) {
     const d = demo(email);
