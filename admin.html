@@ -435,14 +435,15 @@ function sectionsBars(){if(!analytics.sections.length)return '<p class="sub">П�
 
 function hintCard(what,tip){return `<div class="card" style="border-left:3px solid var(--mag);background:#faf2f6;padding:12px 14px;margin-bottom:14px"><div style="font-size:13px"><b>Для чего этот раздел:</b> ${what}</div>${tip?`<div style="font-size:12.5px;color:var(--muted);margin-top:5px">💡 ${tip}</div>`:''}</div>`;}
 function vMod(){
-  const isAff=a=>a.raw&&(a.raw.kind==='affiliate'||a.raw.kind==='marketing');
-  const prod=apps.filter(a=>!isAff(a)&&a.status!=='rejected');
-  const aff=apps.filter(a=>isAff(a)&&a.status!=='rejected');
-  return `<h2>Заявки на продукт</h2><p class="sub">Партнёры-производители, ожидающие проверки (KYB). Одобрите и присвойте бейдж.</p>
-  ${hintCard('Заявки партнёров/вендоров на размещение продукта. Здесь ты их проверяешь (KYB) и одобряешь — одобренные попадают в маркетплейс.','Пусто, пока никто не подал заявку. Они приходят с сайта: Маркетплейс → «Разместить продукт».')}
-  ${prod.length?prod.map(a=>appCard(a)).join(''):'<p class="sub">Нет заявок на продукт.</p>'}
-  <h2 style="margin-top:26px">Аффилейт / Маркетинг</h2><p class="sub">Заявки аффилейтов и маркетинг-агентств.</p>
-  ${aff.length?aff.map(a=>appCard(a)).join(''):'<p class="sub">Нет заявок.</p>'}`;
+  const pending=apps.filter(a=>a.status==='pending');
+  const approved=apps.filter(a=>a.status==='approved'||a.status==='partner'||a.status==='new');
+  const rejected=apps.filter(a=>a.status==='rejected');
+  const sec=(title,icon,list,empty)=>`<div style="margin-top:20px"><h3 style="display:flex;align-items:center;gap:8px">${ic(icon)} ${title} <span class="pill">${list.length}</span></h3>${list.length?list.map(a=>appCard(a)).join(''):`<p class="sub">${empty}</p>`}</div>`;
+  return `<h2>Заявки на продукт</h2><p class="sub">Этапы: заявка идёт от «Поступивших» к «Одобрено» или «Отклонено». Двигай между этапами в любой момент — всё пишется в Историю.</p>
+  ${hintCard('Заявки по этапам. Одобрил → в Маркетплейс; отклонил → в «Отклонённые». Любую можно вернуть или переместить в другой этап.','Новые приходят с сайта: Маркетплейс → «Разместить продукт».')}
+  ${sec('Поступившие','clock',pending,'Новых заявок нет.')}
+  ${sec('Одобренные','check',approved,'Пока нет одобренных.')}
+  ${sec('Отклонённые','x',rejected,'Отклонённых нет.')}`;
 }
 function appFull(raw){
   if(!raw)return '';
@@ -456,12 +457,12 @@ function appCard(a){
     :a.status==='partner'?`<span class="st pt">${ic('star')} Partner by BetConstruct</span>`
     :a.status==='new'?`<span class="st nw">${ic('sparkles')} New offer</span>`
     :`<span class="st rej">${ic('x')} Отклонён</span>`;
-  const actions=a.status==='pending'?`<div class="row" style="margin-top:11px;flex-wrap:wrap;gap:7px">
-      <button class="btn g sm" onclick="setStatus('${a.id}','approved')">${ic('check')} Approved</button>
-      <button class="btn b sm" onclick="setStatus('${a.id}','partner')">${ic('star')} Partner</button>
-      <button class="btn sec sm" onclick="setStatus('${a.id}','new')">${ic('sparkles')} New offer</button>
-      <button class="btn r sm" onclick="setStatus('${a.id}','rejected')">${ic('x')} Отклонить</button></div>`
-    :`<div class="row" style="margin-top:11px"><button class="btn sec sm" onclick="setStatus('${a.id}','pending')">Вернуть на проверку</button></div>`;
+  const mv=(s,cls,label)=>`<button class="btn ${cls} sm" onclick="setStatus('${a.id}','${s}')">${label}</button>`;
+  let acts;
+  if(a.status==='pending') acts=mv('approved','g',ic('check')+' Одобрить')+mv('partner','b',ic('star')+' Partner')+mv('new','sec',ic('sparkles')+' New')+mv('rejected','r',ic('x')+' Отклонить');
+  else if(a.status==='rejected') acts=mv('pending','sec',ic('clock')+' В поступившие')+mv('approved','g',ic('check')+' Одобрить');
+  else acts=mv('pending','sec',ic('clock')+' В поступившие')+mv('rejected','r',ic('x')+' Отклонить');
+  const actions=`<div class="row" style="margin-top:11px;flex-wrap:wrap;gap:7px">${acts}</div>`;
   const vd=vendorsData.find(x=>x.application_id===a.id);
   const stats=vd?`<div class="det" style="margin-top:6px;color:var(--mag)"><b>Marketplace:</b> ${vd.impressions||0} показов · ${vd.clicks||0} кликов</div>`:'';
   const rr=a.raw&&a.raw.portal_reset_requested?`<div class="det" style="margin-top:6px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px"><b>⚠ Запрос на восстановление доступа</b> · ${String(a.raw.portal_reset_requested).slice(0,16).replace('T',' ')}<button class="btn sec sm" style="margin-left:8px" onclick="clearReset('${a.id}')">Обработано</button></div>`:'';
