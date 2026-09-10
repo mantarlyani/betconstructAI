@@ -76,9 +76,19 @@ function demo(email) {
 }
 
 async function accessToken() {
-  const url = `https://accounts.zoho.${DC}/oauth/v2/token?refresh_token=${RT}&client_id=${CID}&client_secret=${SECRET}&grant_type=refresh_token`;
-  const r = await fetch(url, { method: 'POST' });
-  const d = await r.json();
+  const body = new URLSearchParams({
+    refresh_token: (RT || '').trim(),
+    client_id: (CID || '').trim(),
+    client_secret: (SECRET || '').trim(),
+    grant_type: 'refresh_token'
+  }).toString();
+  const r = await fetch(`https://accounts.zoho.${DC}/oauth/v2/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body
+  });
+  let d = {}; try { d = await r.json(); } catch (e) {}
+  if (!d.access_token) throw new Error('token: ' + (d.error || ('HTTP ' + r.status)));
   return d.access_token;
 }
 
