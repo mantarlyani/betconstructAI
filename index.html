@@ -113,6 +113,27 @@
   .pcat .body{display:none;border-top:1px solid var(--line)}
   .pcat.open .body{display:block}
   .pcat.open .more svg{transform:rotate(180deg)}
+  .solhint{display:flex;gap:9px;align-items:flex-start;padding:0 16px 14px;font-size:12.5px;line-height:1.55;color:var(--muted)}
+  .solhint svg{color:var(--mag);font-size:16px;flex-shrink:0;margin-top:1px}
+  .solhint b{color:var(--text);font-weight:700}
+  .solhint .fitrow{margin-bottom:5px}
+  .solhint .fitrow:last-child{margin-bottom:0}
+  .solhint .what{color:var(--text);font-weight:600;font-size:13px;margin-bottom:6px}
+  .solfacts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 0 13px}
+  .solfacts div{background:var(--card);padding:10px 12px;text-align:center}
+  .solfacts b{display:block;color:var(--mag);font-weight:800;font-size:15px;line-height:1.2;white-space:nowrap}
+  .solfacts span{display:block;color:var(--muted);font-size:11px;line-height:1.35;margin-top:3px}
+  .solneed{display:flex;gap:8px;align-items:flex-start;margin-top:12px;padding:10px 12px;
+    background:var(--bg);border-radius:8px;font-size:12.5px;line-height:1.55;color:var(--muted)}
+  .solneed svg{color:var(--mag);font-size:15px;flex-shrink:0;margin-top:1px}
+  .solneed b{color:var(--text);font-weight:700}
+  .solpick{background:linear-gradient(90deg,#fbf1f7,#fff);border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:14px}
+  .solpick .ttl{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;margin-bottom:9px}
+  .solpick .ttl svg{color:var(--mag);font-size:18px}
+  .solpick .li{display:flex;gap:8px;font-size:12.8px;line-height:1.55;color:var(--muted);margin-bottom:6px}
+  .solpick .li:last-child{margin-bottom:0}
+  .solpick .li b{color:var(--text);font-weight:700;white-space:nowrap}
   .loycard{background:linear-gradient(135deg,var(--mag),var(--mag-dk));color:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 8px 22px rgba(166,0,99,.28)}
   .loytop{display:flex;align-items:center;gap:12px}
   .loybadge{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex:none}
@@ -963,22 +984,68 @@ async function loadMarketData(){
 }
 function _vlist(){return (MKT_DATA.vendors&&MKT_DATA.vendors.length)?MKT_DATA.vendors:VENDORS.map(v=>({name:v[0],category:v[1],desc:v[2],regions:v[6],status:v[3]}));}
 function _plist(){return (MKT_DATA.partners&&MKT_DATA.partners.length)?MKT_DATA.partners:VENDORS.map(v=>({company:v[0],category:v[1],status:v[3]==='new'?'pending':'approved'}));}
+/* ---------- Полная база знаний сайта для AI-советника ----------
+   Правило: всё, что видит пользователь на страницах, попадает в контекст AI.
+   Каждый раздел отдаётся целиком (описания, цены, блоки, условия),
+   плюс карта сайта — чтобы советник мог сослаться на нужный экран. */
+function _kbSol(){
+  return SOL.map(s=>[
+    '### '+s.name+' — '+s.tag,
+    'Для чего: '+s.short,
+    'Кому подходит: '+s.fit,
+    'Чем удобно: '+s.why,
+    'Ключевые цифры: '+s.facts.map(f=>f[0]+' '+f[1]).join(' · '),
+    'Что нужно от партнёра: '+s.need,
+    'Суть: '+s.intro,
+    ...s.blocks.map(b=>'  · '+b[0]+': '+b[1])
+  ].join('\n')).join('\n');
+}
+function _kbPlat(){
+  return PLAT.map(p=>[
+    '### '+p.name,
+    p.desc,
+    ...(p.price||[]).map(pr=>'  Цена · '+pr[0]+': '+pr[1]),
+    ...(p.blocks||[]).map(b=>'  · '+b[0]+': '+b[1])
+  ].join('\n')).join('\n');
+}
+function _kbProducts(){
+  return PCAT.map(c=>'### '+c.cat+'\n'+c.items.map(it=>'  · '+it[0]+' — '+it[1]+(it[2]?(' | цена: '+it[2]):'')).join('\n')).join('\n');
+}
+function _kbLoyalty(){
+  return LTIERS.map(tr=>'  · '+tr.name+' ('+tr.vip+'): '+tr.lv.map(l=>'ур.'+l[0]+' — '+fmtN(l[1])+' XP → +'+fmtN(l[2])+' CIC').join('; ')).join('\n');
+}
 function bcKB(){
-  const L=['BETCONSTRUCT — что это (наша платформа):'];
-  L.push('iGaming-решения: '+SOL.map(s=>s.name+' ('+s.tag+')').join('; ')+'.');
-  L.push('Платформы: '+PLAT.map(p=>p.name+(p.price&&p.price[0]?(' — '+p.price[0][1]):'')).join('; ')+'.');
-  L.push('Пакеты и цены: '+PACKS.map(p=>p[0]+' '+p[1]+' ('+p[2]+')').join('; ')+'.');
-  PCAT.forEach(c=>L.push('Продукты — '+c.cat+': '+c.items.map(it=>it[0]+(it[2]?(' '+it[2]):'')).join(', ')+'.'));
-  L.push('Backoffice/BME: '+BME.map(b=>b[0]).join(', ')+'.');
-  L.push('Регионы: '+REGIONS.map(r=>r[1]).join(', ')+'.');
-  L.push('Лицензии: '+LICENSES.map(l=>l[0]).join(', ')+'.');
-  L.push('Платежи: '+PAY.map(p=>p[1]).join(', ')+'.');
+  const L=[];
+  L.push('# BETCONSTRUCT — решения, продукты и цены (наша платформа)');
+  L.push('\n## iGaming Solutions (4 модели сотрудничества)\n'+_kbSol());
+  L.push('\n## Платформы и конструкторы (цены за лицензию/сетап)\n'+_kbPlat());
+  L.push('\n## Пакеты и цены\n'+PACKS.map(p=>'  · '+p[0]+' — '+p[1]+': '+p[2]).join('\n'));
+  L.push('\n## Продукты по категориям\n'+_kbProducts());
+  L.push('\n## Backoffice / Spring BME (единая облачная консоль, console.betconstruct.com)\n'+BME.map(b=>'  · '+b[0]+': '+b[1]).join('\n'));
+  L.push('\n## Регионы и юрисдикции\n'+REGIONS.map(r=>'  · '+r[1]+': '+r[2]).join('\n'));
+  L.push('\n## Лицензии и сертификаты\n'+LICENSES.map(l=>'  · '+l[0]+': '+l[1]).join('\n'));
+  L.push('\n## Платежи\n'+PAY.map(p=>'  · '+p[1]+': '+p[2]).join('\n'));
+  L.push('\n## Loyalty-программа (XP → VIP-уровень → Level Up бонус CIC)\n'+_kbLoyalty());
+  L.push('\n## Демо фронтенда и живые продукты (ссылки можно давать клиенту)\n'+FRONTEND.map(f=>'  · '+f[1]+' — '+f[2]).join('\n'));
+  L.push('\n## Инструменты BetConstruct\n'+BCPRODUCTS.map(b=>'  · '+b[1]+' — '+b[2]).join('\n'));
   return L.join('\n');
 }
+function navKB(){
+  return ['# КАРТА САЙТА BetConstructAI — куда направлять клиента',
+    'Разделы каталога: '+MENU_TOP.map(m=>m[1]).join(', ')+'.',
+    'Marketplace — витрина продуктов вендоров, категории: '+MKT_CATS.join(', ')+'. Есть корзина и запрос демо по каждому продукту.',
+    'Partners — список производителей, размещённых на платформе.',
+    'Loyalty — XP и VIP-уровни с бонусами.',
+    'Чат с менеджером — живой чат для финальных условий и договора.',
+    'Стать партнёром (форма): KYB-данные компании, тип продукта ('+['Игра','Платёжная система','Платформа','Инструмент / Софт','Лицензионный сервис','Маркетинг / Affiliate'].join('/')+'), описание и ценность, регионы и запрещённые рынки, языки и валюты, крипто-поддержка, комплаенс, модель монетизации (RevShare/CPA/Fixed fee/License/Hybrid), ценовой ориентир, % платформе, AI-теги (вертикаль, гео, сегмент SMB/Mid-market/Enterprise). После модерации — бейдж «Approved by BetConstruct» или «Partner by BetConstruct» и доступ в кабинет партнёра.',
+    'Аффилейт / Маркетинг (форма): тип (Affiliate-сеть/Трафик-команда/Маркетинг-агентство/Инфлюенсер), модель (CPA/RevShare/Hybrid/Fixed fee), гео, вертикали, источники трафика, объёмы, кейсы и метрики, минимальные условия, KYB.',
+    'Роли при регистрации: оператор-покупатель, поставщик игр, платёжный провайдер, аффилейт.'
+  ].join('\n');
+}
 function buildKB(){
-  const v='MARKETPLACE — продукты вендоров:\n'+_vlist().map(v=>`• ${v.name} [${v.category||'—'}] — ${v.desc||''}; регионы: ${v.regions||'—'}; статус: ${v.status||'—'}`).join('\n');
-  const p='ПАРТНЁРЫ — производители:\n'+_plist().map(x=>`• ${x.company} — ${x.category||''}; статус: ${x.status||''}`).join('\n');
-  return bcKB()+'\n\n'+v+'\n\n'+p;
+  const v='# MARKETPLACE — продукты вендоров\n'+_vlist().map(v=>`• ${v.name} [${v.category||'—'}] — ${v.desc||''}; регионы: ${v.regions||'—'}; статус: ${v.status||'—'}`).join('\n');
+  const p='# ПАРТНЁРЫ — производители\n'+_plist().map(x=>`• ${x.company} — ${x.category||''}; статус: ${x.status||''}`).join('\n');
+  return [bcKB(),navKB(),v,p].join('\n\n');
 }
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function runAI(){
@@ -1010,7 +1077,13 @@ function aiLocal(q){
   const kw=[];if(slots)kw.push('игр','casino','слот','game');if(crypto)kw.push('crypto','usdt','btc','крипт','платёж','pay','coin');if(sport)kw.push('спорт','sport','odds','betting');
   const denom=kw.length||1;
   const match=_vlist().map(v=>{const hay=(v.name+' '+(v.category||'')+' '+(v.desc||'')).toLowerCase();const hits=kw.filter(k=>hay.includes(k)).length;return {v:v,pct:hits?Math.min(98,Math.round(55+hits/denom*43)):0};}).filter(x=>x.pct>0).sort((a,b)=>b.pct-a.pct).slice(0,4);
-  const rows=[['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${product}`],['card',`<b>${t('rPay')}:</b> ${pay}`],['badge',`<b>${t('rLic')}:</b> Curaçao / MGA`]];
+  // модель сотрудничества из iGaming Solutions — та же логика, что в блоке «Как выбрать за 30 секунд»
+  const hasApi=/(сво[яей] платформ|наш[аей] платформ|есть платформ|api|интеграц|фронтенд|front-?end)/.test(s);
+  const noLic=/(нет лицензи|без лицензи|лицензи[ияй]{1,2}\s*(нет|отсутств)|no licen|without licen|don'?t have.{0,12}licen)/.test(s);
+  const hasLic=!noLic&&/(есть лицензи|сво[яей] лицензи|лицензия есть|have.{0,12}licen|own licen)/.test(s);
+  const solName=hasApi?'API iGaming':noLic?'White Label iGaming':hasLic?'Turnkey iGaming':crypto?'Crypto iGaming':'White Label iGaming';
+  const sol=SOL.find(x=>x.name===solName)||SOL[2];
+  const rows=[['diamond',`<b>iGaming Solution:</b> ${sol.name} — ${sol.tag}`],['bulb',`<b>Для чего:</b> ${sol.short}`],['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${product}`],['card',`<b>${t('rPay')}:</b> ${pay}`],['badge',`<b>${t('rLic')}:</b> Curaçao / MGA`]];
   let html=`<div class="rec" style="margin-top:14px">${rows.map(r=>`<div class="row">${ic(r[0])}<div>${r[1]}</div></div>`).join('')}</div>`;
   if(match.length){
     const ttl=lang==='ru'?'Из нашего Marketplace':lang==='en'?'From our Marketplace':'Մեր Marketplace-ից';
@@ -1077,33 +1150,56 @@ function submitEntry(){
 
 const SOL=[
  {ic:'box',name:'Turnkey iGaming',tag:'Для партнёров со своей лицензией и кошельком',
+  short:'Запустить свой бренд на готовой платформе BetConstruct — лицензия, деньги и правила остаются у вас.',
+  facts:[['350+','провайдеров игр'],['Multi-Wallet','EUR, USD, BTC, DOGE'],['24/7','поддержка']],
+  need:'Собственная игорная лицензия и собственный кошелёк.',
+  fit:'у вас уже есть лицензия и свой кошелёк, нужен полный контроль над брендом, финансами и маржой',
+  why:'получаете готовую платформу (спорт + казино + бэкофис) без разработки с нуля — запуск с первого дня, свои лимиты, риск-менеджмент и промо в одном окне',
   intro:'Готовый, беспроблемный пакет ПО под задачи бизнеса: большой выбор web- и mobile-игр, обширный каталог спортивных событий, выделенный бэкофис — всё в одном решении под ключ.',
   blocks:[
    ['Turnkey Sportsbook','Полноценная Betting Management System: pre-match и live ставки по множеству видов спорта и лиг, типы ставок и коэффициенты; регистрация и управление аккаунтами игроков, безопасные транзакции.'],
    ['Turnkey Casino','Каталог игр от 350+ ведущих провайдеров; Remote Gaming Server (RGS) для интеграции сторонних систем; промо-инструменты — бонусы и джекпоты.'],
    ['Почему Turnkey','Полный BackOffice (аккаунты, транзакции, депозиты, ставки, выводы); платёжные интеграции; промо-инструменты и лояльность; риск-менеджмент и защита от фрода.'],
    ['Multi-Wallet','Один игровой аккаунт — любая валюта (EUR, USD, BTC, DOGE и др.); крипто и фиат в одной платформе, без обмена валют между площадками.'],
+   ['Маркетинг в комплекте','CRM-платформа и Affiliate Marketing System идут внутри решения — отдельно подключать не нужно.'],
    ['Плюсы','Быстрый запуск с первого дня; поддержка 24/7; BME-консоль; гибкая трейдинг-система; встроенные CRM и Affiliate; кастомные лимиты и маржа; риск-менеджмент.']
   ]},
  {ic:'cash',name:'Crypto iGaming',tag:'Классическая платформа + крипто-интеграция',
+  short:'Принимать ставки и депозиты в криптовалюте наравне с фиатом, не строя отдельную платформу.',
+  facts:[['70K+','live-матчей / мес'],['140K+','pre-match / мес'],['100+','провайдеров']],
+  need:'Ничего особенного — крипто-модуль ставится поверх классической платформы BetConstruct.',
+  fit:'работаете с крипто-аудиторией или хотите принимать BTC, ETH, USDT наравне с фиатом',
+  why:'крипта и фиат живут в одном Multi-Wallet — не нужна отдельная инфраструктура; плюс крипто-игры под бренд (Crash, Blackjack, Roulette) и выход на рынки, закрытые для классических платежей',
   intro:'Всё как в награждённой классической платформе BetConstruct, но с крипто-интеграцией и крипто-коллекциями игр. Доступ ко всем продуктам: Sportsbook, Casino Suite, Live Casino, Skill games и др.',
   blocks:[
    ['Crypto Sportsbook','70K+ live-матчей и 140K+ pre-match событий ежемесячно; работа в двух отдельных кошельках.'],
    ['Crypto Casino','100+ ведущих провайдеров, широкий каталог игр в крипто; мульти-депозит.'],
    ['Почему Crypto','Множество криптовалют для основного кошелька (BTC, ETH, USDT, LTC и др.); выход на новые аудитории, предпочитающие крипто; live-дилеры, ставки, турниры.'],
    ['Крипто-продукты','BetChain — крипто-платформа с удобной навигацией и лояльностью; Custom Token — собственный токен на блокчейне для роста экосистемы.'],
+   ['Кошельки игроков','Интеграция с популярными крипто-кошельками, включая MetaMask — игрок вносит депозит напрямую из своего кошелька.'],
    ['Плюсы','Multi-Wallet (крипто + фиат в одной платформе); шире аудитория; поддержка BTC/ETH/USDT/LTC; кастомные крипто-игры под бренд (Crash, Blackjack, Roulette).']
   ]},
  {ic:'badge',name:'White Label iGaming',tag:'Под лицензиями BetConstruct, быстрый старт',
+  short:'Быстро выйти на рынок под лицензиями BetConstruct, не получая собственную лицензию.',
+  facts:[['1–3','недели до запуска'],['500+','платёжных шлюзов'],['350+','провайдеров игр']],
+  need:'Своя лицензия не нужна. BetConstruct берёт на себя юридические, финансовые и административные операции.',
+  fit:'стартуете без своей лицензии, бюджет и сроки ограничены, хотите проверить рынок',
+  why:'работаете под лицензиями BetConstruct (Curaçao, Malta, France, UK) — юридические, финансовые и административные операции берёт на себя BC; запуск за 1–3 недели и минимальные стартовые вложения',
   intro:'Самый экономичный и быстрый способ: полный пакет продуктов, полностью регулируемый под лицензиями BetConstruct (Curaçao, Malta, France, UK). BetConstruct берёт на себя юридические, финансовые и административные операции.',
   blocks:[
    ['White Label Sportsbook','Максимум автономии; pre-match и live события под лицензиями BC; историческая статистика, риск-менеджмент и wallet-менеджмент.'],
    ['White Label Casino','Игры от 350+ топ-провайдеров под лицензиями BC; RGS; отчётность и мониторинг в BackOffice; запуск в кратчайшие сроки.'],
    ['Почему White Label','Работа под лицензиями Curaçao, Malta, France, UK; полный BackOffice; 500+ платёжных шлюзов; промо-инструменты.'],
    ['Плюсы','500+ платёжных шлюзов; промо-инструменты; BME-консоль; поддержка 24/7 (B2B и B2C); риск-менеджмент; нулевой стартовый взнос в джекпоты.'],
+   ['Бренд и суб-лицензии','Кастомизация под ваш бренд; возможность суб-лицензирования собственным партнёрам.'],
    ['Запуск','До 1–3 недель после подписания контракта. Полностью легально в юрисдикциях UK, MGA и Curaçao.']
   ]},
  {ic:'code',name:'API iGaming',tag:'Для действующих операторов — интеграция по API',
+  short:'Добавить недостающие продукты в свою платформу, не меняя фронтенд и бренд.',
+  facts:[['2 млн','матчей в 3 000 лигах'],['10 000','игр казино'],['350+','провайдеров']],
+  need:'Своя работающая платформа и команда разработки. Срок интеграции зависит от вашей лицензии и требований региона.',
+  fit:'у вас уже есть работающая платформа, свой фронтенд и команда разработки',
+  why:'подключаете только то, чего не хватает — спорт, казино или Odds Feed — а свой UX, бренд и логика остаются вашими; документация и open-source библиотеки ускоряют интеграцию',
   intro:'Для существующих операторов: гладкая интеграция игр, ставок и Odds Feed в вашу платформу. Обширное покрытие спорта и игр, подробная документация и экспертная поддержка.',
   blocks:[
    ['Sportsbook API','Мост между вашей платформой и серверами беттинга; 70K+ live и 140K+ pre-match событий/мес; историческая статистика по 2 млн матчей в 3000 лигах.'],
@@ -1115,11 +1211,23 @@ const SOL=[
 function igaming(){
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('diamond')} iGaming Solutions</h2><p class="sub">Choose the solution that best meets your needs — и запускай бизнес с BetConstruct.</p>
+    <div class="solpick">
+      <div class="ttl">${ic('bulb')} Как выбрать за 30 секунд</div>
+      <div class="li"><b>Есть лицензия →</b> Turnkey: своя лицензия и кошелёк, полный контроль.</div>
+      <div class="li"><b>Нет лицензии →</b> White Label: работаете под лицензиями BC, старт за 1–3 недели.</div>
+      <div class="li"><b>Крипто-аудитория →</b> Crypto: BTC/ETH/USDT и фиат в одном кошельке.</div>
+      <div class="li"><b>Своя платформа →</b> API: подключаете только нужные продукты, фронтенд ваш.</div>
+    </div>
     ${SOL.map((s,i)=>`<div class="pcat" id="sol${i}"><div class="hd" onclick="togglePc('sol${i}')"><span class="l">${ic(s.ic)} ${s.name}</span><span class="more">Подробно ${ic('chevD')}</span></div>
-      <div class="body" style="padding:13px 16px">
-        <p style="font-size:12.5px;color:var(--mag);font-weight:700;margin:0 0 8px">${s.tag}</p>
-        <p style="font-size:13.5px;line-height:1.6;margin:0 0 12px">${s.intro}</p>
-        ${s.blocks.map(b=>`<div style="margin-bottom:11px"><div style="font-weight:700;font-size:13.5px;margin-bottom:3px">${b[0]}</div><div style="font-size:13px;color:var(--muted);line-height:1.6">${b[1]}</div></div>`).join('')}
+      <div class="solhint">${ic('bulb')}<div><div class="what">${s.short}</div><div class="fitrow"><b>Кому подходит:</b> ${s.fit}</div></div></div>
+      <div class="body">
+        <div class="solfacts">${s.facts.map(f=>`<div><b>${f[0]}</b><span>${f[1]}</span></div>`).join('')}</div>
+        <div style="padding:0 16px 14px">
+          <p style="font-size:13px;line-height:1.6;margin:0 0 12px;color:var(--muted)"><b style="color:var(--text)">Чем удобно:</b> ${s.why}</p>
+          <p style="font-size:13.5px;line-height:1.6;margin:0 0 13px">${s.intro}</p>
+          ${s.blocks.map(b=>`<div style="margin-bottom:11px"><div style="font-weight:700;font-size:13.5px;margin-bottom:3px">${b[0]}</div><div style="font-size:13px;color:var(--muted);line-height:1.6">${b[1]}</div></div>`).join('')}
+          <div class="solneed">${ic('check')}<div><b>Что нужно от вас:</b> ${s.need}</div></div>
+        </div>
       </div></div>`).join('')}
     <div class="rec" style="margin-top:6px"><div class="row" style="align-items:flex-start;gap:11px;font-size:13.5px">${ic('sparkles')}<div>Не уверены, что выбрать? Опишите задачу — AI-советник подберёт решение, платежи и лицензию, дальше подключится менеджер.</div></div></div>
     <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
