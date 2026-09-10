@@ -116,6 +116,19 @@ async function coqlByOwner(token, module, ownerId, fields) {
 }
 
 export default async function handler(req, res) {
+  // Health-check: проверка ключей и обмена токена. Без данных CRM и без секретов.
+  if (req.query && (req.query.health || req.query.health === '')) {
+    const env = { client_id: !!CID, client_secret: !!SECRET, refresh_token: !!RT, dc: DC };
+    if (!CID || !SECRET || !RT) return res.status(200).json({ health: true, env, token_ok: false, reason: 'missing_env' });
+    try {
+      const t = await accessToken();
+      let users = 0; try { users = (await zohoUsers(t)).length; } catch (e) {}
+      return res.status(200).json({ health: true, env, token_ok: true, zoho_users: users });
+    } catch (e) {
+      return res.status(200).json({ health: true, env, token_ok: false, error: String((e && e.message) || e) });
+    }
+  }
+
   const auth = await authUser(req);
   const isAdmin = !!auth && auth.role === 'admin';
   let email = String((req.query && req.query.email) || '').trim().toLowerCase();
