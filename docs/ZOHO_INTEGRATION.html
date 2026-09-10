@@ -1,0 +1,194 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Интеграция Zoho CRM — BetConstructAI</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#1b191d;max-width:860px;margin:32px auto;padding:0 22px;line-height:1.55;font-size:15px}
+h1{color:#A60063;border-bottom:3px solid #A60063;padding-bottom:8px;font-size:26px}
+h2{color:#A60063;margin-top:30px;border-bottom:1px solid #e7e2e8;padding-bottom:5px;font-size:20px}
+h3{margin-top:22px;font-size:16px}
+code{background:#f6f2f5;padding:2px 5px;border-radius:5px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{background:#1b191d;color:#f6f2f5;padding:14px 16px;border-radius:10px;overflow-x:auto}
+pre code{background:none;color:inherit;padding:0}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px}
+th,td{border:1px solid #e7e2e8;padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#faf2f6;color:#7a0049}
+a{color:#2f6bd6}
+hr{border:none;border-top:1px solid #e7e2e8;margin:26px 0}
+ul,ol{padding-left:22px}
+@media print{body{margin:0;font-size:12px}h1{font-size:22px}pre{white-space:pre-wrap}}
+.note{background:#faf2f6;border:1px solid #A60063;border-radius:10px;padding:10px 14px;font-size:13px;margin:0 0 18px}
+</style></head><body>
+<div class="note">Чтобы сохранить в PDF: открой файл в браузере → Печать (Cmd/Ctrl+P) → «Сохранить как PDF». Или переслать этот .html как есть.</div>
+<h1>Интеграция Zoho CRM — личный кабинет сотрудника</h1>
+<p>Документация по подключению Zoho CRM к разделу <strong>Сотрудники → личный кабинет</strong> в admin.html.</p>
+<ul>
+<li><strong>Статус кода:</strong> готов. Сейчас работает в демо-режиме (заглушка).</li>
+<li><strong>Что нужно для реального режима:</strong> 4 переменные окружения в Vercel (ниже).</li>
+<li><strong>Дата-центр:</strong> <code>com</code> (crm.zoho.com).</li>
+</ul>
+<hr>
+<h2>1. Как это устроено</h2>
+<pre><code>admin.html (Сотрудники → клик по имени)
+   │  openStaff(id) → loadZoho(email)
+   ▼
+GET /api/zoho?email=&lt;email сотрудника&gt;
+   │
+   ├─ нет ключей Zoho  → демо-данные (badge «● демо-данные»)
+   └─ есть ключи Zoho  → Zoho CRM API (badge «● подключено»)
+         1) refresh_token → access_token (accounts.zoho.com)
+         2) COQL-запрос по Owner.email = &lt;email&gt;
+            модули: Leads, Deals, Contacts, Tasks
+</code></pre>
+<p><strong>Файлы:</strong></p>
+<ul>
+<li><code>api/zoho.js</code> — серверный эндпоинт (Vercel Serverless Function).</li>
+<li><code>admin.html</code> — функции <code>loadZoho()</code>, <code>zohoCard()</code>; кэш <code>zohoCache</code>.</li>
+</ul>
+<p><strong>Ответ <code>/api/zoho</code>:</strong></p>
+<pre><code>{
+  "connected": true,
+  "owner": "ruzanna.goroyan@softconstruct.com",
+  "counts": { "leads": 3, "deals": 4, "contacts": 2, "tasks": 3 },
+  "leads": [ ... ], "deals": [ ... ], "contacts": [ ... ], "tasks": [ ... ]
+}
+</code></pre>
+<p><code>connected:false</code> = демо-режим (ключей нет или ошибка токена).</p>
+<hr>
+<h2>2. Переменные окружения (Vercel)</h2>
+<table><thead><tr><th>Name</th><th>Пример</th><th>Описание</th></tr></thead><tbody><tr><td><code>ZOHO_CLIENT_ID</code></td><td><code>1000.ABCD...</code></td><td>Client ID из Self Client</td></tr><tr><td><code>ZOHO_CLIENT_SECRET</code></td><td><code>a1b2c3...</code></td><td>Client Secret из Self Client</td></tr><tr><td><code>ZOHO_REFRESH_TOKEN</code></td><td><code>1000.xxxx...</code></td><td>Бессрочный refresh token</td></tr><tr><td><code>ZOHO_DC</code></td><td><code>com</code></td><td>Дата-центр: com / eu / in / com.au / jp / ca</td></tr></tbody></table>
+<p>Где добавить: <strong>Vercel → проект → Settings → Environment Variables</strong> → среды <strong>Production + Preview</strong> → затем <strong>Redeploy</strong>.</p>
+<p>Если хоть одной из <code>CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN</code> нет — эндпоинт автоматически отдаёт демо-данные.</p>
+<hr>
+<h2>3. Получение ключей Zoho (пошагово)</h2>
+<h3>3.1 Создать Self Client</h3>
+<ol>
+<li>https://api-console.zoho.com → <strong>Add Client</strong> → <strong>Self Client</strong> → <strong>Create</strong>.</li>
+<li>Вкладка <strong>Client Secret</strong> → скопировать <strong>Client ID</strong> и <strong>Client Secret</strong>.</li>
+</ol>
+<h3>3.2 Сгенерировать grant code</h3>
+<p>Вкладка <strong>Generate Code</strong>:</p>
+<ul>
+<li><strong>Scope:</strong> <code>ZohoCRM.modules.ALL,ZohoCRM.users.READ</code></li>
+<li><strong>Time Duration:</strong> <code>10 minutes</code></li>
+<li><strong>Scope Description:</strong> любое (напр. <code>crm</code>)</li>
+<li><strong>Create</strong> → выбрать портал/организацию → скопировать <strong>grant code</strong> (<code>1000.xxxxx</code>).</li>
+</ul>
+<p>&gt; Grant code живёт 10 минут — сразу переходи к обмену.</p>
+<h3>3.3 Обменять grant code на refresh token</h3>
+<p>В терминале (подставь значения):</p>
+<pre><code>curl -s -X POST "https://accounts.zoho.com/oauth/v2/token" \
+  -d "grant_type=authorization_code" \
+  -d "client_id=ТВОЙ_CLIENT_ID" \
+  -d "client_secret=ТВОЙ_CLIENT_SECRET" \
+  -d "code=GRANT_CODE"
+</code></pre>
+<p>Ответ:</p>
+<pre><code>{ "access_token":"1000...", "refresh_token":"1000...", "expires_in":3600, ... }
+</code></pre>
+<p>Сохрани <strong><code>refresh_token</code></strong> — он бессрочный (используется и для будущих запросов). <code>access_token</code> вписывать никуда не нужно: код получает его сам из refresh token при каждом запросе.</p>
+<h3>3.4 Вписать в Vercel и Redeploy</h3>
+<p>См. раздел 2.</p>
+<hr>
+<h2>4. Scopes (права доступа)</h2>
+<p>Минимально нужно:</p>
+<ul>
+<li><code>ZohoCRM.modules.ALL</code> — чтение Leads/Deals/Contacts/Tasks через COQL.</li>
+<li><code>ZohoCRM.users.READ</code> — сопоставление владельца по email.</li>
+</ul>
+<p>Если позже добавим запись (создание задач/заметок из кабинета) — расширим scope и перевыпустим refresh token.</p>
+<hr>
+<h2>5. Сопоставление сотрудников (важно)</h2>
+<p>COQL фильтрует по владельцу записи:</p>
+<pre><code>select ... from Deals where Owner.email = '&lt;email сотрудника&gt;' limit 20
+</code></pre>
+<p>Email в нашей базе <code>staff.email</code> (например <code>ruzanna.goroyan@softconstruct.com</code>) <strong>должен совпадать</strong> с email владельца (Owner) в Zoho CRM.</p>
+<ul>
+<li>Совпадает → в кабинете реальные лиды/сделки.</li>
+<li>Не совпадает → счётчики по нулям (данные есть, но не привязываются).</li>
+</ul>
+<p>Если в Zoho у людей другие адреса — пришли соответствие «наш email → email в Zoho», добавим таблицу маппинга в <code>api/zoho.js</code>.</p>
+<hr>
+<h2>6. Проверка</h2>
+<ol>
+<li>После Redeploy открой <strong>/admin → Сотрудники → клик по имени</strong>.</li>
+<li>Бейдж в карточке «Zoho CRM»:</li>
+</ol>
+<ul>
+<li><strong>● подключено</strong> — реальные данные.</li>
+<li><strong>● демо-данные</strong> — ключей нет или ошибка (см. раздел 7).</li>
+</ul>
+<ol>
+<li>Прямой ответ API (подставь реальный email):</li>
+<pre><code>   https://www.betconstructai.com/api/zoho?email=ruzanna.goroyan@softconstruct.com
+</code></pre>
+</ol>
+<p>   Смотри <code>connected</code> и <code>counts</code>.</p>
+<hr>
+<h2>7. Диагностика проблем</h2>
+<table><thead><tr><th>Симптом</th><th>Причина</th><th>Решение</th></tr></thead><tbody><tr><td>Остаётся «демо-данные»</td><td>Переменные не добавлены / не сделан Redeploy</td><td>Проверь env в Vercel, сделай Redeploy</td></tr><tr><td><code>connected:false</code> + <code>error</code> в ответе</td><td>refresh token невалиден / не тот DC</td><td>Перевыпусти refresh token; проверь <code>ZOHO_DC</code></td></tr><tr><td><code>connected:true</code>, но счётчики 0</td><td>Owner.email в Zoho ≠ email сотрудника</td><td>Раздел 5 (маппинг)</td></tr><tr><td><code>INVALID_TOKEN</code> / <code>AUTHENTICATION_FAILURE</code></td><td>Протух access token / нет scope</td><td>Проверь scope <code>ZohoCRM.modules.ALL</code>; перевыпуск</td></tr><tr><td><code>NO_PERMISSION</code></td><td>У аккаунта нет API-доступа</td><td>Нужен план Zoho CRM с API</td></tr><tr><td>Пусто по Tasks</td><td>Другое имя модуля в портале</td><td>Сообщи — поправим API-имя модуля</td></tr></tbody></table>
+<p>Логи ошибок: <strong>Vercel → Deployments → (деплой) → Functions → /api/zoho</strong>.</p>
+<hr>
+<h2>8. Безопасность</h2>
+<ul>
+<li>Секреты — только в Vercel Environment Variables. <strong>Не коммитить</strong> в репозиторий, не слать в чат/мессенджеры.</li>
+<li>Refresh token = полный доступ к CRM на чтение. Утёк — отозвать в https://api-console.zoho.com (удалить/перевыпустить Self Client).</li>
+<li><strong>Защита сессией — реализована.</strong> <code>/api/zoho</code> проверяет Bearer-токен Supabase:</li>
+<li>реальные данные Zoho отдаются <strong>только авторизованным</strong> (иначе демо — утечки нет);</li>
+<li><strong>staff</strong> видит только свой email (query-параметр игнорируется), <strong>admin</strong> — любой;</li>
+<li>токен берётся из сессии Supabase на фронте (<code>db.auth.getSession()</code>), проверяется на сервере через <code>/auth/v1/user</code>, роль — из <code>profiles.role</code>.</li>
+</ul>
+<hr>
+<h2>9. Как расширять</h2>
+<ul>
+<li><strong>Новые поля/модули:</strong> в <code>api/zoho.js</code> → функция <code>coql()</code> вызывается отдельно на каждый модуль; добавь нужные поля в <code>select</code> и новый <code>coql(token,'Module',...)</code>.</li>
+<li><strong>Запись в Zoho</strong> (создать задачу/заметку из кабинета): добавить POST-эндпоинт + scope на запись.</li>
+<li><strong>Кэш:</strong> сейчас кэш только на фронте (<code>zohoCache</code> на сессию). При росте нагрузки — добавить серверное кэширование/лимиты.</li>
+</ul>
+<hr>
+<h2>10. Быстрый чек-лист</h2>
+<ul>
+<li>☐ Self Client создан, есть Client ID + Secret</li>
+<li>☐ Grant code выпущен со scope <code>ZohoCRM.modules.ALL,ZohoCRM.users.READ</code></li>
+<li>☐ Получен refresh token (curl, раздел 3.3)</li>
+<li>☐ 4 переменные добавлены в Vercel (Production + Preview)</li>
+<li>☐ Redeploy сделан</li>
+<li>☐ Бейдж «● подключено», счётчики &gt; 0</li>
+<li>☐ (если 0) проверено совпадение email владельцев</li>
+</ul>
+<hr>
+<h2>11. Целевая модель: «зеркало» Zoho (каждый видит свой аккаунт)</h2>
+<p><strong>Идея:</strong> платформа — это *mirror side* (витрина) поверх Zoho. Учёт/истина данных остаётся в Zoho CRM; мы только отображаем (и позже — частично пишем).</p>
+<p>Каждый сотрудник логинится → попадает в <strong>свой</strong> кабинет → видит <strong>свои</strong> записи из Zoho (его лиды/сделки/контакты/задачи — те, где он Owner).</p>
+<h3>Как это ложится на текущий код</h3>
+<ul>
+<li><code>admin.html</code> — админ открывает <strong>любого</strong> сотрудника (обзор всей команды). Уже работает.</li>
+<li><code>/partner</code> (staff.html) — сотрудник видит <strong>только себя</strong>. Это следующий шаг:</li>
+</ul>
+<ol>
+<li>После входа берём email из сессии Supabase (<code>db.auth.getUser()</code> → <code>profiles.email</code>), <strong>не</strong> из URL.</li>
+<li>Запрос <code>/api/zoho?email=&lt;свой email&gt;</code> → рендер того же <code>zohoCard</code>.</li>
+<li>Пользователь не может подставить чужой email.</li>
+</ol>
+<h3>Защита эндпоинта — СДЕЛАНО ✅</h3>
+<ul>
+<li>Фронт шлёт <strong>access token</strong> сессии Supabase в заголовке <code>Authorization: Bearer …</code>.</li>
+<li><code>/api/zoho</code> проверяет токен (<code>/auth/v1/user</code>), определяет email и роль (<code>profiles.role</code>).</li>
+<li><strong>staff</strong> → email принудительно из токена (query игнорируется); <strong>admin</strong> → любой email.</li>
+<li>Неавторизованный запрос → демо-данные (реальные данные Zoho не отдаются).</li>
+</ul>
+<h3>Источник истины</h3>
+<ul>
+<li><strong>Zoho = учёт</strong> (сделки, суммы, этапы). Мы не дублируем расчёты, а читаем из Zoho.</li>
+<li>Наша БД (Supabase) хранит: доступы/логины, дежурства, внутренние заметки — то, чего нет в Zoho.</li>
+<li>При необходимости двусторонней записи (создать задачу/лид из кабинета) — отдельный POST-эндпоинт со scope на запись; Zoho остаётся мастером.</li>
+</ul>
+<h3>План внедрения (по шагам)</h3>
+<ol>
+<li>Подключить реальные ключи Zoho (разделы 2–3). ← <strong>сейчас (на стороне клиента/админа)</strong></li>
+<li>✅ Защитить <code>/api/zoho</code> сессией Supabase (email из токена, не из query). — <strong>СДЕЛАНО</strong></li>
+<li>В <code>/partner</code> (staff.html) показать кабинет текущего пользователя (его Zoho-данные). — <strong>следующий шаг</strong></li>
+<li>✅ Роли: admin — вся команда; staff — только свой аккаунт (на уровне API уже так).</li>
+<li>(Опционально) запись в Zoho из кабинета.</li>
+</ol>
+<hr>
+<p>_Справка: Zoho OAuth — https://www.zoho.com/crm/developer/docs/api/v3/auth-request.html · COQL — https://www.zoho.com/crm/developer/docs/api/v3/COQL-Overview.html_</p>
+
+</body></html>
