@@ -281,7 +281,7 @@ async function sendClientMail(){const g=id=>($('#'+id)&&$('#'+id).value)||'';con
   }catch(e){toast('Ошибка сети');}}
 async function setStaffField(id,field,val){if(db)await db.from('staff').update({[field]:val}).eq('id',id);const s=staff.find(x=>x.id===id);if(s)s[field]=val;toast('Обновлено');}
 let activeStaff=null, staffComms=[], staffFilter='', zohoCache={};
-async function loadZoho(email){if(!email)return;if(!zohoCache[email])zohoCache[email]={loading:true};try{const r=await fetch('/api/zoho?email='+encodeURIComponent(email));zohoCache[email]=r.ok?await r.json():{error:'Сервер недоступен'};}catch(e){zohoCache[email]={error:'Нет связи'};}if(activeStaff)render();}
+async function loadZoho(email){if(!email)return;if(!zohoCache[email])zohoCache[email]={loading:true};try{let tok='';try{const{data}=await db.auth.getSession();tok=(data&&data.session&&data.session.access_token)||'';}catch(e){}const r=await fetch('/api/zoho?email='+encodeURIComponent(email),tok?{headers:{Authorization:'Bearer '+tok}}:{});zohoCache[email]=r.ok?await r.json():{error:'Сервер недоступен'};}catch(e){zohoCache[email]={error:'Нет связи'};}if(activeStaff)render();}
 async function openStaff(id){activeStaff=id;staffComms=[];const sref=staff.find(x=>x.id===id);if(sref&&sref.email)loadZoho(sref.email);render();loadLeads();loadDeals();if(db){const s=staff.find(x=>x.id===id);if(s){const {data}=await db.from('comm_messages').select('*').eq('staff_name',s.name).order('created_at',{ascending:false}).limit(200);staffComms=data||[];render();}}}
 function closeStaff(){activeStaff=null;render();}
 async function setStaffRole(id,role){if(db)await db.from('staff').update({role}).eq('id',id);toast('Роль обновлена');loadStaff();}

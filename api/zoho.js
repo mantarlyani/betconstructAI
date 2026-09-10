@@ -11,6 +11,30 @@ const CID = process.env.ZOHO_CLIENT_ID;
 const SECRET = process.env.ZOHO_CLIENT_SECRET;
 const RT = process.env.ZOHO_REFRESH_TOKEN;
 
+// Supabase — для проверки сессии (модель «каждый видит свой аккаунт»)
+const SB_URL = process.env.SB_URL || 'https://smddtvaewmmpuyvtuscb.supabase.co';
+const SB_ANON = process.env.SB_ANON_KEY || 'sb_publishable_oPGh3c7PEFreALuOkY6wOA_WovnaNpL';
+
+// Проверяем Bearer-токен Supabase → {email, role}. null, если не авторизован.
+async function authUser(req) {
+  const h = (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
+  const tok = h.indexOf('Bearer ') === 0 ? h.slice(7) : '';
+  if (!tok) return null;
+  try {
+    const r = await fetch(SB_URL + '/auth/v1/user', { headers: { apikey: SB_ANON, Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return null;
+    const u = await r.json();
+    if (!u || !u.id) return null;
+    let role = 'visitor';
+    try {
+      const pr = await fetch(SB_URL + '/rest/v1/profiles?id=eq.' + u.id + '&select=role', { headers: { apikey: SB_ANON, Authorization: 'Bearer ' + tok } });
+      const d = await pr.json();
+      if (Array.isArray(d) && d[0] && d[0].role) role = String(d[0].role);
+    } catch (e) {}
+    return { email: String(u.email || '').toLowerCase(), role };
+  } catch (e) { return null; }
+}
+
 function hash(str) { let h = 0; for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; } return Math.abs(h); }
 function pick(arr, seed) { return arr[seed % arr.length]; }
 
@@ -72,14 +96,23 @@ async function coql(token, module, email, fields) {
 }
 
 export default async function handler(req, res) {
-  const email = String((req.query && req.query.email) || '').trim().toLowerCase();
+  const auth = await authUser(req);
+  const isAdmin = !!auth && auth.role === 'admin';
+  let email = String((req.query && req.query.email) || '').trim().toLowerCase();
+  // Модель «каждый свой»: сотрудник видит только свой email; админ — любой.
+  if (auth && !isAdmin) email = auth.email;
+  if (!email && auth) email = auth.email;
   if (!email) return res.status(400).json({ error: 'email required' });
 
-  // Нет ключей → демо-режим (заглушка)
-  if (!CID || !SECRET || !RT) {
+  // Реальные данные Zoho — только авторизованным. Неавторизованным → демо (утечки нет).
+  const canReal = !!auth;
+
+  // Нет сессии, нет ключей, или ошибка → демо-режим
+  if (!canReal || !CID || !SECRET || !RT) {
     const d = demo(email);
     return res.status(200).json({
-      connected: false, owner: email,
+      connected: false, owner: email, demo: true,
+      reason: !canReal ? 'not_authenticated' : 'no_zoho_keys',
       counts: { leads: d.leads.length, deals: d.deals.length, contacts: d.contacts.length, tasks: d.tasks.length },
       ...d
     });
