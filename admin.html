@@ -243,7 +243,7 @@ function switchAccount(){logout();} /* возврат к экрану входа
 function toggleAcctMenu(ev){if(ev){ev.stopPropagation();}const p=$('#acctPop');if(p)p.classList.toggle('on');}
 document.addEventListener('click',function(e){const p=$('#acctPop');if(p&&p.classList.contains('on')&&!(e.target.closest&&e.target.closest('.acctwrap')))p.classList.remove('on');});
 function paintAcct(){const nm=(BCU&&BCU.name)||'Админ';const em=(BCU&&BCU.email)||'';const a=$('#acctName'),a2=$('#acctName2'),el=$('#acctEmail'),av=$('#acctAv'),aw=document.querySelector('.acctwrap');if(a)a.textContent=nm;if(a2)a2.textContent=nm;if(el)el.textContent=em;if(av)av.textContent=((nm||'А').trim()[0]||'А').toUpperCase();if(aw)aw.style.display='inline-block';}
-function startApp(){AUTHED=true;document.querySelector('.tabs').style.display='flex';paintAcct();renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();loadEvents();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();}
+function startApp(){AUTHED=true;document.querySelector('.tabs').style.display='flex';paintAcct();renderTabs();render();loadStaff();if(cur==='mod'||cur==='dash'){loadApps();loadVendors();}if(cur==='stats'){loadStats();loadVendors();loadEvents();}if(cur==='sales'||cur==='crm'||cur==='dash'){loadLeads();loadShifts();loadDeals();}if(cur==='dash')loadEvents();if(cur==='dash'||cur==='history')loadActionLog();}
 async function boot(){const ok=await applySession();if(ok){startApp();}else{location.replace('/login');}}
 const IC={
   dash:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
@@ -391,13 +391,13 @@ let banners=[{title:'Запусти казино за 2 недели',sub:'Turnk
 let idxToggles={quick:true,live:true,promo:true,sections:true};
 
 /* ---------- TABS ---------- */
-const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['content','Контент','layout']];
+const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['history','История','clock'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');translateDOM($('#tabs'));}
-function go(t){if(t!=='chat'&&t!=='staff')chatBackStaff=null;cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();loadEvents();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();}
+function go(t){if(t!=='chat'&&t!=='staff')chatBackStaff=null;cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();loadEvents();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();if(t==='dash'||t==='history')loadActionLog();}
 
 /* ---------- VIEWS ---------- */
-function render(){if(!AUTHED)return;$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,content:vContent}[cur])();if(KEEP_SCROLL){KEEP_SCROLL=false;}else{window.scrollTo(0,0);}translateDOM(document.body);paintLangSw();}
+function render(){if(!AUTHED)return;$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,history:vHistory,content:vContent}[cur])();if(KEEP_SCROLL){KEEP_SCROLL=false;}else{window.scrollTo(0,0);}translateDOM(document.body);paintLangSw();}
 
 function vDash(){
   const pend=apps.filter(a=>a.status==='pending').length;
@@ -428,15 +428,16 @@ function vDash(){
   <div class="grid2">
     <div class="card"><h3>${ic('layout')} Открытые задачи</h3>${(function(){const op=taskData.filter(t=>t.status!=='done');return op.length?op.slice(0,7).map(t=>`<div class="fbar"><span style="flex:1"><span class="st ${TPRIO[t.priority]||'pend'}" style="font-size:10px">${t.priority||'P3'}</span> ${t.title}${t.dept?` · <span style="color:var(--muted)">${t.dept}</span>`:''}</span><button class="btn sm" onclick="go('tasks')">Открыть</button></div>`).join(''):'<p class="sub">Открытых задач нет.</p>';})()}</div>
     <div class="card"><h3>${ic('crm')} Сделки по стадиям</h3>${STAGES.map(s=>{const n=deals.filter(d=>d.stage===s.k&&d.status==='active').length;return `<div class="fbar"><span style="flex:1">${s.n}</span><b>${n}</b></div>`;}).join('')}</div>
-  </div>`;
+  </div>
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">${ic('clock')} История действий</h3><button class="btn sec sm" onclick="go('history')">Все →</button></div>${actionLog.length?actionLog.slice(0,6).map(actionRow).join(''):'<p class="sub">Пока нет действий.</p>'}</div>`;
 }
 function sectionsBars(){if(!analytics.sections.length)return '<p class="sub">Пока нет данных о посещениях.</p>';const max=Math.max(...analytics.sections.map(s=>s[1]))||1;return analytics.sections.map(s=>`<div class="fbar"><span style="width:120px">${s[0]}</span><span class="bar"><span style="width:${s[1]/max*100}%"></span></span><b>${s[1]}%</b></div>`).join('');}
 
 function hintCard(what,tip){return `<div class="card" style="border-left:3px solid var(--mag);background:#faf2f6;padding:12px 14px;margin-bottom:14px"><div style="font-size:13px"><b>Для чего этот раздел:</b> ${what}</div>${tip?`<div style="font-size:12.5px;color:var(--muted);margin-top:5px">💡 ${tip}</div>`:''}</div>`;}
 function vMod(){
   const isAff=a=>a.raw&&(a.raw.kind==='affiliate'||a.raw.kind==='marketing');
-  const prod=apps.filter(a=>!isAff(a));
-  const aff=apps.filter(isAff);
+  const prod=apps.filter(a=>!isAff(a)&&a.status!=='rejected');
+  const aff=apps.filter(a=>isAff(a)&&a.status!=='rejected');
   return `<h2>Заявки на продукт</h2><p class="sub">Партнёры-производители, ожидающие проверки (KYB). Одобрите и присвойте бейдж.</p>
   ${hintCard('Заявки партнёров/вендоров на размещение продукта. Здесь ты их проверяешь (KYB) и одобряешь — одобренные попадают в маркетплейс.','Пусто, пока никто не подал заявку. Они приходят с сайта: Маркетплейс → «Разместить продукт».')}
   ${prod.length?prod.map(a=>appCard(a)).join(''):'<p class="sub">Нет заявок на продукт.</p>'}
@@ -475,9 +476,23 @@ async function setStatus(id,s){const a=apps.find(x=>x.id===id);if(a)a.status=s;
     else if(a){
       await db.from('vendors').delete().eq('application_id',id);
       if(portalActive){const {error:ve}=await db.from('vendors').insert({application_id:id,name:a.name,category:a.cat,description:a.desc,badge:s,active:true,regions:a.regions,match_score:s==='new'?65:80});if(ve)toast('Вендор: '+ve.message);}
+      logAction('app_'+s,a.name,id);
     }}
   toast(portalActive?((s==='approved'?'✓ Approved':s==='partner'?'★ Partner':'✦ New offer')+' · кабинет партнёра активирован'):(s==='rejected'?'Отклонён':'Возвращён на проверку'));render();}
 async function clearReset(id){if(db)await db.from('applications').update({portal_reset_requested:null}).eq('id',id);const a=apps.find(x=>x.id===id);if(a&&a.raw)a.raw.portal_reset_requested=null;toast('Запрос отмечен обработанным');render();}
+// ======== История действий ========
+let actionLog=[];
+async function logAction(action,name,entityId){
+  try{if(db)await db.from('action_log').insert({actor:(BCU&&(BCU.name||BCU.email))||'admin',action:action,entity_type:'application',entity_id:entityId?String(entityId):null,entity_name:name||''});}catch(e){}
+}
+async function loadActionLog(){if(!db)return;const {data}=await db.from('action_log').select('*').order('created_at',{ascending:false}).limit(200);if(data){actionLog=data;render();}}
+function actionLabel(a){return ({app_approved:'✓ Одобрено',app_partner:'★ Partner',app_new:'✦ New offer',app_rejected:'✕ Отклонено',app_pending:'↩ Возвращено на проверку'})[a]||a;}
+function actionRow(r){return `<div class="fbar" style="align-items:flex-start"><div style="flex:1"><b>${actionLabel(r.action)}</b>${r.entity_name?(' · '+esc(r.entity_name)):''}<br><span style="color:var(--muted);font-size:12px">${esc(r.actor||'—')} · ${(r.created_at||'').slice(0,16).replace('T',' ')}</span></div></div>`;}
+function vHistory(){
+  return `<h2>История</h2><p class="sub">Все действия команды. Новые сверху.</p>
+  ${hintCard('Журнал действий: кто, что и когда сделал (одобрил/отклонил заявку и т.п.). Отклонённые заявки уходят из очереди сюда.','Записи появляются автоматически при действиях в панели.')}
+  <div class="card"><h3>${ic('clock')} Все действия (${actionLog.length})</h3>${actionLog.length?actionLog.map(actionRow).join(''):'<p class="sub">Пока нет записей.</p>'}</div>`;
+}
 
 const ROLE_LIST=['Sales','Service Sales','PM','Account Manager','Юрист','Модератор','Маркетинг','Финансы','Админ'];
 function vStaff(){
