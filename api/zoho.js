@@ -115,7 +115,59 @@ async function coqlByOwner(token, module, email, fields) {
   return { data: (d && d.data) || [] };
 }
 
+// --- Запись в Zoho ---
+async function resolveOwnerId(token, email) {
+  try { const U = await zohoUsers(token); const u = (U.list || []).find(x => String(x.email || '').toLowerCase() === String(email).toLowerCase()); return u ? u.id : null; } catch (e) { return null; }
+}
+async function zput(token, module, id, fields) {
+  const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/${module}/${id}`, { method: 'PUT', headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [fields] }) });
+  let d = {}; try { d = await r.json(); } catch (e) {} return { ok: r.ok, d };
+}
+async function zpost(token, module, fields) {
+  const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/${module}`, { method: 'POST', headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [fields] }) });
+  let d = {}; try { d = await r.json(); } catch (e) {} return { ok: r.ok, d };
+}
+async function znote(token, module, id, title, content) {
+  const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/${module}/${id}/Notes`, { method: 'POST', headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [{ Note_Title: title || 'Заметка', Note_Content: content || '' }] }) });
+  let d = {}; try { d = await r.json(); } catch (e) {} return { ok: r.ok, d };
+}
+const WRITE_MODULES = { Leads: 1, Deals: 1, Contacts: 1, Tasks: 1 };
+
 export default async function handler(req, res) {
+  // Запись в Zoho (создание/обновление/заметка). Только авторизованным; сотрудник — только свой owner.
+  if (req.method === 'POST') {
+    const auth = await authUser(req);
+    if (!auth) return res.status(401).json({ error: 'auth required' });
+    if (!CID || !SECRET || !RT) return res.status(400).json({ error: 'zoho not configured' });
+    const isAdmin = auth.role === 'admin';
+    const b = (req.body && typeof req.body === 'object') ? req.body : {};
+    const action = String(b.action || ''), module = String(b.module || ''), id = b.id ? String(b.id) : '';
+    const data = (b.data && typeof b.data === 'object') ? b.data : {};
+    const ownerEmail = String(b.owner || auth.email || '').toLowerCase();
+    if (!isAdmin && ownerEmail && ownerEmail !== auth.email) return res.status(403).json({ error: 'forbidden' });
+    if (!WRITE_MODULES[module]) return res.status(400).json({ error: 'bad module' });
+    try {
+      const token = await accessToken();
+      if (action === 'update') {
+        if (!id) return res.status(400).json({ error: 'id required' });
+        const r = await zput(token, module, id, data);
+        return res.status(r.ok ? 200 : 400).json({ ok: r.ok, result: r.d });
+      }
+      if (action === 'note') {
+        if (!id) return res.status(400).json({ error: 'id required' });
+        const r = await znote(token, module, id, data.title, data.content);
+        return res.status(r.ok ? 200 : 400).json({ ok: r.ok, result: r.d });
+      }
+      if (action === 'create') {
+        const fields = Object.assign({}, data);
+        if (ownerEmail) { const oid = await resolveOwnerId(token, ownerEmail); if (oid) fields.Owner = { id: String(oid) }; }
+        const r = await zpost(token, module, fields);
+        return res.status(r.ok ? 200 : 400).json({ ok: r.ok, result: r.d });
+      }
+      return res.status(400).json({ error: 'unknown action' });
+    } catch (e) { return res.status(500).json({ error: String((e && e.message) || e) }); }
+  }
+
   // Health-check: проверка ключей и обмена токена. Без данных CRM и без секретов.
   if (req.query && (req.query.health || req.query.health === '')) {
     const env = { client_id: !!CID, client_secret: !!SECRET, refresh_token: !!RT, dc: DC };
@@ -159,10 +211,10 @@ export default async function handler(req, res) {
 
     // Выборка напрямую по владельцу (Owner.email = email сотрудника)
     const [L, D, C, T] = await Promise.all([
-      coqlByOwner(token, 'Leads', email, 'Company,Full_Name,Lead_Source,Lead_Status'),
-      coqlByOwner(token, 'Deals', email, 'Deal_Name,Stage,Amount,Closing_Date'),
-      coqlByOwner(token, 'Contacts', email, 'Full_Name,Account_Name,Email'),
-      coqlByOwner(token, 'Tasks', email, 'Subject,Due_Date,Status')
+      coqlByOwner(token, 'Leads', email, 'id,Company,Full_Name,Lead_Source,Lead_Status,Email,Phone'),
+      coqlByOwner(token, 'Deals', email, 'id,Deal_Name,Stage,Amount,Closing_Date'),
+      coqlByOwner(token, 'Contacts', email, 'id,Full_Name,Account_Name,Email,Phone'),
+      coqlByOwner(token, 'Tasks', email, 'id,Subject,Due_Date,Status')
     ]);
     const leads = L.data, deals = D.data, contacts = C.data, tasks = T.data;
     const errs = [L.error, D.error, C.error, T.error].filter(Boolean);
