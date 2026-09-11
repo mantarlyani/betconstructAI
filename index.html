@@ -1131,7 +1131,7 @@ function runAI(){
   out.innerHTML=`<div class="rec" style="margin-top:14px"><div class="row">${ic('sparkles')}<div>${lang==='ru'?'Анализирую по данным платформы…':lang==='en'?'Analyzing platform data…':'Վերլուծում եմ հարթակի տվյալները…'}</div></div></div>`;
   track('ai','query',{q:q});
   const ctx=buildKB();
-  aiRemote(q,ctx).then(txt=>{out.innerHTML=txt?aiWrap(txt):aiLocal(q);}).catch(()=>{out.innerHTML=aiLocal(q);});
+  aiRemote(q,ctx).then(txt=>{out.innerHTML=txt?aiWrap(txt):trHTML(aiLocal(q));}).catch(()=>{out.innerHTML=trHTML(aiLocal(q));});
 }
 async function aiRemote(q,ctx){
   try{
@@ -1165,7 +1165,7 @@ function aiLocal(q){
   const reg=regName&&REGIONS.find(r=>r[1]===regName);
   const base=sol.name==='Crypto iGaming'?['Turnkey iGaming','White Label iGaming']:[sol.name];
   const regWarn=reg&&!base.some(b=>reg[6].includes(b))
-    ? `<b>Внимание:</b> ${sol.name.replace(' iGaming','')} в регионе ${regName} не предлагается — там доступны ${reg[6].map(m=>m.replace(' iGaming','')).join(' и ')}. Для Turnkey нужна своя лицензия; варианты обсудите с менеджером.`
+    ? I().regWarn(sol.name.replace(' iGaming',''),regName,reg[6].map(m=>m.replace(' iGaming','')).join(I().and))
     : '';
   const rows=[['diamond',`<b>iGaming Solution:</b> ${sol.name} — ${sol.tag}`],['bulb',`<b>Для чего:</b> ${sol.short}`],...(regWarn?[['shield',regWarn]]:[]),['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${product}`],['card',`<b>${t('rPay')}:</b> ${pay}`],['badge',`<b>${t('rLic')}:</b> Curaçao / MGA`]];
   let html=`<div class="rec" style="margin-top:14px">${rows.map(r=>`<div class="row">${ic(r[0])}<div>${r[1]}</div></div>`).join('')}</div>`;
@@ -1637,9 +1637,21 @@ function solRegions(name){
   const base = name==='Crypto iGaming' ? ['Turnkey iGaming','White Label iGaming'] : [name];
   return REGIONS.map(r=>({name:r[1], on:base.some(b=>r[6].includes(b))}));
 }
+// фразы, которые собираются из частей, — по языкам (словарь TR их не поймает целиком)
+const I18N={
+  ru:{and:' и ',regAll:n=>`все ${n} регионов`,regSome:(a,b,l)=>`${a} из ${b} — кроме ${l}`,of3:n=>`${n} из 3`,
+      regWarn:(s,r,m)=>`<b>Внимание:</b> ${s} в регионе ${r} не предлагается — там доступны ${m}. Для Turnkey нужна своя лицензия; варианты обсудите с менеджером.`},
+  en:{and:' and ',regAll:n=>`all ${n} regions`,regSome:(a,b,l)=>`${a} of ${b} — except ${l}`,of3:n=>`${n} of 3`,
+      regWarn:(s,r,m)=>`<b>Note:</b> ${s} is not offered in ${r} — available there: ${m}. Turnkey requires your own licence; discuss options with a manager.`},
+  hy:{and:' և ',regAll:n=>`բոլոր ${n} տարածաշրջանները`,regSome:(a,b,l)=>`${b}-ից ${a}-ը՝ բացի ${l}`,of3:n=>`3-ից ${n}`,
+      regWarn:(s,r,m)=>`<b>Ուշադրություն՝</b> ${s}-ը ${r} տարածաշրջանում չի առաջարկվում. այնտեղ հասանելի են ${m}։ Turnkey-ի համար անհրաժեշտ է սեփական լիցենզիա. տարբերակները քննարկեք մենեջերի հետ։`}
+};
+function I(){return I18N[lang]||I18N.ru;}
+// перевод одной строки данных по словарю TR — для мест, которые выводятся мимо trHTML
+function L(ru){return lang==='ru'||!ru?ru:((TR[ru]&&(TR[ru][lang]||TR[ru].en))||ru);}
 function solRegionLine(name){
   const list=solRegions(name), on=list.filter(x=>x.on), off=list.filter(x=>!x.on);
-  return off.length ? `${on.length} из ${list.length} — кроме ${off.map(x=>x.name).join(' и ')}` : `все ${list.length} регионов`;
+  return off.length ? I().regSome(on.length,list.length,off.map(x=>x.name).join(I().and)) : I().regAll(list.length);
 }
 function regNeed(r){
   return r[6].includes('White Label iGaming')
@@ -1667,7 +1679,7 @@ function openCategory(cat){
 function quickInfo(q){
   const kind=q[2], name=q[3], firstSent=t=>{const p=(t||'').replace(/\b(Mr|Mrs|Dr|St|No|Nr|Inc|Ltd|vs|др|т\.д|т\.п)\.\s/g,'$1.\u0001').split(/(?<=\.)\s+(?=[A-ZА-ЯЁ0-9«])/); let r=''; for(const x of p){if((r+x).length>190&&r)break; r+=(r?' ':'')+x;} return r.replace(/\u0001/g,' ');};
   if(kind==='prod'){const it=PCAT.flatMap(c=>c.items).find(x=>x[0]===name)||[];
-    return {sub:name, hint:q[4]||it[4], facts:firstSent(it[3]), price:it[2], open:`openProduct('${name}')`, demo:q[5]};}
+    return {sub:name, hint:q[4]||it[4], facts:firstSent(L(it[3])), price:it[2], open:`openProduct('${name}')`, demo:q[5]};}
   if(kind==='sol'){const x=SOL.find(v=>v.name===name)||{};
     return {sub:name, hint:x.short, facts:(x.facts||[]).map(f=>f[0]+' '+f[1]).join(' · '), open:`openSolution('${name}')`, demo:q[5]};}
   if(kind==='plat'){const x=PLAT.find(v=>v.name===name)||{};
@@ -1698,6 +1710,7 @@ function quickTap(i){
         <button class="btn" style="grid-column:1/-1;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="closeSheet();go('chat')">${ic('message')} Обсудить с менеджером</button>`}
       </div>
     </div>`;
+  w.innerHTML=trHTML(w.innerHTML);
   document.body.appendChild(w);
   w.querySelector('.qsh').focus();
 }
@@ -1732,7 +1745,7 @@ function regional(){
     ${REGIONS.map((r,i)=>`<div class="pcat" id="reg${i}"><div class="hd" onclick="togglePc('reg${i}')"><span class="l">${ic('pin')} ${r[1]}</span><span class="more">Подробно ${ic('chevD')}</span></div>
       <div class="solhint">${ic('bulb')}<div><div class="what">${r[3]}</div><div class="fitrow"><b>Модели:</b> ${r[6].map(m=>m.replace(' iGaming','')).join(' · ')}</div></div></div>
       <div class="body">
-        <div class="solfacts wrap"><div><b>${r[5]}</b><span>регулятор</span></div><div><b>${r[6].length} из 3</b><span>модели сотрудничества</span></div><div><b>${r[7]}</b><span>офис</span></div></div>
+        <div class="solfacts wrap"><div><b>${r[5]}</b><span>регулятор</span></div><div><b>${I().of3(r[6].length)}</b><span>модели сотрудничества</span></div><div><b>${r[7]}</b><span>офис</span></div></div>
         <div style="padding:0 16px 14px">
           <p style="font-size:13px;line-height:1.6;margin:0 0 12px;color:var(--muted)">${r[2]}</p>
           <div class="solreg"><div class="lbl">Доступные модели</div><div class="chips">${r[6].map(m=>`<span class="chip" onclick="openSolution('${m}')">${m.replace(' iGaming','')}</span>`).join('')}</div></div>
