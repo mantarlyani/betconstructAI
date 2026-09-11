@@ -128,6 +128,20 @@
     background:var(--bg);border-radius:8px;font-size:12.5px;line-height:1.55;color:var(--muted)}
   .solneed svg{color:var(--mag);font-size:15px;flex-shrink:0;margin-top:1px}
   .solneed b{color:var(--text);font-weight:700}
+  .prow{border-top:1px solid var(--line)}
+  .prow>summary{padding:11px 16px;cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:10px}
+  .prow>summary::-webkit-details-marker{display:none}
+  .prow>summary .pn{flex:1;font-size:14px;font-weight:700;color:var(--mag)}
+  .prow>summary .pn .car{display:inline-block;transition:.2s;font-size:11px;color:var(--muted);margin-left:5px}
+  .prow[open]>summary .pn .car{transform:rotate(180deg)}
+  .prow>summary .pp{font-size:12.5px;color:var(--muted);white-space:nowrap}
+  .prow .pd{font-size:12.5px;color:var(--muted);line-height:1.5;padding:0 16px 4px}
+  .prow .pbody{padding:2px 16px 14px}
+  .prow .pfor{font-size:13px;line-height:1.6;color:var(--text);background:var(--bg);
+    border-radius:8px;padding:10px 12px;margin-bottom:9px}
+  .prow .pfor b{color:var(--mag)}
+  .prow .plink{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--mag)}
+  .prow .plink svg{font-size:14px}
   .solpick{background:linear-gradient(90deg,#fbf1f7,#fff);border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:14px}
   .solpick .ttl{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;margin-bottom:9px}
   .solpick .ttl svg{color:var(--mag);font-size:18px}
@@ -1011,7 +1025,7 @@ function _kbPlat(){
   ].filter(Boolean).join('\n')).join('\n');
 }
 function _kbProducts(){
-  return PCAT.map(c=>'### '+c.cat+'\nДля чего: '+c.short+'\n'+c.items.map(it=>'  · '+it[0]+' — '+it[1]+(it[2]?(' | цена: '+it[2]):'')).join('\n')).join('\n');
+  return PCAT.map(c=>'### '+c.cat+'\nДля чего: '+c.short+'\n'+c.items.map(it=>'  · '+it[0]+' — '+it[1]+(it[2]?(' | цена: '+it[2]):'')+(it[4]?('\n      для чего: '+it[4]):'')).join('\n')).join('\n');
 }
 function _kbLoyalty(){
   return LTIERS.map(tr=>'  · '+tr.name+' ('+tr.vip+'): '+tr.lv.map(l=>'ур.'+l[0]+' — '+fmtN(l[1])+' XP → +'+fmtN(l[2])+' CIC').join('; ')).join('\n');
@@ -1359,66 +1373,66 @@ const PCAT=[
  {cat:'Ставки и казино',ic:'ball',
   short:'Сами продукты, на которых игрок делает ставку. С них начинается любой проект — без них остальное не нужно.',
   items:[
-   ['Sportsbook','90 000+ live-матчей, доступно на 20+ языках','от €19.9K'],
-   ['Esport','Ставки на LoL, CS:GO, DOTA2, Overwatch, Starcraft и др.','от €10K'],
-   ['Virtual Sports','9 виртуальных видов спорта, нон-стоп, здоровая маржа','€10K'],
-   ['Casino Platform','45 000+ игр от BetConstruct и топ-провайдеров','€10K'],
-   ['Live Casino','Живые дилеры + возможности роста бизнеса','€10K']
+   ['Sportsbook','90 000+ live-матчей, доступно на 20+ языках','от €19.9K','https://www.betconstruct.com/ru/products/sportsbook','Ядро беттинг-бизнеса: приём ставок на спорт до матча и в лайве, управление коэффициентами, типами ставок и лимитами.'],
+   ['Esport','Ставки на LoL, CS:GO, DOTA2, Overwatch, Starcraft и др.','от €10K','https://www.betconstruct.com/ru/products/esports','Отдельная молодая аудитория, которая не ставит на классический спорт. Подключается к уже работающему спортсбуку.'],
+   ['Virtual Sports','9 виртуальных видов спорта, нон-стоп, здоровая маржа','€10K','https://www.betconstruct.com/ru/products/virtual-sports','Ставки идут круглосуточно, когда реальных матчей нет — ночью и в межсезонье. Исход считает генератор, маржа предсказуема.'],
+   ['Casino Platform','45 000+ игр от BetConstruct и топ-провайдеров','€10K','https://www.betconstruct.com/ru/products/casino-suite','Витрина и движок казино: каталог игр, категории, провайдеры, бонусы и джекпоты в одном месте.'],
+   ['Live Casino','Живые дилеры + возможности роста бизнеса','€10K','https://www.betconstruct.com/ru/products/live-casino','Живые дилеры в студии — удерживает игроков, которые не доверяют генератору случайных чисел.']
  ]},
  {cat:'Data Feed',ic:'chart',
   short:'Данные, на которых держатся ставки: коэффициенты, live-статистика, трансляции, защита от рисков. Берут отдельно, когда платформа своя.',
   items:[
-   ['Odds Feed','700+ профессиональных трейдеров, отзывчивый odds-фид','от €5K'],
-   ['Live Scouting Data','Быстрые и защищённые live-данные для котировок','€6.5 / матч'],
-   ['Stats Widgets','Все спорт-данные на одной странице','€1.75K / мес'],
-   ['Live Streaming','Эксклюзивный HD live-видеоконтент','от €5'],
-   ['BetGuard','Защита трейдинга от рисков и финансовых потерь','от €15K + RevShare'],
-   ['Dataspot','Аналитика поведения и предпочтений игроков','по запросу']
+   ['Odds Feed','700+ профессиональных трейдеров, отзывчивый odds-фид','от €5K','https://www.betconstruct.com/ru/products/odds-feed','Готовые коэффициенты от трейдеров BetConstruct — когда платформа своя, а торговой команды нет.'],
+   ['Live Scouting Data','Быстрые и защищённые live-данные для котировок','€6.5 / матч','https://www.betconstruct.com/ru/products/live-scouting-data','Данные прямо с матча для расчёта live-коэффициентов. Здесь решает скорость: опоздание данных — это убыток.'],
+   ['Stats Widgets','Все спорт-данные на одной странице','€1.75K / мес','https://www.betconstruct.com/ru/products/statistics','Статистика команд и игроков на странице события — поднимает вовлечённость и средний размер ставки.'],
+   ['Live Streaming','Эксклюзивный HD live-видеоконтент','от €5','','Трансляция матча прямо на сайте: игрок смотрит и ставит, не уходя на сторонний ресурс.'],
+   ['BetGuard','Защита трейдинга от рисков и финансовых потерь','от €15K + RevShare','https://www.betconstruct.com/ru/products/betguard','Ловит договорные матчи, арбитражников и аномальные ставки раньше, чем они превратятся в убыток.'],
+   ['Dataspot','Аналитика поведения и предпочтений игроков','по запросу','https://www.betconstruct.com/ru/products/dataspot','Аналитика поведения игроков: кто уходит, кто приносит деньги, на каком шаге теряется трафик.']
  ]},
  {cat:'Платформы',ic:'puzzle',
   short:'Оболочка, в которой живут продукты: сайт, приложение, витрина бетшопа. Отвечает за то, как всё выглядит и кто этим управляет.',
   items:[
-   ['CMS Pro','Гибкая масштабируемая система управления контентом','по запросу'],
-   ['SpringBuilder X','No-code конструктор mobile-first сайта','по запросу'],
-   ['Native Apps','Нативные приложения iOS/Android для продуктов BC','по запросу'],
-   ['Land Based Solutions','Retail-решения для наземного бизнеса','депозит'],
-   ['Bet on League','Sportsbook + статистика (iframe)','депозит'],
-   ['BetChain','Крипто-ориентированная фронт-платформа','депозит'],
-   ['LOYA','Платформа клиентской лояльности','по запросу'],
-   ['Bet Easy','Кросс-платформенные мобильные приложения (iOS/Android)','по запросу']
+   ['CMS Pro','Гибкая масштабируемая система управления контентом','по запросу','https://www.betconstruct.com/ru/products/cms-pro','Управление контентом сайта силами маркетинга, без разработчиков. Подробно — в разделе Platforms.'],
+   ['SpringBuilder X','No-code конструктор mobile-first сайта','по запросу','https://www.betconstruct.com/ru/springbuilderx','Сборка сайта перетаскиванием блоков, без программистов. Подробно — в разделе Platforms.'],
+   ['Native Apps','Нативные приложения iOS/Android для продуктов BC','по запросу','https://www.betconstruct.com/ru/products/native-apps','Нативные приложения iOS и Android. Подробно — в разделе Platforms.'],
+   ['Land Based Solutions','Retail-решения для наземного бизнеса','депозит','https://www.betconstruct.com/ru/products/land-based-solutions','Терминалы, касса и экраны для наземных бетшопов. Подробно — в разделе Platforms.'],
+   ['Bet on League','Sportsbook + статистика (iframe)','депозит','https://www.betconstruct.com/ru/products/bet-on-league','Ставки по одному турниру виджетом на чужом сайте. Подробно — в разделе Platforms.'],
+   ['BetChain','Крипто-ориентированная фронт-платформа','депозит','https://www.betconstruct.com/ru/products/betchain','Крипто-ориентированный фронт с персональной лентой. Подробно — в разделе Platforms.'],
+   ['LOYA','Платформа клиентской лояльности','по запросу','https://www.betconstruct.com/ru/products/copy-of-sportsbook-software','Лояльность для наземного бетшопа без полной регистрации игрока. Подробно — в разделе Platforms.'],
+   ['Bet Easy','Кросс-платформенные мобильные приложения (iOS/Android)','по запросу','https://www.betconstruct.com/ru/products/copy-of-native-apps','Быстрый выпуск мобильного приложения. Подробно — в разделе Platforms.']
  ]},
  {cat:'Операционные инструменты',ic:'gear',
   short:'То, чем управляют бизнесом после запуска: удержание игроков, маркетинг, риски, аналитика, агентская сеть.',
   items:[
-   ['Last Battle','Лояльность нового уровня с кастомными журналами','по запросу'],
-   ['Last Battle Universe (B2B)','Первая B2B-система лояльности, до 100% cashback на setup','по запросу'],
-   ['Affiliate Ecosystem','ПО + управление + сеть: мост между аффилейтами и операторами','по запросу'],
-   ['Agent System','Рост через отношения агент↔игрок','€1K / мес'],
-   ['Umbrella','AI risk management — выявление и управление рисками','€1K / мес'],
-   ['Betcloud','Приём ставок сверх лимитов, разделение риска в сети','депозит'],
-   ['Hoory AI','AI-ассистент поддержки клиентов','от $9.99 / мес'],
-   ['Business Dashboard','Дашборд метрик эффективности бизнеса','по запросу'],
-   ['Bet-Insights','Realtime-аналитика ставок и in-match подсказки','по запросу'],
-   ['iGaming BOT','Перенос iGaming-бизнеса в Telegram','по запросу'],
-   ['BetNetwork','Соцфичи: чаты, комьюнити, друзья','по запросу'],
-   ['CRM AI','Таргетированные маркетинг-кампании','€1.5K / мес'],
-   ['AI Lobby Personalization','Персональное лобби: подборка игр под каждого игрока','по запросу']
+   ['Last Battle','Лояльность нового уровня с кастомными журналами','по запросу','https://www.betconstruct.com/ru/products/last-battle','Лояльность как игра: игрок возвращается за прогрессом и статусом, а не за разовым бонусом.'],
+   ['Last Battle Universe (B2B)','Первая B2B-система лояльности, до 100% cashback на setup','по запросу','','Та же механика лояльности, но на сеть партнёров. До 100% cashback на стоимость внедрения.'],
+   ['Affiliate Ecosystem','ПО + управление + сеть: мост между аффилейтами и операторами','по запросу','https://www.betconstruct.com/ru/products/affiliate-ecosystem','Софт, управление и готовая сеть партнёров — источник трафика, когда своей команды закупки нет.'],
+   ['Agent System','Рост через отношения агент↔игрок','€1K / мес','https://www.betconstruct.com/ru/products/agent-system','Модель для рынков, где игроки приходят через агентов, а не из интернета — Азия, Латинская Америка.'],
+   ['Umbrella','AI risk management — выявление и управление рисками','€1K / мес','https://www.betconstruct.com/ru/products/umbrella','AI-риск-менеджмент: распознаёт подозрительные паттерны ставок до того, как они ударят по кассе.'],
+   ['Betcloud','Приём ставок сверх лимитов, разделение риска в сети','депозит','https://www.betconstruct.com/ru/products/betcloud','Принять ставку выше собственного лимита, разделив риск с другими операторами сети.'],
+   ['Hoory AI','AI-ассистент поддержки клиентов','от $9.99 / мес','https://www.betconstruct.com/ru/products/hoory','Первая линия поддержки: снимает с операторов типовые вопросы игроков круглосуточно.'],
+   ['Business Dashboard','Дашборд метрик эффективности бизнеса','по запросу','https://www.betconstruct.com/ru/products/business-dashboard','Ключевые метрики бизнеса на одном экране — вместо ручных выгрузок из бэкофиса.'],
+   ['Bet-Insights','Realtime-аналитика ставок и in-match подсказки','по запросу','https://www.betconstruct.com/ru/products/bet-insights','Аналитика ставок в реальном времени и подсказки прямо по ходу матча.'],
+   ['iGaming BOT','Перенос iGaming-бизнеса в Telegram','по запросу','https://www.betconstruct.com/ru/products/igaming-bot','Перенос ставок в Telegram — для рынков, где мессенджер привычнее сайта.'],
+   ['BetNetwork','Соцфичи: чаты, комьюнити, друзья','по запросу','','Чаты, друзья, сообщество: игрок держится за людей, а не только за коэффициент.'],
+   ['CRM AI','Таргетированные маркетинг-кампании','€1.5K / мес','https://www.betconstruct.com/ru/products/crm','Кампании под сегменты игроков: кому, что и когда отправить, чтобы вернуть и удержать.'],
+   ['AI Lobby Personalization','Персональное лобби: подборка игр под каждого игрока','по запросу','','Каждый игрок видит своё лобби — игры подбираются под его историю и вкус.']
  ]},
  {cat:'Games Suite (игры)',ic:'dice',
   short:'Собственные игры BetConstruct. Отличают вас от операторов с одинаковым набором слотов от тех же провайдеров.',
   items:[
-   ['Pool Masters','Прогнозы исходов и общий призовой фонд','€2K'],
-   ['Poker','Богатый онлайн-функционал, для новичков и про','€10K'],
-   ['Social Gaming','Кастомные социальные казино-игры под ваш бренд','€25K'],
-   ['Skill Games','Нарды и Belote','€10K'],
-   ['Keno','Онлайн-лотерея','€5K'],
-   ['Farkle','Кости: развлечение + расчёт','€5K'],
-   ['Ogwil','Онлайн scratch card','Free'],
-   ['Penality','Футбольная лотерея-игра с горячими коэффициентами','€5K'],
-   ['Hokm','Trick-taking карточная игра','€5K'],
-   ['Pasoor','Популярная карточная игра','€5K'],
-   ['Talisman','Культурная bet-on лотерея','€5K'],
-   ['Okey','Tile-based игра','€5K']
+   ['Pool Masters','Прогнозы исходов и общий призовой фонд','€2K','https://www.betconstruct.com/ru/products/pool-masters','Прогнозы исходов с общим призовым фондом — вовлекает, не требуя крупной ставки.'],
+   ['Poker','Богатый онлайн-функционал, для новичков и про','€10K','https://www.betconstruct.com/ru/products/poker','Игроки играют друг против друга, а не против оператора — это держит их в продукте дольше.'],
+   ['Social Gaming','Кастомные социальные казино-игры под ваш бренд','€25K','https://www.betconstruct.com/ru/products/social-gaming','Социальное казино под ваш бренд — работает и там, где ставки на деньги запрещены.'],
+   ['Skill Games','Нарды и Belote','€10K','https://www.betconstruct.com/ru/products/skill-games','Нарды и Belote — сильны в регионах, где эти игры часть повседневной культуры.'],
+   ['Keno','Онлайн-лотерея','€5K','https://www.betconstruct.com/ru/products/keno','Онлайн-лотерея: низкий порог входа и частые розыгрыши.'],
+   ['Farkle','Кости: развлечение + расчёт','€5K','https://www.betconstruct.com/ru/products/farkle','Кости: простые правила и быстрый раунд — хорошо заходит новичкам.'],
+   ['Ogwil','Онлайн scratch card','Free','https://www.betconstruct.com/ru/products/ogwil','Скретч-карта онлайн: мгновенный результат, подключение бесплатное.'],
+   ['Penality','Футбольная лотерея-игра с горячими коэффициентами','€5K','https://www.betconstruct.com/ru/products/penality','Футбольная лотерея с горячими коэффициентами — пик интереса вокруг крупных турниров.'],
+   ['Hokm','Trick-taking карточная игра','€5K','https://www.betconstruct.com/ru/products/hokm','Карточная игра со взятками, популярная в Иране и соседних странах.'],
+   ['Pasoor','Популярная карточная игра','€5K','https://www.betconstruct.com/ru/products/pasoor','Популярная в регионе карточная игра — локальный продукт под конкретный рынок.'],
+   ['Talisman','Культурная bet-on лотерея','€5K','https://www.betconstruct.com/ru/products/talisman','Лотерея на культурной основе: продукт под конкретный национальный рынок.'],
+   ['Okey','Tile-based игра','€5K','https://www.betconstruct.com/ru/products/okey','Игра с плитками, популярная в Турции и среди турецкой диаспоры.']
  ]}
 ];
 const PACKS=[
@@ -1436,7 +1450,10 @@ function catalog(){
     ${PCAT.map((c,i)=>`<div class="pcat" id="cat${i}"><div class="hd" onclick="togglePc('cat${i}')"><span class="l">${ic(c.ic)} ${c.cat}</span><span class="more">${c.items.length} · ${ic('chevD')}</span></div>
       <div class="solhint">${ic('bulb')}<div><div class="what">${c.short}</div></div></div>
       <div class="body">
-        ${c.items.map(it=>`<div style="padding:11px 16px;border-top:1px solid var(--line)"><b style="font-size:14px">${it[0]}</b><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${it[1]}</div></div>`).join('')}
+        ${c.items.map(it=>`<details class="prow"><summary><span class="pn">${it[0]}<span class="car">${ic('chevD')}</span></span><span class="pp">${it[2]||''}</span></summary>
+          <div class="pd">${it[1]}</div>
+          <div class="pbody"><div class="pfor"><b>Для чего:</b> ${it[4]}</div>
+          ${it[3]?`<a class="plink" href="${it[3]}" target="_blank" rel="noopener">${ic('external')} Страница продукта на betconstruct.com</a>`:''}</div></details>`).join('')}
       </div></div>`).join('')}
     <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать продукты с AI-советником</button>
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
