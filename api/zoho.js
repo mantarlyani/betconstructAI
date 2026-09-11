@@ -103,7 +103,7 @@ async function zohoUsers(token) {
 
 // Реальная выборка по владельцу (по email). Возвращает {data, error}.
 async function coqlByOwner(token, module, email, fields) {
-  const q = `select ${fields} from ${module} where Owner.email = '${String(email).replace(/'/g, '')}' limit 50`;
+  const q = `select ${fields} from ${module} where Owner.email = '${String(email).replace(/'/g, '')}' limit 200`;
   const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/coql`, {
     method: 'POST',
     headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' },
