@@ -557,7 +557,8 @@ const MENU_TOP=[
   ['card','Payment methods','payment',1]
 ];
 const QUICK=[
- // [иконка, подпись, куда ведёт: prod|sol|plat|cat|url, цель, своя подсказка, живой пример на VBET]
+ // [иконка, подпись, куда ведёт: prod|sol|plat|cat|demo|url, цель, своя подсказка, живой пример на VBET]
+ // demo — описания в каталоге нет, только живой пример и менеджер
  // первые 8 видны без «Ещё» — главные продукты
  ['ball','Sports','prod','Sportsbook','','https://www.vbet.com/en/sports/pre-match/event-view'],
  ['broadcast','Live','prod','Sportsbook','Ставки по ходу матча: коэффициенты меняются в реальном времени, кэшаут частичный, полный и автоматический. Часть Sportsbook.','https://www.vbet.com/en/sports/live/event-view'],
@@ -570,6 +571,9 @@ const QUICK=[
  ['chart','Stats','prod','Stats Widgets','','https://statistics.vbet.com/'],
  ['store','Betshops','plat','Land Based Solutions','',''],
  ['gamepad','Games','cat','Games Suite (игры)','','https://www.vbet.com/en/casino/generic/36/games/'],
+ ['target','PredictStreet','demo','','','https://www.vbet.com/en/casino/game-view/555602000/PredictStreet-FIFA'],
+ ['book','Eventbook','demo','','','https://www.vbet.com/en/casino/game-view/500522022/eventbook'],
+ ['tv','TV Games','demo','','','https://www.vbet.com/en/tv-games/home'],
  ['cards','Belote','prod','Skill Games','',''],
  ['dice','Backgammon','prod','Skill Games','',''],
  ['wheel','WonderWheel','prod','Casino Platform','Колесо фортуны с фриспинами и бонусами — промо-инструмент, который возвращает игрока в казино. Входит в Casino Platform.','https://www.vbet.com/en/promotions/popular'],
@@ -1647,6 +1651,7 @@ function quickInfo(q){
     return {sub:name, hint:x.short, facts:(x.facts||[]).map(f=>f[0]+' '+f[1]).join(' · '), price:x.price&&x.price[0]?x.price[0][1]:'', open:`openPlatform('${name}')`, demo:q[5]};}
   if(kind==='cat'){const c=PCAT.find(v=>v.cat===name)||{items:[]};
     return {sub:name, hint:c.short, facts:c.items.map(x=>x[0]).join(', '), open:`openCategory('${name}')`, demo:q[5]};}
+  if(kind==='demo') return {sub:'', label:'Как посмотреть', hint:'Откройте живой пример у оператора VBET — там продукт работает в реальном интерфейсе. Описания в нашем каталоге пока нет, условия подключения расскажет менеджер.', demo:q[5], open:null};
   return null;
 }
 function quickTap(i){
@@ -1658,15 +1663,16 @@ function quickTap(i){
   w.innerHTML=`<div class="qsh-bg" onclick="closeSheet()"></div>
     <div class="qsh" role="dialog" aria-modal="true" aria-label="${q[1]}" tabindex="-1">
       <div class="qsh-grip"></div>
-      <div class="qsh-hd">${ic(q[0])}<div style="flex:1"><b>${q[1]}</b>${d.sub!==q[1]?`<div class="qsh-sub">→ ${d.sub.replace(' (игры)','')}</div>`:''}</div><button class="qsh-x" onclick="closeSheet()" aria-label="Закрыть">×</button></div>
-      <div class="pfor"><b>Для чего:</b> ${d.hint}</div>
+      <div class="qsh-hd">${ic(q[0])}<div style="flex:1"><b>${q[1]}</b>${d.sub&&d.sub!==q[1]?`<div class="qsh-sub">→ ${d.sub.replace(' (игры)','')}</div>`:''}</div><button class="qsh-x" onclick="closeSheet()" aria-label="Закрыть">×</button></div>
+      <div class="pfor"><b>${d.label||'Для чего'}:</b> ${d.hint}</div>
       ${d.facts?`<div class="pfacts">${d.facts}</div>`:''}
       ${d.price?`<div class="qsh-price">Цена: <b>${d.price}</b></div>`:''}
       ${d.demo?`<a class="btn" href="${d.demo}" target="_blank" rel="noopener" style="text-decoration:none" onclick="track('click','quick_demo',{name:'${q[1]}'})">${ic('external')} Смотреть вживую на VBET</a>
       <div class="qsh-note">Пример работы продукта у оператора VBET · 18+</div>`:''}
-      <div class="qsh-row">
+      <div class="qsh-row">${d.open?`
         <button class="btn" ${d.demo?'style="background:var(--card);color:var(--mag);border:1px solid var(--mag)"':''} onclick="closeSheet();${d.open}">${ic('chevD')} Подробно</button>
-        <button class="btn" style="background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="closeSheet();advise()">${ic('sparkles')} AI-советник</button>
+        <button class="btn" style="background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="closeSheet();advise()">${ic('sparkles')} AI-советник</button>`:`
+        <button class="btn" style="grid-column:1/-1;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="closeSheet();go('chat')">${ic('message')} Обсудить с менеджером</button>`}
       </div>
     </div>`;
   document.body.appendChild(w);
