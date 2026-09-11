@@ -101,9 +101,9 @@ async function zohoUsers(token) {
   try { const d = await r.json(); return { list: (d && d.users) || [] }; } catch (e) { return { list: [], error: 'parse' }; }
 }
 
-// Реальная выборка по владельцу (по user id). Возвращает {data, error}.
-async function coqlByOwner(token, module, ownerId, fields) {
-  const q = `select ${fields} from ${module} where Owner = '${ownerId}' limit 20`;
+// Реальная выборка по владельцу (по email). Возвращает {data, error}.
+async function coqlByOwner(token, module, email, fields) {
+  const q = `select ${fields} from ${module} where Owner.email = '${String(email).replace(/'/g, '')}' limit 50`;
   const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/coql`, {
     method: 'POST',
     headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' },
@@ -155,25 +155,12 @@ export default async function handler(req, res) {
     const token = await accessToken();
     if (!token) throw new Error('no access_token (проверь refresh token/ключи)');
 
-    // Находим пользователя Zoho по email владельца
-    const U = await zohoUsers(token);
-    const users = U.list || [];
-    const me = users.find(u => String(u.email || '').toLowerCase() === email);
-    if (!me) {
-      return res.status(200).json({
-        connected: true, owner: email,
-        note: U.error ? ('api_error: ' + U.error) : 'owner_not_in_zoho',
-        counts: { leads: 0, deals: 0, contacts: 0, tasks: 0 },
-        leads: [], deals: [], contacts: [], tasks: [],
-        zoho_users: users.length
-      });
-    }
-
+    // Выборка напрямую по владельцу (Owner.email = email сотрудника)
     const [L, D, C, T] = await Promise.all([
-      coqlByOwner(token, 'Leads', me.id, 'Company,Full_Name,Lead_Source,Lead_Status'),
-      coqlByOwner(token, 'Deals', me.id, 'Deal_Name,Stage,Amount,Closing_Date'),
-      coqlByOwner(token, 'Contacts', me.id, 'Full_Name,Account_Name,Email'),
-      coqlByOwner(token, 'Tasks', me.id, 'Subject,Due_Date,Status')
+      coqlByOwner(token, 'Leads', email, 'Company,Full_Name,Lead_Source,Lead_Status'),
+      coqlByOwner(token, 'Deals', email, 'Deal_Name,Stage,Amount,Closing_Date'),
+      coqlByOwner(token, 'Contacts', email, 'Full_Name,Account_Name,Email'),
+      coqlByOwner(token, 'Tasks', email, 'Subject,Due_Date,Status')
     ]);
     const leads = L.data, deals = D.data, contacts = C.data, tasks = T.data;
     const errs = [L.error, D.error, C.error, T.error].filter(Boolean);
