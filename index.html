@@ -101,6 +101,12 @@
   .qsh .pfacts{font-size:12.5px;line-height:1.6;color:var(--muted);border-left:2px solid var(--mag);padding-left:11px;margin-bottom:12px}
   .qsh-price{font-size:13px;color:var(--muted);margin-bottom:12px}
   .qsh-price b{color:var(--text)}
+  .qsh-note{font-size:11.5px;color:var(--muted);text-align:center;margin:6px 0 10px}
+  .qsh-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .qsh-row .btn{margin:0}
+  .qtile{position:relative}
+  .qtile.demo::after,.qdot{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mag)}
+  .qtile.demo::after{position:absolute;top:8px;right:8px}
   .lscroll{display:flex;gap:12px;overflow-x:auto;padding:0 16px 4px;scrollbar-width:none}
   .lscroll::-webkit-scrollbar{display:none}
   .lmatch{min-width:258px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer}
@@ -551,26 +557,27 @@ const MENU_TOP=[
   ['card','Payment methods','payment',1]
 ];
 const QUICK=[
- // [иконка, подпись, куда ведёт: prod|sol|plat|cat|url, цель, своя подсказка (если плитка — часть продукта)]
+ // [иконка, подпись, куда ведёт: prod|sol|plat|cat|url, цель, своя подсказка, живой пример на VBET]
  // первые 8 видны без «Ещё» — главные продукты
- ['ball','Sports','prod','Sportsbook'],
- ['broadcast','Live','prod','Sportsbook','Ставки по ходу матча: коэффициенты меняются в реальном времени, кэшаут частичный, полный и автоматический. Часть Sportsbook.'],
- ['cherry','Casino','prod','Casino Platform'],
- ['cards','Live Casino','prod','Live Casino'],
- ['gamepad','Esports','prod','Esport'],
- ['activity','Virtual','prod','Virtual Sports'],
- ['spade','Poker','prod','Poker'],
- ['code','Partner API','sol','API iGaming'],
- ['store','Betshops','plat','Land Based Solutions'],
- ['gamepad','Games','cat','Games Suite (игры)'],
- ['cards','Belote','prod','Skill Games'],
- ['dice','Backgammon','prod','Skill Games'],
- ['wheel','WonderWheel','prod','Casino Platform','Колесо фортуны с фриспинами и бонусами — промо-инструмент, который возвращает игрока в казино. Входит в Casino Platform.'],
- ['cash','Cashback','prod','Casino Platform','Возврат части проигрыша или оборота; Cashback Accumulator копит награды за день, неделю или месяц. Входит в промо-инструменты Casino Platform.'],
- ['chart','Dataspot','prod','Dataspot'],
- ['robot','CRM-AI','prod','CRM AI'],
- ['umbrella','Umbrella','prod','Umbrella'],
- ['news','Blog','url','https://www.betconstruct.com/product-blog']
+ ['ball','Sports','prod','Sportsbook','','https://www.vbet.com/en/sports/pre-match/event-view'],
+ ['broadcast','Live','prod','Sportsbook','Ставки по ходу матча: коэффициенты меняются в реальном времени, кэшаут частичный, полный и автоматический. Часть Sportsbook.','https://www.vbet.com/en/sports/live/event-view'],
+ ['cherry','Casino','prod','Casino Platform','','https://www.vbet.com/en/casino/slots/-1/all'],
+ ['cards','Live Casino','prod','Live Casino','','https://www.vbet.com/en/live-casino/home'],
+ ['gamepad','Esports','prod','Esport','','https://www.vbet.com/en/esports'],
+ ['activity','Virtual','prod','Virtual Sports','','https://www.vbet.com/en/virtual-sports/home'],
+ ['spade','Poker','prod','Poker','','https://www.vbet.com/en/page/casino/poker/28'],
+ ['code','Partner API','sol','API iGaming','',''],
+ ['chart','Stats','prod','Stats Widgets','','https://statistics.vbet.com/'],
+ ['store','Betshops','plat','Land Based Solutions','',''],
+ ['gamepad','Games','cat','Games Suite (игры)','','https://www.vbet.com/en/casino/generic/36/games/'],
+ ['cards','Belote','prod','Skill Games','',''],
+ ['dice','Backgammon','prod','Skill Games','',''],
+ ['wheel','WonderWheel','prod','Casino Platform','Колесо фортуны с фриспинами и бонусами — промо-инструмент, который возвращает игрока в казино. Входит в Casino Platform.','https://www.vbet.com/en/promotions/popular'],
+ ['cash','Cashback','prod','Casino Platform','Возврат части проигрыша или оборота; Cashback Accumulator копит награды за день, неделю или месяц. Входит в промо-инструменты Casino Platform.','https://www.vbet.com/en/promotions/popular'],
+ ['bulb','Dataspot','prod','Dataspot','',''],
+ ['robot','CRM-AI','prod','CRM AI','',''],
+ ['umbrella','Umbrella','prod','Umbrella','',''],
+ ['news','Blog','url','https://www.betconstruct.com/product-blog','','']
 ];
 
 function header(){return '';}
@@ -606,8 +613,8 @@ function home(){
     <div class="aicard" onclick="advise()"><div><div class="t">${ic('sparkles')} ${t('aiTitle')}</div><div class="d" style="font-size:14px;opacity:.9;margin-top:3px">${t('aiDesc')}</div></div><div class="chev">›</div></div>
   </div>
   <div class="h2"><span class="lft">${t('quick')}</span><a onclick="toggleQuick()">${quickOpen?(lang==='ru'?'Свернуть':lang==='en'?'Collapse':'Փակել'):(lang==='ru'?'Ещё':lang==='en'?'More':'Ավելին')} ${quickOpen?'▴':'▾'}</a></div>
-  <p class="qhint">Нажмите на плитку — появится подсказка: для чего продукт, цифры и цена.</p>
-  <div class="qa">${(quickOpen?QUICK:QUICK.slice(0,8)).map((q,i)=>`<div class="qtile" onclick="quickTap(${i})">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
+  <p class="qhint">Нажмите на плитку — подсказка по продукту. <span class="qdot"></span> — можно посмотреть вживую на VBET.</p>
+  <div class="qa">${(quickOpen?QUICK:QUICK.slice(0,8)).map((q,i)=>`<div class="qtile${q[5]?' demo':''}" onclick="quickTap(${i})">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
   <div class="promo" onclick="openURL('https://www.betconstruct.com/products')"><div><div class="t">${ic('sparkles')} ${t('promoT')}</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
   <div style="height:16px"></div>`;
 }
@@ -1078,7 +1085,7 @@ function navKB(){
     'Marketplace — витрина продуктов вендоров, категории: '+MKT_CATS.join(', ')+'. Есть корзина и запрос демо по каждому продукту.',
     'Partners — список производителей, размещённых на платформе.',
     'Loyalty — XP и VIP-уровни с бонусами.',
-    'Быстрый доступ на главной: плитки Sports, Live, Casino, Live Casino, Poker, Esports, Virtual, Betshops, Dataspot, CRM-AI, Umbrella и др. — по нажатию подсказка по продукту и переход в его карточку каталога.',
+    'Быстрый доступ на главной: плитки продуктов — по нажатию подсказка и переход в карточку каталога. Живые примеры работы продуктов у оператора VBET (vbet.com): '+QUICK.filter(q=>q[5]).map(q=>q[1]+' — '+q[5]).join('; ')+'. Советуй клиенту посмотреть живой пример, если он хочет увидеть продукт в работе.',
     'Чат с менеджером — живой чат для финальных условий и договора.',
     'Стать партнёром (форма): KYB-данные компании, тип продукта ('+['Игра','Платёжная система','Платформа','Инструмент / Софт','Лицензионный сервис','Маркетинг / Affiliate'].join('/')+'), описание и ценность, регионы и запрещённые рынки, языки и валюты, крипто-поддержка, комплаенс, модель монетизации (RevShare/CPA/Fixed fee/License/Hybrid), ценовой ориентир, % платформе, AI-теги (вертикаль, гео, сегмент SMB/Mid-market/Enterprise). После модерации — бейдж «Approved by BetConstruct» или «Partner by BetConstruct» и доступ в кабинет партнёра.',
     'Аффилейт / Маркетинг (форма): тип (Affiliate-сеть/Трафик-команда/Маркетинг-агентство/Инфлюенсер), модель (CPA/RevShare/Hybrid/Fixed fee), гео, вертикали, источники трафика, объёмы, кейсы и метрики, минимальные условия, KYB.',
@@ -1631,15 +1638,15 @@ function openCategory(cat){
 }
 // Быстрый доступ: плитка -> подсказка из каталога (для чего, цифры, цена) -> «Подробно»
 function quickInfo(q){
-  const kind=q[2], name=q[3], firstSent=t=>{const p=(t||'').split(/(?<=\.)\s+/); let r=''; for(const x of p){if((r+x).length>190&&r)break; r+=(r?' ':'')+x;} return r;};
+  const kind=q[2], name=q[3], firstSent=t=>{const p=(t||'').replace(/\b(Mr|Mrs|Dr|St|No|Nr|Inc|Ltd|vs|др|т\.д|т\.п)\.\s/g,'$1.\u0001').split(/(?<=\.)\s+(?=[A-ZА-ЯЁ0-9«])/); let r=''; for(const x of p){if((r+x).length>190&&r)break; r+=(r?' ':'')+x;} return r.replace(/\u0001/g,' ');};
   if(kind==='prod'){const it=PCAT.flatMap(c=>c.items).find(x=>x[0]===name)||[];
-    return {sub:name, hint:q[4]||it[4], facts:firstSent(it[3]), price:it[2], open:`openProduct('${name}')`};}
+    return {sub:name, hint:q[4]||it[4], facts:firstSent(it[3]), price:it[2], open:`openProduct('${name}')`, demo:q[5]};}
   if(kind==='sol'){const x=SOL.find(v=>v.name===name)||{};
-    return {sub:name, hint:x.short, facts:(x.facts||[]).map(f=>f[0]+' '+f[1]).join(' · '), open:`openSolution('${name}')`};}
+    return {sub:name, hint:x.short, facts:(x.facts||[]).map(f=>f[0]+' '+f[1]).join(' · '), open:`openSolution('${name}')`, demo:q[5]};}
   if(kind==='plat'){const x=PLAT.find(v=>v.name===name)||{};
-    return {sub:name, hint:x.short, facts:(x.facts||[]).map(f=>f[0]+' '+f[1]).join(' · '), price:x.price&&x.price[0]?x.price[0][1]:'', open:`openPlatform('${name}')`};}
+    return {sub:name, hint:x.short, facts:(x.facts||[]).map(f=>f[0]+' '+f[1]).join(' · '), price:x.price&&x.price[0]?x.price[0][1]:'', open:`openPlatform('${name}')`, demo:q[5]};}
   if(kind==='cat'){const c=PCAT.find(v=>v.cat===name)||{items:[]};
-    return {sub:name, hint:c.short, facts:c.items.map(x=>x[0]).join(', '), open:`openCategory('${name}')`};}
+    return {sub:name, hint:c.short, facts:c.items.map(x=>x[0]).join(', '), open:`openCategory('${name}')`, demo:q[5]};}
   return null;
 }
 function quickTap(i){
@@ -1655,8 +1662,12 @@ function quickTap(i){
       <div class="pfor"><b>Для чего:</b> ${d.hint}</div>
       ${d.facts?`<div class="pfacts">${d.facts}</div>`:''}
       ${d.price?`<div class="qsh-price">Цена: <b>${d.price}</b></div>`:''}
-      <button class="btn" onclick="closeSheet();${d.open}">${ic('chevD')} Подробно</button>
-      <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="closeSheet();advise()">${ic('sparkles')} Подобрать с AI-советником</button>
+      ${d.demo?`<a class="btn" href="${d.demo}" target="_blank" rel="noopener" style="text-decoration:none" onclick="track('click','quick_demo',{name:'${q[1]}'})">${ic('external')} Смотреть вживую на VBET</a>
+      <div class="qsh-note">Пример работы продукта у оператора VBET · 18+</div>`:''}
+      <div class="qsh-row">
+        <button class="btn" ${d.demo?'style="background:var(--card);color:var(--mag);border:1px solid var(--mag)"':''} onclick="closeSheet();${d.open}">${ic('chevD')} Подробно</button>
+        <button class="btn" style="background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="closeSheet();advise()">${ic('sparkles')} AI-советник</button>
+      </div>
     </div>`;
   document.body.appendChild(w);
   w.querySelector('.qsh').focus();
