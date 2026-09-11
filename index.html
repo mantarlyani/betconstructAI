@@ -103,6 +103,14 @@
   .qsh-price b{color:var(--text)}
   .qsh-note{font-size:11.5px;color:var(--muted);text-align:center;margin:6px 0 10px}
   .qsh-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .plrow{display:flex;align-items:center;gap:11px;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer}
+  .plrow:first-child{border-top:none}
+  .plrow:focus-visible{outline:2px solid var(--mag);outline-offset:-2px}
+  .plrow .ico{color:var(--mag);display:inline-flex;font-size:20px}
+  .plrow .nm{flex:1;min-width:0;display:flex;flex-direction:column}
+  .plrow .nm b{font-size:14px}
+  .plrow .nm span{font-size:12px;color:var(--muted)}
+  .plrow .go{color:var(--muted);display:inline-flex}
   .qsh-row .btn{margin:0}
   .qtile{position:relative}
   .qtile.demo::after,.qdot{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mag)}
@@ -461,9 +469,9 @@ const T={
   ru:{hi:'Добро пожаловать',q:'Что сыграем сегодня?',searchPh:'Поиск: игры, спорт, партнёры…',
     aiTitle:'AI-советник',aiDesc:'Опишите задачу — подскажу решение',quick:'Быстрый доступ',liveNow:'Live сейчас',all:'все',
     promoT:'Запусти казино за 2 недели',wonderD:'Turnkey · Curaçao · Casino Suite',allSections:'Все разделы',
-    productsSub:'Демо front-end опции (Partner iFrame / API) и продукты BetConstruct. Нажмите «Подробно» — откроются реальные ссылки.',
+    productsSub:'Все продукты с быстрыми подсказками: для чего нужен, цифры и живой пример на VBET.',plPlayer:'Что видит игрок',plOperator:'Инструменты оператора',plCatalog:'Весь каталог с ценами',liveFor:'Для чего',liveCal:'Live-календарь на VBET',liveCasino:'Live Casino на VBET',liveMore:'Подробно о Sportsbook',
     feCat:'Front-end опции (iFrame / API)',bcCat:'Продукты BetConstruct',details:'Подробно',askAI:'Спросить AI-советника',
-    liveSub:'Прямые события — тап открывает реальную витрину.',openAllLive:'Открыть все live-события',
+    liveSub:'Live-ставки на платформе BetConstruct — посмотрите, как они работают вживую у оператора VBET.',openAllLive:'Открыть все live-события',
     partnersSub:'Два пути и проверенные партнёры.',buy:'Приобрести услуги',provide:'Предоставлять услуги',
     moreSub:'Дополнительные разделы и продукты.',back:'Назад',aiPageSub:'✦ Powered by Google Gemini — опишите задачу.',
     aiPh:'Хочу крипто-казино в LATAM с упором на слоты',getRec:'Получить рекомендацию',discuss:'Обсудить с менеджером',
@@ -487,9 +495,9 @@ const T={
   en:{hi:'Welcome',q:'What shall we play today?',searchPh:'Search: games, sport, partners…',
     aiTitle:'AI advisor',aiDesc:'Describe your task — get a solution',quick:'Quick access',liveNow:'Live now',all:'all',
     promoT:'Launch your casino in 2 weeks',wonderD:'Turnkey · Curaçao · Casino Suite',allSections:'All sections',
-    productsSub:'Demo front-end options (Partner iFrame / API) and BetConstruct products. Tap “Details” to open real links.',
+    productsSub:'All products with quick hints: what it is for, key figures and a live example on VBET.',plPlayer:'What the player sees',plOperator:'Operator tools',plCatalog:'Full catalogue with prices',liveFor:'What it is for',liveCal:'Live calendar on VBET',liveCasino:'Live Casino on VBET',liveMore:'More about Sportsbook',
     feCat:'Front-end options (iFrame / API)',bcCat:'BetConstruct products',details:'Details',askAI:'Ask the AI advisor',
-    liveSub:'Live events — tap opens the real storefront.',openAllLive:'Open all live events',
+    liveSub:'Live betting on the BetConstruct platform — see how it works live at the VBET operator.',openAllLive:'Open all live events',
     partnersSub:'Two paths and verified partners.',buy:'Buy services',provide:'Provide services',
     moreSub:'Extra sections and products.',back:'Back',aiPageSub:'✦ Powered by Google Gemini — describe your task.',
     aiPh:'I want a crypto casino in LATAM focused on slots',getRec:'Get recommendation',discuss:'Discuss with a manager',
@@ -513,9 +521,9 @@ const T={
   hy:{hi:'Բարի գալուստ',q:'Ի՞նչ խաղանք այսօր',searchPh:'Որոնում՝ խաղեր, սպորտ, գործընկերներ…',
     aiTitle:'AI խորհրդատու',aiDesc:'Նկարագրիր խնդիրը — կառաջարկեմ լուծում',quick:'Արագ մուտք',liveNow:'Ուղիղ հիմա',all:'բոլորը',
     promoT:'Գործարկիր քո կազինոն 2 շաբաթում',wonderD:'Turnkey · Curaçao · Casino Suite',allSections:'Բոլոր բաժինները',
-    productsSub:'Դեմո front-end տարբերակներ (Partner iFrame / API) և BetConstruct-ի ապրանքներ։ Սեղմիր «Մանրամասն»՝ իրական հղումների համար։',
+    productsSub:'Բոլոր ապրանքները արագ հուշումներով՝ ինչի համար են, հիմնական թվերը և կենդանի օրինակ VBET-ում։',plPlayer:'Ինչ է տեսնում խաղացողը',plOperator:'Օպերատորի գործիքներ',plCatalog:'Ամբողջ կատալոգը գներով',liveFor:'Ինչի համար է',liveCal:'Live-օրացույց VBET-ում',liveCasino:'Live Casino VBET-ում',liveMore:'Մանրամասն Sportsbook-ի մասին',
     feCat:'Front-end տարբերակներ (iFrame / API)',bcCat:'BetConstruct-ի ապրանքներ',details:'Մանրամասն',askAI:'Հարցնել AI խորհրդատուին',
-    liveSub:'Ուղիղ իրադարձություններ — սեղմումը բացում է իրական էջը։',openAllLive:'Բացել բոլոր ուղիղ իրադարձությունները',
+    liveSub:'Live-խաղադրույքներ BetConstruct հարթակում — տեսեք, թե ինչպես են դրանք աշխատում VBET օպերատորի մոտ։',openAllLive:'Բացել բոլոր ուղիղ իրադարձությունները',
     partnersSub:'Երկու ուղի և ստուգված գործընկերներ։',buy:'Ձեռք բերել ծառայություններ',provide:'Տրամադրել ծառայություններ',
     moreSub:'Լրացուցիչ բաժիններ և ապրանքներ։',back:'Հետ',aiPageSub:'✦ Powered by Google Gemini — նկարագրիր խնդիրը։',
     aiPh:'Ուզում եմ կրիպտո-կազինո LATAM-ում՝ սլոտների շեշտով',getRec:'Ստանալ առաջարկ',discuss:'Քննարկել մենեջերի հետ',
@@ -547,7 +555,6 @@ const QA_ROUTE=['live','products','live','products','products','products','produ
 const SEC_IC=['diamond','puzzle','box','gear','globe','card','bulb','news','store'];
 const NAV_IC=['home','box','broadcast','store','users','dots'];
 const NAV_KEY=['home','products','live','market','partners','more'];
-const MATCHES=[['Club Friendlies','1 : 1','2.20'],['Club Friendlies','0 : 0','2.25'],['World Cup','—','1.85']];
 const MENU_TOP=[
   ['diamond','iGaming Solutions','igaming',1],
   ['puzzle','Platforms','platforms',1],
@@ -645,45 +652,37 @@ function changeServer(){vpn.server=(vpn.server+1)%SERVERS.length;if(vpn.on)vpnIP
 const SEC_URL={4:'https://www.betconstruct.com/products',5:'https://www.betconstruct.com/products',6:'https://www.betconstruct.com/products',7:'https://www.betconstruct.com/product-blog'};
 function sectionTap(i){i=+i;if([1,2,8].includes(i))go('products');else if(SEC_URL[i])openURL(SEC_URL[i]);else toast(t('sec')[i]);}
 
-const FRONTEND=[
-  ['code','Partner (iFrame) / API front-end','https://www.betconstruct.com/products'],
-  ['broadcast','Live (Soccer)','https://www.betconstruct.com/products'],
-  ['ball','Sports (pre-match)','https://www.betconstruct.com/products'],
-  ['cherry','Casino / Slots','https://www.betconstruct.com/products'],
-  ['cards','Live Casino','https://www.betconstruct.com/products'],
-  ['book','Eventbook','https://www.betconstruct.com/products'],
-  ['target','ADI PredictStreet FIFA','https://www.betconstruct.com/products'],
-  ['wheel','WonderWheel','https://www.betconstruct.com/products'],
-  ['trophy','Goallywood 2026','https://www.betconstruct.com/products'],
-  ['store','Betshops','https://www.betconstruct.com/products'],
-  ['clock','Tik-tak','https://www.betconstruct.com/products'],
-  ['cash','Cashback reverse','https://www.betconstruct.com/products'],
-  ['cards','Belote','https://www.betconstruct.com/products'],
-  ['spade','Poker','https://www.betconstruct.com/products'],
-  ['dice','Backgammon','https://www.betconstruct.com/products'],
-  ['gamepad','Esports','https://www.betconstruct.com/products'],
-  ['gamepad','Games','https://www.betconstruct.com/products'],
-  ['tv','TV-games','https://www.betconstruct.com/products'],
-  ['activity','Virtual sports','https://www.betconstruct.com/products']
-];
-const BCPRODUCTS=[
-  ['chart','Dataspot','https://www.betconstruct.com/products/dataspot'],
-  ['robot','CRM-AI','https://www.betconstruct.com/products/crm'],
-  ['umbrella','Umbrella','https://www.betconstruct.com/products/umbrella'],
-  ['news','Product Blog','https://www.betconstruct.com/product-blog']
-];
 function linkRows(a){return a.map(l=>`<a class="lnk" href="${l[2]}" target="_blank" rel="noopener"><span class="nm">${ic(l[0])} ${l[1]}</span><span class="go">${ic('external')}</span></a>`).join('');}
 function products(){
-  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('box')} ${t('nav')[1]}</h2><p class="sub">${t('productsSub')}</p>
-    <div class="pcat" id="pc1"><div class="hd" onclick="togglePc('pc1')"><span class="l">${ic('desktop')} ${t('feCat')}</span><span class="more">${t('details')} ${ic('chevD')}</span></div><div class="body">${linkRows(FRONTEND)}</div></div>
-    <div class="pcat" id="pc2"><div class="hd" onclick="togglePc('pc2')"><span class="l">${ic('building')} ${t('bcCat')}</span><span class="more">${t('details')} ${ic('chevD')}</span></div><div class="body">${linkRows(BCPRODUCTS)}</div></div>
+  // единый источник — QUICK: та же подсказка, что в быстром доступе, и живой пример на VBET
+  const OP=['Partner API','Dataspot','CRM-AI','Umbrella','Blog'];
+  const rowQ=i=>{const q=QUICK[i], d=q[2]==='url'?null:quickInfo(q);
+    const sub=d&&d.sub&&d.sub!==q[1]?d.sub.replace(' (игры)',''):(q[2]==='url'?'betconstruct.com':'');
+    return `<div class="plrow" role="button" tabindex="0" onclick="quickTap(${i})" onkeydown="if(event.key==='Enter')quickTap(${i})"><span class="ico">${ic(q[0])}</span><span class="nm"><b>${q[1]}</b>${sub?`<span>${sub}</span>`:''}</span>${q[5]?'<span class="qdot" title="Есть живой пример на VBET"></span>':''}<span class="go">${q[2]==='url'?ic('external'):'›'}</span></div>`;};
+  const idx=QUICK.map((q,i)=>i), player=idx.filter(i=>!OP.includes(QUICK[i][1])), oper=idx.filter(i=>OP.includes(QUICK[i][1]));
+  return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('box')} ${t('nav')[1]}</h2><p class="sub">${t('productsSub')} <span class="qdot"></span> — VBET</p>
+    <button class="btn" style="margin:0 0 14px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('catalog')">${ic('box')} ${t('plCatalog')}</button>
+    <div class="h2" style="margin:0 0 10px;padding:0"><span class="lft">${t('plPlayer')}</span></div>
+    <div class="pcat">${player.map(rowQ).join('')}</div>
+    <div class="h2" style="margin:16px 0 10px;padding:0"><span class="lft">${t('plOperator')}</span></div>
+    <div class="pcat">${oper.map(rowQ).join('')}</div>
     <button class="btn" onclick="advise()">${ic('sparkles')} ${t('askAI')}</button></div>`;
 }
 function togglePc(id){document.getElementById(id).classList.toggle('open');}
 function live(){
+  // реальных live-данных у сайта нет, поэтому не показываем выдуманные матчи — ведём на живую витрину VBET
+  const sb=PCAT.flatMap(c=>c.items).find(x=>x[0]==='Sportsbook')||[], q=QUICK.find(x=>x[1]==='Live')||[];
+  const V='https://www.vbet.com/en/';
+  const b=(href,label,primary)=>`<a class="btn" href="${href}" target="_blank" rel="noopener" style="text-decoration:none;margin-top:8px;${primary?'':'background:var(--card);color:var(--mag);border:1px solid var(--mag)'}" onclick="track('click','live_demo',{to:'${href}'})">${ic('external')} ${label}</a>`;
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('broadcast')} ${t('liveNow')}</h2><p class="sub">${t('liveSub')}</p>
-    ${MATCHES.map((m,i)=>`<div class="lmatch" style="min-width:auto;margin-bottom:10px" onclick="openURL('${i===2?'https://www.betconstruct.com/products':'https://www.betconstruct.com/products'}')"><div class="lg2">${ic('dot')} ${m[0]}</div><div class="bot"><span class="sc">${m[1]}</span><span class="od">${m[2]}</span></div></div>`).join('')}
-    <button class="btn" onclick="openURL('https://www.betconstruct.com/products')">${t('openAllLive')} ${ic('external')}</button></div>`;
+    <div class="pcat"><div class="solhint" style="padding-top:14px">${ic('bulb')}<div><div class="what">${t('liveFor')}: ${q[4]||''}</div></div></div>
+      <div class="solfacts" style="margin:0"><div><b>90K+</b><span>live-матчей в месяц</span></div><div><b>120+</b><span>видов спорта</span></div><div><b>3 вида</b><span>кэшаута</span></div></div></div>
+    ${b(V+'sports/live/event-view',t('openAllLive')+' · VBET',true)}
+    ${b(V+'sports/live/live-calendar',t('liveCal'))}
+    ${b(V+'live-casino/home',t('liveCasino'))}
+    <div class="qsh-note" style="margin-top:8px">Пример работы продукта у оператора VBET · 18+</div>
+    <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="openProduct('Sportsbook')">${ic('chevD')} ${t('liveMore')}</button>
+  </div>`;
 }
 const MKT_CATS=['Все','Игры','Платёжки','Аффилейты','Лицензии','Платформы'];
 let mktCat='Все';
@@ -981,11 +980,17 @@ function partners(){
       <div class="body" style="display:block;border-top:1px solid var(--line)"><div style="padding:10px 16px;font-size:12.5px;color:var(--muted);line-height:1.5">${esc(p.category||'')}${p.regions?(' · '+esc(p.regions)):''}${p.contact?(' · '+esc(p.contact)):''}</div></div></div>`).join('')}</div>`;
 }
 function more(){
-  const items=[['globe',t('sec')[4],'https://www.betconstruct.com/products'],['card',t('sec')[5],'https://www.betconstruct.com/products'],['bulb','Prediction','https://www.betconstruct.com/products'],['chart','Dataspot','https://www.betconstruct.com/products/dataspot'],['umbrella','Umbrella','https://www.betconstruct.com/products/umbrella'],['news',t('sec')[7],'https://www.betconstruct.com/product-blog']];
+  const qi=n=>QUICK.findIndex(q=>q[1]===n);
+  const items=[['news',t('sec')[7],'https://www.betconstruct.com/product-blog']];
   const iRow=(ico,label,fn)=>`<div style="padding:13px 16px;border-top:1px solid var(--line);display:flex;align-items:center;gap:11px;cursor:pointer" onclick="${fn}"><span style="color:var(--mag);display:inline-flex">${ic(ico)}</span><b style="font-size:14px">${label}</b><span style="margin-left:auto;color:var(--muted)">›</span></div>`;
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('dots')} ${t('nav')[5]}</h2><p class="sub">${t('moreSub')}</p>
     <div class="pcat"><div class="body" style="display:block;border:none">
       ${iRow('trophy','Loyalty Program',"go('loyalty')")}
+      ${iRow('globe',t('sec')[4],"go('regional')")}
+      ${iRow('card',t('sec')[5],"go('payment')")}
+      ${iRow('target','Prediction',`quickTap(${qi('PredictStreet')})`)}
+      ${iRow('bulb','Dataspot',`quickTap(${qi('Dataspot')})`)}
+      ${iRow('umbrella','Umbrella',`quickTap(${qi('Umbrella')})`)}
       ${linkRows(items)}
       ${iRow('user',lang==='ru'?'Выйти / сменить пользователя':lang==='en'?'Log out / switch user':'Դուրս գալ',"logoutGuest()")}
     </div></div></div>`;
@@ -1098,8 +1103,6 @@ function bcKB(){
   L.push('\n## Лицензии и сертификаты (итого: 16 регуляторов, 15 стран, 25+ лицензий, 60+ сертификатов GLI)\n'+LICENSES.map(l=>'  · '+l[0]+' ('+l[1]+', '+l[2]+'): '+l[3]).join('\n')+'\nСертификаты:\n'+CERTS.map(c=>'  · '+c[0]+' ('+c[1]+'): '+c[2]).join('\n'));
   L.push('\n## Платежи\nКак выбрать: фиат-аудитория — 500+ шлюзов и локальные методы; крипто-аудитория — крипто-платежи и Crypto iGaming; смешанная — Multi-Wallet (€25 000).\n'+PAY.map(p=>'  · '+p[1]+' — для чего: '+p[3]+' '+p[2]+' '+p[4]).join('\n'));
   L.push('\n## Loyalty-программа (XP → VIP-уровень → Level Up бонус CIC)\n'+_kbLoyalty());
-  L.push('\n## Демо фронтенда и живые продукты (ссылки можно давать клиенту)\n'+FRONTEND.map(f=>'  · '+f[1]+' — '+f[2]).join('\n'));
-  L.push('\n## Инструменты BetConstruct\n'+BCPRODUCTS.map(b=>'  · '+b[1]+' — '+b[2]).join('\n'));
   return L.join('\n');
 }
 function navKB(){
