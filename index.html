@@ -128,6 +128,13 @@
     background:var(--bg);border-radius:8px;font-size:12.5px;line-height:1.55;color:var(--muted)}
   .solneed svg{color:var(--mag);font-size:15px;flex-shrink:0;margin-top:1px}
   .solneed b{color:var(--text);font-weight:700}
+  .solreg{margin:0 0 13px}
+  .solreg .lbl{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:7px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--mag);cursor:pointer;white-space:nowrap}
+  .chip:hover{border-color:var(--mag)}
+  .chip.off{color:var(--muted);background:transparent;border-style:dashed;cursor:default;text-decoration:line-through}
+  .solreg .note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:7px}
   .prow{border-top:1px solid var(--line)}
   .prow>summary{padding:11px 16px;cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:10px}
   .prow>summary::-webkit-details-marker{display:none}
@@ -1010,6 +1017,7 @@ function _kbSol(){
     'Чем удобно: '+s.why,
     'Ключевые цифры: '+s.facts.map(f=>f[0]+' '+f[1]).join(' · '),
     'Что нужно от партнёра: '+s.need,
+    'Где доступно: '+solRegions(s.name).filter(r=>r.on).map(r=>r.name).join(', ')+(solRegions(s.name).some(r=>!r.on)?(' — НЕ предлагается: '+solRegions(s.name).filter(r=>!r.on).map(r=>r.name).join(', ')):'')+(s.name==='Crypto iGaming'?' (крипто ставится поверх Turnkey/White Label; проверить, разрешает ли регулятор крипто-платежи)':''),
     'Суть: '+s.intro,
     ...s.blocks.map(b=>'  · '+b[0]+': '+b[1])
   ].join('\n')).join('\n');
@@ -1038,7 +1046,7 @@ function bcKB(){
   L.push('\n## Пакеты и цены\n'+PACKS.map(p=>'  · '+p[0]+' — '+p[1]+': '+p[2]).join('\n'));
   L.push('\n## Продукты по категориям\n'+_kbProducts());
   L.push('\n## Backoffice / Spring BME (единая облачная консоль, console.betconstruct.com)\nBackOffice — управление работающим бизнесом; Spring BME — сборка и расширение проекта. Кому: начинающим операторам, действующим партнёрам, выбирающим White Label. Запуск: создать проект в консоли → добавить продукты → включить инструменты (CMS, бэкофис, CRM) → управлять из одной платформы. Есть бесплатная пробная версия.\n'+BME.map(b=>'  · '+b[0]+' — для чего: '+b[1]+' Детали: '+b[2]).join('\n'));
-  L.push('\n## Регионы и юрисдикции\n'+REGIONS.map(r=>'  · '+r[1]+' ['+r[5]+']: '+r[3]+' Детали: '+r[4]).join('\n'));
+  L.push('\n## Регионы и юрисдикции\n'+REGIONS.map(r=>'  · '+r[1]+' ['+r[5]+']: '+r[3]+' Доступные модели: '+r[6].join(', ')+'. Детали: '+r[4]).join('\n')+'\nПравило: сначала рынок, потом модель. White Label не предлагается в South Africa и Asia — там только Turnkey (нужна своя лицензия) или API.');
   L.push('\n## Лицензии и сертификаты (итого: 16 регуляторов, 15 стран, 25+ лицензий, 60+ сертификатов GLI)\n'+LICENSES.map(l=>'  · '+l[0]+' ('+l[1]+', '+l[2]+'): '+l[3]).join('\n')+'\nСертификаты:\n'+CERTS.map(c=>'  · '+c[0]+' ('+c[1]+'): '+c[2]).join('\n'));
   L.push('\n## Платежи\nКак выбрать: фиат-аудитория — 500+ шлюзов и локальные методы; крипто-аудитория — крипто-платежи и Crypto iGaming; смешанная — Multi-Wallet (€25 000).\n'+PAY.map(p=>'  · '+p[1]+' — для чего: '+p[3]+' '+p[2]+' '+p[4]).join('\n'));
   L.push('\n## Loyalty-программа (XP → VIP-уровень → Level Up бонус CIC)\n'+_kbLoyalty());
@@ -1099,7 +1107,14 @@ function aiLocal(q){
   const hasLic=!noLic&&/(есть лицензи|сво[яей] лицензи|лицензия есть|have.{0,12}licen|own licen)/.test(s);
   const solName=hasApi?'API iGaming':noLic?'White Label iGaming':hasLic?'Turnkey iGaming':crypto?'Crypto iGaming':'White Label iGaming';
   const sol=SOL.find(x=>x.name===solName)||SOL[2];
-  const rows=[['diamond',`<b>iGaming Solution:</b> ${sol.name} — ${sol.tag}`],['bulb',`<b>Для чего:</b> ${sol.short}`],['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${product}`],['card',`<b>${t('rPay')}:</b> ${pay}`],['badge',`<b>${t('rLic')}:</b> Curaçao / MGA`]];
+  // сверка с регионом: доступна ли выбранная модель на этом рынке
+  const regName={LATAM:'Latin America',Africa:'South Africa',Asia:'Asia'}[geo];
+  const reg=regName&&REGIONS.find(r=>r[1]===regName);
+  const base=sol.name==='Crypto iGaming'?['Turnkey iGaming','White Label iGaming']:[sol.name];
+  const regWarn=reg&&!base.some(b=>reg[6].includes(b))
+    ? `<b>Внимание:</b> ${sol.name.replace(' iGaming','')} в регионе ${regName} не предлагается — там доступны ${reg[6].map(m=>m.replace(' iGaming','')).join(' и ')}. Для Turnkey нужна своя лицензия; варианты обсудите с менеджером.`
+    : '';
+  const rows=[['diamond',`<b>iGaming Solution:</b> ${sol.name} — ${sol.tag}`],['bulb',`<b>Для чего:</b> ${sol.short}`],...(regWarn?[['shield',regWarn]]:[]),['pin',`<b>${t('rRegion')}:</b> ${geo}`],['dice',`<b>${t('rProduct')}:</b> ${product}`],['card',`<b>${t('rPay')}:</b> ${pay}`],['badge',`<b>${t('rLic')}:</b> Curaçao / MGA`]];
   let html=`<div class="rec" style="margin-top:14px">${rows.map(r=>`<div class="row">${ic(r[0])}<div>${r[1]}</div></div>`).join('')}</div>`;
   if(match.length){
     const ttl=lang==='ru'?'Из нашего Marketplace':lang==='en'?'From our Marketplace':'Մեր Marketplace-ից';
@@ -1233,12 +1248,17 @@ function igaming(){
       <div class="li"><b>Нет лицензии →</b> White Label: работаете под лицензиями BC, старт за 1–3 недели.</div>
       <div class="li"><b>Крипто-аудитория →</b> Crypto: BTC/ETH/USDT и фиат в одном кошельке.</div>
       <div class="li"><b>Своя платформа →</b> API: подключаете только нужные продукты, фронтенд ваш.</div>
+      <div class="li" style="margin-top:4px"><b>Но сначала рынок →</b> не каждая модель есть в каждом регионе: White Label не предлагается в ЮАР и Азии. <a onclick="go('regional')" style="color:var(--mag);font-weight:700;cursor:pointer">Смотреть регионы</a></div>
     </div>
     ${SOL.map((s,i)=>`<div class="pcat" id="sol${i}"><div class="hd" onclick="togglePc('sol${i}')"><span class="l">${ic(s.ic)} ${s.name}</span><span class="more">Подробно ${ic('chevD')}</span></div>
-      <div class="solhint">${ic('bulb')}<div><div class="what">${s.short}</div><div class="fitrow"><b>Кому подходит:</b> ${s.fit}</div></div></div>
+      <div class="solhint">${ic('bulb')}<div><div class="what">${s.short}</div><div class="fitrow"><b>Кому подходит:</b> ${s.fit}</div><div class="fitrow"><b>Где:</b> ${solRegionLine(s.name)}</div></div></div>
       <div class="body">
         <div class="solfacts">${s.facts.map(f=>`<div><b>${f[0]}</b><span>${f[1]}</span></div>`).join('')}</div>
         <div style="padding:0 16px 14px">
+          <div class="solreg"><div class="lbl">Где доступно</div>
+            <div class="chips">${solRegions(s.name).map(r=>r.on?`<span class="chip" onclick="openRegion('${r.name}')">${r.name}</span>`:`<span class="chip off" title="Модель не предлагается в регионе">${r.name}</span>`).join('')}</div>
+            ${s.name==='Crypto iGaming'?'<div class="note">Крипто ставится поверх Turnkey или White Label, поэтому география — как у них. Перед запуском проверьте, разрешает ли регулятор страны крипто-платежи.</div>':''}
+          </div>
           <p style="font-size:13px;line-height:1.6;margin:0 0 12px;color:var(--muted)"><b style="color:var(--text)">Чем удобно:</b> ${s.why}</p>
           <p style="font-size:13.5px;line-height:1.6;margin:0 0 13px">${s.intro}</p>
           ${s.blocks.map(b=>`<div style="margin-bottom:11px"><div style="font-weight:700;font-size:13.5px;margin-bottom:3px">${b[0]}</div><div style="font-size:13px;color:var(--muted);line-height:1.6">${b[1]}</div></div>`).join('')}
@@ -1501,35 +1521,35 @@ const REGIONS=[
  ['ti','United Kingdom','Предложение под рынок UK — регулируется UK Gambling Commission.',
   'Самый зрелый и строгий рынок Европы: работать можно только с лицензией UKGC — у BetConstruct она есть, B2B и B2C.',
   'Основа рынка — скачки и футбол, в казино — рулетка и карточные игры. Жёсткие требования ответственной игры. Продукты: Sportsbook, Esports, Virtual Sports, Casino Suite, Land Based, Odds Feed, Live Scouting Data, CRM. Модели: White Label, Turnkey, Partner API, SWARM API. Офис в Лондоне.',
-  'UKGC'],
+  'UKGC', ['White Label iGaming','Turnkey iGaming','API iGaming']],
  ['ti','Latin America','Растущие рынки LATAM.',
   'Быстрорастущий регион с разными правилами в каждой стране — есть свои офисы и местные лицензии в Перу и Бразилии.',
   'Лицензии: MINCETUR (Перу) PT0000043 — спортсбук, казино, live-казино; Бразилия — Ordinance SPA/MF No. 254/2025; плюс MGA и UKGC. Сертификаты GLI для Колумбии и Аргентины. Офисы в Монтевидео, Лиме и Бразилии, локальные директора. Продукты: Sportsbook, Esports, Virtual Sports, Casino Suite, Live Casino, Poker, Land Based. Модели: White Label, Turnkey, Partner API, SWARM API.',
-  'Перу · Бразилия'],
+  'Перу · Бразилия', ['White Label iGaming','Turnkey iGaming','API iGaming']],
  ['ti','South Africa','Рынки ЮАР и Африки.',
   'Мобильный рынок: большинство ставок идёт с телефона, в том числе через SMS и USSD — для этого есть отдельные решения.',
   'Лицензии: National Manufacturer Licence (National Gambling Board) и Western Cape Gambling and Racing Board 10183381-009 — онлайн-ставки и казино. Продукты: спортивные ставки, виртуальный спорт, казино, кено, наземные решения, SMS/USSD-ставки. Модели: Turnkey, SWARM API, Partner API. Офис в Кейптауне.',
-  'NGB · WCGRB'],
+  'NGB · WCGRB', ['Turnkey iGaming','API iGaming']],
  ['ti','Asia','Азиатские рынки с локальными платёжными методами.',
   'Один из самых быстрорастущих рынков: нужны свой интерфейс, местные платежи и работа в часовом поясе UTC+8.',
   'Региональный офис на Филиппинах, работа в UTC+8. Лицензии MGA и UKGC. Продукты: Sportsbook, Esports, Casino, Live Casino, CRM, видеотрансляции, статистические виджеты, наземные решения. Модели: Turnkey и Partner API. В каталоге под Азию есть отдельный интерфейс BetChain и Agent System — для агентской модели привлечения игроков.',
-  'MGA · UKGC'],
+  'MGA · UKGC', ['Turnkey iGaming','API iGaming']],
  ['ti','France','Рынок Франции.',
   'Закрытый рынок с жёстким регулятором ANJ: в 2017 году BetConstruct стала первой новой компанией с лицензией на ставки с 2010 года.',
   'Три лицензии ANJ на онлайн-ставки на спорт, ежегодная сертификация ANJ и Mazars. Разрешены: Sportsbook, Poker, Social Gaming, CRM, Agent System, Affiliate Marketing — онлайн-казино во Франции не лицензируется. Офисы в Монако, Париже (Нейи-сюр-Сен) и Женеве. Модели: White Label, Turnkey, Partner API, SWARM API.',
-  'ANJ'],
+  'ANJ', ['White Label iGaming','Turnkey iGaming','API iGaming']],
  ['ti','Cyprus','Кипр — юрисдикция ЕС.',
   'Рынок разделён надвое: в Республике Кипр онлайн разрешены только ставки на спорт с фиксированными коэффициентами, на Севере регулирования нет.',
   'Республика Кипр — Betting Law 2012: только спортивные ставки с фиксированными коэффициентами. Северный Кипр — без официального регулирования онлайн-операций. Продукты: Sportsbook, Esports, Virtual Sports, Land Based. Лицензии MGA и UKGC. Модели: White Label, Turnkey, API, SWARM API. Офис в Никосии.',
-  'Betting Law 2012'],
+  'Betting Law 2012', ['White Label iGaming','Turnkey iGaming','API iGaming']],
  ['ti','Malta','Мальта — лицензия MGA.',
   'Самая удобная юрисдикция ЕС для старта: MGA — первый онлайн-регулятор Евросоюза, лицензии BetConstruct покрывают B2B и B2C.',
   'MGA регулирует онлайн-гейминг с 2004 года — первым в ЕС. Лицензии B2B MGA/B2B/286/2014 и B2C MGA/B2C/292/2015: казино, ставки с фиксированными коэффициентами включая live, skill-игры, покер. Продукты: Sportsbook, Live Casino, Virtual Sports, Esports, Poker, Casino Suite, Odds Feed и др. Модели: White Label, Turnkey, SWARM API. Офис в Портомазо, Сент-Джулианс.',
-  'MGA'],
+  'MGA', ['White Label iGaming','Turnkey iGaming','API iGaming']],
  ['ti','Ukraine','Рынок Украины.',
   'Самый перспективный рынок СНГ с оценкой до $2 млрд; государство выдаёт лицензии и на онлайн, и на розницу.',
   'Лицензии для веб- и розничных операций выдаёт государство; у BetConstruct — B2B-разрешение регулятора PlayCity (N 150-Р от 12.11.25), плюс MGA и UKGC. Продукты: Sportsbook, Live Casino, Casino Suite, Esports, CRM, Odds Feed. Модели: White Label, Turnkey, Partner API, SWARM API. Офис в Киеве.',
-  'PlayCity']
+  'PlayCity', ['White Label iGaming','Turnkey iGaming','API iGaming']]
 ];
 const LICENSES=[
  // [регулятор, страна, тип, детали] — у первых двух и «Оператора» детали начинаются со старой строки (есть перевод)
@@ -1558,20 +1578,41 @@ const CERTS=[
  ['Mazars и ANJ','Франция','Ежегодная сертификация.']
 ];
 
+// Связь iGaming Solutions ↔ Regional: единый источник — REGIONS[i][6]
+function solRegions(name){
+  // Crypto ставится поверх Turnkey / White Label — география как у них
+  const base = name==='Crypto iGaming' ? ['Turnkey iGaming','White Label iGaming'] : [name];
+  return REGIONS.map(r=>({name:r[1], on:base.some(b=>r[6].includes(b))}));
+}
+function solRegionLine(name){
+  const list=solRegions(name), on=list.filter(x=>x.on), off=list.filter(x=>!x.on);
+  return off.length ? `${on.length} из ${list.length} — кроме ${off.map(x=>x.name).join(' и ')}` : `все ${list.length} регионов`;
+}
+function openRegion(name){
+  go('regional');
+  const i=REGIONS.findIndex(r=>r[1]===name), el=document.getElementById('reg'+i);
+  if(el){el.open=true; el.scrollIntoView({block:'center'});}
+}
+function openSolution(name){
+  go('igaming');
+  const i=SOL.findIndex(x=>x.name===name), el=document.getElementById('sol'+i);
+  if(el){el.classList.add('open'); el.scrollIntoView({block:'start'});}
+}
 function regional(){
-  const row=(name,right,inner)=>`<details class="prow"><summary><span class="pn">${name}<span class="car">${ic('chevD')}</span></span><span class="pp">${right}</span></summary>${inner}</details>`;
+  const row=(name,right,inner,id)=>`<details class="prow"${id?` id="${id}"`:''}><summary><span class="pn">${name}<span class="car">${ic('chevD')}</span></span><span class="pp">${right}</span></summary>${inner}</details>`;
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('globe')} Regional / Jurisdiction</h2><p class="sub">Регион-специфичные предложения — подберём решение под ваш рынок и юрисдикцию (USA, Asia, Africa, Europe и др.).</p>
     <div class="solpick">
       <div class="ttl">${ic('bulb')} Для чего этот раздел</div>
       <div class="li">Где вы можете работать легально и что для этого понадобится. Сначала выбирают рынок — от него зависят лицензия, разрешённые продукты и платежи.</div>
+      <div class="li"><b>Рынок определяет модель:</b> White Label есть не везде — в ЮАР и Азии только Turnkey и API. У каждого региона ниже видно, какие <a onclick="go('igaming')" style="color:var(--mag);font-weight:700;cursor:pointer">iGaming Solutions</a> там доступны.</div>
     </div>
     <div class="pcat"><div class="solfacts" style="margin:0;border:none">
       <div><b>15</b><span>стран с лицензиями</span></div><div><b>25+</b><span>лицензий</span></div><div><b>60+</b><span>сертификатов GLI</span></div>
     </div></div>
     <div class="h2" style="margin:14px 0 10px;padding:0"><span class="lft">Регионы</span></div>
     <div class="pcat">
-      ${REGIONS.map(r=>row(r[1],r[5],`<div class="pd">${r[2]}</div><div class="pbody"><div class="pfor"><b>Суть рынка:</b> ${r[3]}</div><div class="pfacts">${r[4]}</div></div>`)).join('')}
+      ${REGIONS.map((r,i)=>row(r[1],r[5],`<div class="pd">${r[2]}</div><div class="pbody"><div class="pfor"><b>Суть рынка:</b> ${r[3]}</div><div class="solreg"><div class="lbl">Доступные модели</div><div class="chips">${r[6].map(m=>`<span class="chip" onclick="openSolution('${m}')">${m.replace(' iGaming','')}</span>`).join('')}</div></div><div class="pfacts">${r[4]}</div></div>`,'reg'+i)).join('')}
     </div>
     <div class="h2" style="margin:16px 0 10px;padding:0"><span class="lft">Лицензии</span></div>
     <div class="pcat">
