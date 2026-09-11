@@ -281,7 +281,7 @@ async function sendClientMail(){const g=id=>($('#'+id)&&$('#'+id).value)||'';con
   }catch(e){toast('Ошибка сети');}}
 async function setStaffField(id,field,val){if(db)await db.from('staff').update({[field]:val}).eq('id',id);const s=staff.find(x=>x.id===id);if(s)s[field]=val;toast('Обновлено');}
 let activeStaff=null, staffComms=[], staffFilter='', zohoCache={}, zoTab='deals', zoFilter='';
-function setZoTab(t){zoTab=t;zoFilter='';render();}
+function setZoTab(t){zoTab=t;zoFilter='';zoDetail=null;zoDetailData=null;render();}
 function setZoFilter(v){zoFilter=(zoFilter===v?'':v);render();}
 // Приоритетные стадии воронки (из реального Zoho) — для порядка/чипов
 const DEAL_STAGE_ORDER=['1st Contact','2nd Contact','3rd Contact','Qualification','NDA','KYC','Price Negotiation','Negotiations','Project Details Discussion','Project Confirmed','Agreement Sent','Agreement Signed','Agreement signed & payment done','Paid','Project Started','Hand Over to Account Manager','On Hold','Closed Won (LIVE)','Success','Closed (Lost) - Other','Closed-Lost to Competition','Closed (Lost) Commercial/Legal/Disappeared','Rejected','Cold Lead','Hot Lead'];
@@ -289,7 +289,7 @@ const LEAD_STATUS_ORDER=['Not Contacted Yet','Cold Lead','Warm Lead','Hot Lead',
 function zoWon(st){return /closed won|success|live/i.test(st||'');}
 function zoLost(st){return /lost|rejected|junk/i.test(st||'');}
 async function loadZoho(email){if(!email)return;if(!zohoCache[email])zohoCache[email]={loading:true};try{let tok='';try{const{data}=await db.auth.getSession();tok=(data&&data.session&&data.session.access_token)||'';}catch(e){}const r=await fetch('/api/zoho?email='+encodeURIComponent(email),tok?{headers:{Authorization:'Bearer '+tok}}:{});zohoCache[email]=r.ok?await r.json():{error:'Сервер недоступен'};}catch(e){zohoCache[email]={error:'Нет связи'};}if(activeStaff)render();}
-async function openStaff(id){activeStaff=id;staffComms=[];zoTab='deals';zoFilter='';const sref=staff.find(x=>x.id===id);if(sref&&sref.email)loadZoho(sref.email);render();loadLeads();loadDeals();if(db){const s=staff.find(x=>x.id===id);if(s){const {data}=await db.from('comm_messages').select('*').eq('staff_name',s.name).order('created_at',{ascending:false}).limit(200);staffComms=data||[];render();}}}
+async function openStaff(id){activeStaff=id;staffComms=[];zoTab='deals';zoFilter='';zoDetail=null;zoDetailData=null;const sref=staff.find(x=>x.id===id);if(sref&&sref.email)loadZoho(sref.email);render();loadLeads();loadDeals();if(db){const s=staff.find(x=>x.id===id);if(s){const {data}=await db.from('comm_messages').select('*').eq('staff_name',s.name).order('created_at',{ascending:false}).limit(200);staffComms=data||[];render();}}}
 function closeStaff(){activeStaff=null;render();}
 // --- Запись в Zoho из кабинета ---
 async function zoPost(payload){
@@ -299,7 +299,7 @@ async function zoPost(payload){
   toast('Zoho: сохраняю…');
   try{const r=await fetch('/api/zoho',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify(Object.assign({owner:email},payload))});
     const d=await r.json().catch(()=>({}));
-    if(r.ok&&d.ok){toast('Zoho: готово ✓');zohoCache[email]={loading:true};render();loadZoho(email);}
+    if(r.ok&&d.ok){toast('Zoho: готово ✓');zohoCache[email]={loading:true};render();loadZoho(email);if(zoDetail){zoDetailData=null;loadZoDetail();}}
     else{const rr=d&&d.result&&d.result.data&&d.result.data[0];const msg=(rr&&(rr.message||(rr.details&&JSON.stringify(rr.details))))||(d&&d.error)||('HTTP '+r.status);toast('Zoho: '+msg);}
   }catch(e){toast('Zoho: нет связи');}
 }
@@ -307,6 +307,53 @@ function zoUpdate(module,id,fields){zoPost({action:'update',module:module,id:id,
 function zoNote(module,id){const t=prompt('Заметка для Zoho:');if(t&&t.trim())zoPost({action:'note',module:module,id:id,data:{title:'Заметка',content:t.trim()}});}
 function zoCreateForm(prefix,module,map){const data={};map.forEach(function(m){const el=document.getElementById(prefix+m[0]);if(el&&(el.value!==''&&el.value!=null))data[m[1]]=el.value;});if(!Object.keys(data).length){toast('Заполните поля');return;}zoPost({action:'create',module:module,data:data});}
 function zoToggle(k){const el=document.getElementById('zof_'+k);if(el)el.hidden=!el.hidden;}
+// --- Детальная карточка записи Zoho ---
+let zoDetail=null, zoDetailData=null;
+function openZoDetail(module,id){if(!id)return;zoDetail={module:module,id:id};zoDetailData=null;render();loadZoDetail();}
+function closeZoDetail(){zoDetail=null;zoDetailData=null;render();}
+async function loadZoDetail(){
+  if(!zoDetail)return;
+  let tok='';try{const{data}=await db.auth.getSession();tok=(data&&data.session&&data.session.access_token)||'';}catch(e){}
+  try{const r=await fetch('/api/zoho?detail=1&module='+encodeURIComponent(zoDetail.module)+'&id='+encodeURIComponent(zoDetail.id),tok?{headers:{Authorization:'Bearer '+tok}}:{});zoDetailData=await r.json().catch(()=>({error:'Ошибка загрузки'}));}
+  catch(e){zoDetailData={error:'Нет связи'};}
+  render();
+}
+function zoDetailSave(module,id,map){const f={};map.forEach(function(x){const el=document.getElementById(x[0]);if(el)f[x[1]]=(el.type==='number'&&el.value!=='')?Number(el.value):el.value;});zoUpdate(module,id,f);}
+function zoDetailCard(){
+  const back=`<button class="btn sec sm" onclick="closeZoDetail()">‹ Назад к CRM</button>`;
+  const dd=zoDetailData;
+  if(!dd)return `<div class="card"><div class="row">${back}</div><p class="sub" style="margin-top:10px">Загрузка карточки…</p></div>`;
+  if(dd.error)return `<div class="card"><div class="row">${back}</div><p class="sub" style="margin-top:10px;color:var(--red,#d63d38)">${esc(dd.error)}</p></div>`;
+  const r=dd.record||{}, m=zoDetail.module, id=zoDetail.id;
+  const own=(r.Owner&&(r.Owner.name||r.Owner.email))||'';
+  const F=(l,v)=>(v!=null&&v!=='')?`<div class="fbar"><span style="flex:1;color:var(--muted);font-size:12.5px">${l}</span><b style="text-align:right">${esc(v)}</b></div>`:'';
+  const dt=v=>(v||'').slice(0,16).replace('T',' ');
+  const optsD=(arr,cur)=>{let a=arr.slice();if(cur&&a.indexOf(cur)<0)a.unshift(cur);return a.map(s=>`<option ${s===cur?'selected':''}>${esc(s)}</option>`).join('');};
+  let title='', fields='', edit='';
+  if(m==='Deals'){
+    title=r.Deal_Name||'Сделка';
+    fields=F('Стадия',r.Stage)+F('Сумма',r.Amount!=null?('€'+Number(r.Amount).toLocaleString('ru-RU')):'')+F('Закрытие',r.Closing_Date)+F('Вероятность',r.Probability!=null?r.Probability+'%':'')+F('Тип',r.Type)+F('Аккаунт',r.Account_Name&&(r.Account_Name.name||r.Account_Name))+F('Владелец',own)+F('Создано',dt(r.Created_Time))+F('Изменено',dt(r.Modified_Time));
+    edit=`<div style="display:grid;gap:6px;margin-top:10px"><label>Стадия</label><select id="zed_stage">${optsD(DEAL_STAGE_ORDER,r.Stage)}</select><label>Сумма €</label><input id="zed_amount" type="number" value="${r.Amount!=null?r.Amount:''}"><label>Дата закрытия</label><input id="zed_close" type="date" value="${r.Closing_Date||''}"><button class="btn sm" onclick="zoDetailSave('Deals','${id}',[['zed_stage','Stage'],['zed_amount','Amount'],['zed_close','Closing_Date']])">Сохранить в Zoho</button></div>`;
+  } else if(m==='Leads'){
+    title=r.Full_Name||r.Last_Name||'Лид';
+    fields=F('Статус',r.Lead_Status)+F('Компания',r.Company)+F('Email',r.Email)+F('Телефон',r.Phone)+F('Источник',r.Lead_Source)+F('Владелец',own)+F('Создано',dt(r.Created_Time))+F('Изменено',dt(r.Modified_Time));
+    edit=`<div style="display:grid;gap:6px;margin-top:10px"><label>Статус</label><select id="zel_status">${optsD(LEAD_STATUS_ORDER,r.Lead_Status)}</select><label>Email</label><input id="zel_email" value="${esc(r.Email||'')}"><label>Телефон</label><input id="zel_phone" value="${esc(r.Phone||'')}"><button class="btn sm" onclick="zoDetailSave('Leads','${id}',[['zel_status','Lead_Status'],['zel_email','Email'],['zel_phone','Phone']])">Сохранить в Zoho</button></div>`;
+  } else if(m==='Contacts'){
+    title=r.Full_Name||'Контакт';
+    fields=F('Аккаунт',r.Account_Name&&(r.Account_Name.name||r.Account_Name))+F('Email',r.Email)+F('Телефон',r.Phone)+F('Моб.',r.Mobile)+F('Должность',r.Title)+F('Владелец',own)+F('Создано',dt(r.Created_Time));
+  } else {
+    title=r.Subject||'Задача';
+    fields=F('Статус',r.Status)+F('Срок',r.Due_Date)+F('Приоритет',r.Priority)+F('Владелец',own)+F('Создано',dt(r.Created_Time));
+    if(!/completed|closed/i.test(r.Status||''))edit=`<button class="btn sm" style="margin-top:10px" onclick="zoUpdate('Tasks','${id}',{Status:'Completed'})">✓ Завершить задачу</button>`;
+  }
+  const notes=(dd.notes||[]).map(n=>`<div class="fbar" style="align-items:flex-start"><span style="width:20px">📝</span><div style="flex:1">${n.Note_Title&&n.Note_Title!=='Заметка'?`<b>${esc(n.Note_Title)}</b><br>`:''}<span style="font-size:13px">${esc(n.Note_Content||'')}</span><br><span class="sub" style="font-size:11px">${esc((n.Created_By&&n.Created_By.name)||'')} · ${dt(n.Created_Time)}</span></div></div>`).join('');
+  return `<div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px">${back}<span class="pill">${m}</span></div>
+    <h3 style="margin:10px 0 2px">${esc(title)}</h3>
+    <div style="margin-top:8px">${fields||'<p class="sub">Нет полей.</p>'}</div>
+    ${edit}
+    <h3 style="margin:16px 0 6px;font-size:14px">${ic('megaphone')} История и заметки <button class="btn sec sm" style="padding:2px 8px" onclick="zoNote('${m}','${id}')">＋ заметка</button></h3>
+    ${notes||'<p class="sub">Заметок пока нет.</p>'}</div>`;
+}
 async function setStaffRole(id,role){if(db)await db.from('staff').update({role}).eq('id',id);toast('Роль обновлена');loadStaff();}
 async function resetStaffPass(id){const p=genPass();const s=staff.find(x=>x.id===id);if(db)await db.from('staff').update({pass:p}).eq('id',id);showCred('Новый пароль'+(s?(' · '+s.name):''),(s&&s.login)||'',p);loadStaff();}
 function setStaffPassPrompt(id){const s=staff.find(x=>x.id===id);
@@ -648,6 +695,7 @@ function zohoCard(s){
   if(!email)return `<div class="card">${head}<p class="sub">У сотрудника не указан email — нечего сопоставить с Zoho.</p></div>`;
   if(!z||z.loading)return `<div class="card">${head}<p class="sub">Загрузка из Zoho…</p></div>`;
   if(z.error)return `<div class="card">${head}<p class="sub">Ошибка: ${esc(z.error)}</p></div>`;
+  if(zoDetail)return zoDetailCard();
   const c=z.counts||{};
   const sec=(title,rows)=>`<div style="margin-top:12px"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${title}</div>${rows||'<p class="sub">Нет записей.</p>'}</div>`;
   const deals=(z.deals||[]).map(d=>`<div class="fbar"><span style="flex:1"><b>${esc(d.name||d.Deal_Name||'—')}</b><br><span class="sub" style="font-size:11.5px">${esc(d.stage||d.Stage||'')}${(d.closing||d.Closing_Date)?(' · до '+esc(d.closing||d.Closing_Date)):''}</span></span><b style="white-space:nowrap">€${Number(d.amount||d.Amount||0).toLocaleString('ru-RU')}</b></div>`).join('');
@@ -681,7 +729,7 @@ function zohoCard(s){
     const stages=DEAL_STAGE_ORDER.filter(s=>present.includes(s)).concat(present.filter(s=>!DEAL_STAGE_ORDER.includes(s)));
     const chips=chipsWrap(chip('','Все воронки',!zoFilter)+stages.map(s=>chip(s,s+' ('+D.filter(d=>d.stage===s).length+')',zoFilter===s)).join(''));
     const show=zoFilter?stages.filter(s=>s===zoFilter):stages;
-    const dealRow=d=>`<div class="fbar"><span style="flex:1;min-width:110px"><b>${esc(d.name)}</b>${d.closing?`<br><span class="sub" style="font-size:11px">до ${esc(d.closing)}</span>`:''}</span>${rw&&d.id?`<select onchange="zoUpdate('Deals','${d.id}',{Stage:this.value})" style="max-width:165px;font-size:11px">${opts(DEAL_STAGE_ORDER,d.stage)}</select>`:''}<b style="white-space:nowrap;margin:0 6px">${money(d.amount)}</b>${noteBtn('Deals',d.id)}</div>`;
+    const dealRow=d=>`<div class="fbar"><span style="flex:1;min-width:110px">${d.id?`<b style="color:var(--mag);cursor:pointer" onclick="openZoDetail('Deals','${d.id}')">${esc(d.name)}</b>`:`<b>${esc(d.name)}</b>`}${d.closing?`<br><span class="sub" style="font-size:11px">до ${esc(d.closing)}</span>`:''}</span>${rw&&d.id?`<select onchange="zoUpdate('Deals','${d.id}',{Stage:this.value})" style="max-width:165px;font-size:11px">${opts(DEAL_STAGE_ORDER,d.stage)}</select>`:''}<b style="white-space:nowrap;margin:0 6px">${money(d.amount)}</b>${noteBtn('Deals',d.id)}</div>`;
     const groups=show.map(s=>{const list=D.filter(d=>d.stage===s);const sum=list.reduce((a,d)=>a+d.amount,0);return `<div style="margin-top:10px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:13px">${zoWon(s)?'🏆 ':zoLost(s)?'✖ ':''}${esc(s)}</b><span class="sub">${list.length} · ${money(sum)}</span></div>${list.length?list.map(dealRow).join(''):'<p class="sub" style="margin:4px 0">—</p>'}</div>`;}).join('');
     const total=D.reduce((a,d)=>a+d.amount,0), won=D.filter(d=>zoWon(d.stage)).reduce((a,d)=>a+d.amount,0);
     const createForm=rw?cren('deal','Новая сделка',`<input id="zdeal_name" placeholder="Название сделки"><select id="zdeal_stage">${DEAL_STAGE_ORDER.map(s=>`<option>${esc(s)}</option>`).join('')}</select><input id="zdeal_amount" type="number" placeholder="Сумма €"><input id="zdeal_close" type="date">`,[['name','Deal_Name'],['stage','Stage'],['amount','Amount'],['close','Closing_Date']],'Deals'):'';
@@ -692,16 +740,16 @@ function zohoCard(s){
     const chips=chipsWrap(chip('','Все',!zoFilter)+statuses.map(s=>chip(s,s+' ('+L.filter(l=>l.status===s).length+')',zoFilter===s)).join(''));
     const list=(zoFilter?L.filter(l=>l.status===zoFilter):L);
     const createForm=rw?cren('lead','Новый лид',`<input id="zlead_last" placeholder="Имя/фамилия (обязат.)"><input id="zlead_company" placeholder="Компания"><select id="zlead_status">${LEAD_STATUS_ORDER.map(s=>`<option>${esc(s)}</option>`).join('')}</select><input id="zlead_email" placeholder="Email"><input id="zlead_phone" placeholder="Телефон">`,[['last','Last_Name'],['company','Company'],['status','Lead_Status'],['email','Email'],['phone','Phone']],'Leads'):'';
-    body=`${createForm}${chips}${list.length?list.map(l=>`<div class="fbar"><span style="flex:1;min-width:110px"><b>${esc(l.company)}</b> <span class="sub">${esc(l.name)}</span>${l.source?`<br><span class="sub" style="font-size:11px">источник: ${esc(l.source)}</span>`:''}</span>${rw&&l.id?`<select onchange="zoUpdate('Leads','${l.id}',{Lead_Status:this.value})" style="max-width:150px;font-size:11px">${opts(LEAD_STATUS_ORDER,l.status)}</select>`:`<span class="pill">${esc(l.status||'—')}</span>`}${noteBtn('Leads',l.id)}</div>`).join(''):'<p class="sub">Лидов нет.</p>'}`;
+    body=`${createForm}${chips}${list.length?list.map(l=>`<div class="fbar"><span style="flex:1;min-width:110px">${l.id?`<b style="color:var(--mag);cursor:pointer" onclick="openZoDetail('Leads','${l.id}')">${esc(l.company)}</b>`:`<b>${esc(l.company)}</b>`} <span class="sub">${esc(l.name)}</span>${l.source?`<br><span class="sub" style="font-size:11px">источник: ${esc(l.source)}</span>`:''}</span>${rw&&l.id?`<select onchange="zoUpdate('Leads','${l.id}',{Lead_Status:this.value})" style="max-width:150px;font-size:11px">${opts(LEAD_STATUS_ORDER,l.status)}</select>`:`<span class="pill">${esc(l.status||'—')}</span>`}${noteBtn('Leads',l.id)}</div>`).join(''):'<p class="sub">Лидов нет.</p>'}`;
   } else if(zoTab==='contacts'){
     const createForm=rw?cren('contact','Новый контакт',`<input id="zcontact_last" placeholder="Имя/фамилия (обязат.)"><input id="zcontact_account" placeholder="Компания"><input id="zcontact_email" placeholder="Email"><input id="zcontact_phone" placeholder="Телефон">`,[['last','Last_Name'],['account','Account_Name'],['email','Email'],['phone','Phone']],'Contacts'):'';
-    body=`${createForm}${K.length?K.map(k=>`<div class="fbar"><span style="flex:1"><b>${esc(k.name)}</b> <span class="sub">${esc(k.company)}</span>${k.email?`<br><span class="sub" style="font-size:11px">${esc(k.email)}</span>`:''}</span>${noteBtn('Contacts',k.id)}</div>`).join(''):'<p class="sub">Контактов нет.</p>'}`;
+    body=`${createForm}${K.length?K.map(k=>`<div class="fbar"><span style="flex:1">${k.id?`<b style="color:var(--mag);cursor:pointer" onclick="openZoDetail('Contacts','${k.id}')">${esc(k.name)}</b>`:`<b>${esc(k.name)}</b>`} <span class="sub">${esc(k.company)}</span>${k.email?`<br><span class="sub" style="font-size:11px">${esc(k.email)}</span>`:''}</span>${noteBtn('Contacts',k.id)}</div>`).join(''):'<p class="sub">Контактов нет.</p>'}`;
   } else {
     const open=T.filter(t=>!/completed|closed/i.test(t.status)), done=T.filter(t=>/completed|closed/i.test(t.status));
     const chips=chipsWrap(chip('','Все ('+T.length+')',!zoFilter)+chip('open','Открытые ('+open.length+')',zoFilter==='open')+chip('done','Завершённые ('+done.length+')',zoFilter==='done'));
     const list=zoFilter==='open'?open:zoFilter==='done'?done:T;
     const createForm=rw?cren('task','Новая задача',`<input id="ztask_subj" placeholder="Задача (обязат.)"><input id="ztask_due" type="date">`,[['subj','Subject'],['due','Due_Date']],'Tasks'):'';
-    body=`${createForm}${chips}${list.length?list.map(t=>{const dn=/completed|closed/i.test(t.status);return `<div class="fbar"><span style="flex:1">${esc(t.subject)}</span><span class="st ${dn?'ap':'nw'}" style="font-size:10px">${esc(t.status||'—')}${t.due?(' · '+esc(t.due)):''}</span>${rw&&t.id&&!dn?`<button class="btn sm" style="padding:2px 7px" onclick="zoUpdate('Tasks','${t.id}',{Status:'Completed'})" title="Завершить">✓</button>`:''}${noteBtn('Tasks',t.id)}</div>`;}).join(''):'<p class="sub">Задач нет.</p>'}`;
+    body=`${createForm}${chips}${list.length?list.map(t=>{const dn=/completed|closed/i.test(t.status);return `<div class="fbar"><span style="flex:1">${t.id?`<span style="color:var(--mag);cursor:pointer" onclick="openZoDetail('Tasks','${t.id}')">${esc(t.subject)}</span>`:esc(t.subject)}</span><span class="st ${dn?'ap':'nw'}" style="font-size:10px">${esc(t.status||'—')}${t.due?(' · '+esc(t.due)):''}</span>${rw&&t.id&&!dn?`<button class="btn sm" style="padding:2px 7px" onclick="zoUpdate('Tasks','${t.id}',{Status:'Completed'})" title="Завершить">✓</button>`:''}${noteBtn('Tasks',t.id)}</div>`;}).join(''):'<p class="sub">Задач нет.</p>'}`;
   }
 
   return `<div class="card">${head}
