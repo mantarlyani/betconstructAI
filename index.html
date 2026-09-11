@@ -82,6 +82,25 @@
   .qtile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 4px 12px;text-align:center;cursor:pointer}
   .qtile svg{font-size:28px;color:var(--mag)}.qtile p{margin:8px 0 0;font-size:12.5px;font-weight:700}
   .qtile:active{background:#faf2f6}
+  .qhint{margin:-4px 16px 10px;font-size:12.5px;color:var(--muted);line-height:1.5}
+  .qsh-bg{position:fixed;inset:0;background:rgba(20,10,16,.45);z-index:10000}
+  .qsh{position:fixed;left:0;right:0;bottom:0;z-index:10001;max-width:560px;margin:0 auto;background:var(--card);
+    border-radius:18px 18px 0 0;padding:10px 16px calc(16px + env(safe-area-inset-bottom));max-height:82vh;overflow:auto;
+    box-shadow:0 -8px 30px rgba(0,0,0,.18);animation:qshUp .22s ease;outline:none}
+  @keyframes qshUp{from{transform:translateY(100%)}to{transform:none}}
+  @media (prefers-reduced-motion:reduce){.qsh{animation:none}}
+  .qsh-grip{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+  .qsh-hd{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+  .qsh-hd>svg{font-size:26px;color:var(--mag);flex-shrink:0}
+  .qsh-hd b{font-size:17px}
+  .qsh-sub{font-size:12px;color:var(--muted);margin-top:1px}
+  .qsh-x{border:none;background:var(--bg);width:34px;height:34px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);flex-shrink:0}
+  .qsh-x:focus-visible,.qtile:focus-visible{outline:2px solid var(--mag);outline-offset:2px}
+  .qsh .pfor{font-size:13px;line-height:1.6;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+  .qsh .pfor b{color:var(--mag)}
+  .qsh .pfacts{font-size:12.5px;line-height:1.6;color:var(--muted);border-left:2px solid var(--mag);padding-left:11px;margin-bottom:12px}
+  .qsh-price{font-size:13px;color:var(--muted);margin-bottom:12px}
+  .qsh-price b{color:var(--text)}
   .lscroll{display:flex;gap:12px;overflow-x:auto;padding:0 16px 4px;scrollbar-width:none}
   .lscroll::-webkit-scrollbar{display:none}
   .lmatch{min-width:258px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer}
@@ -532,29 +551,30 @@ const MENU_TOP=[
   ['card','Payment methods','payment',1]
 ];
 const QUICK=[
-  ['code','Partner API','https://www.betconstruct.com/products'],
-  ['broadcast','Live','https://www.betconstruct.com/products'],
-  ['ball','Sports','https://www.betconstruct.com/products'],
-  ['cherry','Casino','https://www.betconstruct.com/products'],
-  ['cards','Live Casino','https://www.betconstruct.com/products'],
-  ['book','Eventbook','https://www.betconstruct.com/products'],
-  ['target','PredictStreet','https://www.betconstruct.com/products'],
-  ['wheel','WonderWheel','https://www.betconstruct.com/products'],
-  ['trophy','Goallywood','https://www.betconstruct.com/products'],
-  ['store','Betshops','https://www.betconstruct.com/products'],
-  ['clock','Tik-tak','https://www.betconstruct.com/products'],
-  ['cash','Cashback','https://www.betconstruct.com/products'],
-  ['cards','Belote','https://www.betconstruct.com/products'],
-  ['spade','Poker','https://www.betconstruct.com/products'],
-  ['dice','Backgammon','https://www.betconstruct.com/products'],
-  ['gamepad','Esports','https://www.betconstruct.com/products'],
-  ['gamepad','Games','https://www.betconstruct.com/products'],
-  ['tv','TV-games','https://www.betconstruct.com/products'],
-  ['activity','Virtual','https://www.betconstruct.com/products'],
-  ['chart','Dataspot','https://www.betconstruct.com/products/dataspot'],
-  ['robot','CRM-AI','https://www.betconstruct.com/products/crm'],
-  ['umbrella','Umbrella','https://www.betconstruct.com/products/umbrella'],
-  ['news','Blog','https://www.betconstruct.com/product-blog']
+ // [иконка, подпись, куда ведёт: prod|sol|plat|cat|url, цель, своя подсказка (если плитка — часть продукта)]
+ ['code','Partner API','sol','API iGaming'],
+ ['broadcast','Live','prod','Sportsbook','Ставки по ходу матча: коэффициенты меняются в реальном времени, кэшаут частичный, полный и автоматический. Часть Sportsbook.'],
+ ['ball','Sports','prod','Sportsbook'],
+ ['cherry','Casino','prod','Casino Platform'],
+ ['cards','Live Casino','prod','Live Casino'],
+ ['book','Eventbook','url','https://www.betconstruct.com/products'],
+ ['target','PredictStreet','url','https://www.betconstruct.com/products'],
+ ['wheel','WonderWheel','prod','Casino Platform','Колесо фортуны с фриспинами и бонусами — промо-инструмент, который возвращает игрока в казино. Входит в Casino Platform.'],
+ ['trophy','Goallywood','url','https://www.betconstruct.com/products'],
+ ['store','Betshops','plat','Land Based Solutions'],
+ ['clock','Tik-tak','url','https://www.betconstruct.com/products'],
+ ['cash','Cashback','prod','Casino Platform','Возврат части проигрыша или оборота; Cashback Accumulator копит награды за день, неделю или месяц. Входит в промо-инструменты Casino Platform.'],
+ ['cards','Belote','prod','Skill Games'],
+ ['spade','Poker','prod','Poker'],
+ ['dice','Backgammon','prod','Skill Games'],
+ ['gamepad','Esports','prod','Esport'],
+ ['gamepad','Games','cat','Games Suite (игры)'],
+ ['tv','TV-games','url','https://www.betconstruct.com/products'],
+ ['activity','Virtual','prod','Virtual Sports'],
+ ['chart','Dataspot','prod','Dataspot'],
+ ['robot','CRM-AI','prod','CRM AI'],
+ ['umbrella','Umbrella','prod','Umbrella'],
+ ['news','Blog','url','https://www.betconstruct.com/product-blog']
 ];
 
 function header(){return '';}
@@ -590,7 +610,8 @@ function home(){
     <div class="aicard" onclick="advise()"><div><div class="t">${ic('sparkles')} ${t('aiTitle')}</div><div class="d" style="font-size:14px;opacity:.9;margin-top:3px">${t('aiDesc')}</div></div><div class="chev">›</div></div>
   </div>
   <div class="h2"><span class="lft">${t('quick')}</span><a onclick="toggleQuick()">${quickOpen?(lang==='ru'?'Свернуть':lang==='en'?'Collapse':'Փակել'):(lang==='ru'?'Ещё':lang==='en'?'More':'Ավելին')} ${quickOpen?'▴':'▾'}</a></div>
-  <div class="qa">${(quickOpen?QUICK:QUICK.slice(0,8)).map(q=>`<div class="qtile" onclick="openURL('${q[2]}')">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
+  <p class="qhint">Нажмите на плитку — появится подсказка: для чего продукт, цифры и цена.</p>
+  <div class="qa">${(quickOpen?QUICK:QUICK.slice(0,8)).map((q,i)=>`<div class="qtile" onclick="quickTap(${i})">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
   <div class="promo" onclick="openURL('https://www.betconstruct.com/products')"><div><div class="t">${ic('sparkles')} ${t('promoT')}</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
   <div style="height:16px"></div>`;
 }
@@ -958,7 +979,7 @@ function searchIndex(){
   LICENSES.forEach(l=>add(l[0],'Лицензия',"go('regional')"));
   _vlist().forEach(v=>add(v.name,'Marketplace · '+(v.category||''),"go('market')"));
   _plist().forEach(p=>add(p.company,'Партнёр',"go('partners')"));
-  QUICK.forEach(q=>add(q[1],'Быстрый доступ',`openURL('${q[2]}')`));
+  QUICK.forEach((q,i)=>add(q[1],'Быстрый доступ',`quickTap(${i})`));
   add('Loyalty Program','Программа лояльности',"go('loyalty')");
   return ix;
 }
@@ -1061,6 +1082,7 @@ function navKB(){
     'Marketplace — витрина продуктов вендоров, категории: '+MKT_CATS.join(', ')+'. Есть корзина и запрос демо по каждому продукту.',
     'Partners — список производителей, размещённых на платформе.',
     'Loyalty — XP и VIP-уровни с бонусами.',
+    'Быстрый доступ на главной: плитки Sports, Live, Casino, Live Casino, Poker, Esports, Virtual, Betshops, Dataspot, CRM-AI, Umbrella и др. — по нажатию подсказка по продукту и переход в его карточку каталога.',
     'Чат с менеджером — живой чат для финальных условий и договора.',
     'Стать партнёром (форма): KYB-данные компании, тип продукта ('+['Игра','Платёжная система','Платформа','Инструмент / Софт','Лицензионный сервис','Маркетинг / Affiliate'].join('/')+'), описание и ценность, регионы и запрещённые рынки, языки и валюты, крипто-поддержка, комплаенс, модель монетизации (RevShare/CPA/Fixed fee/License/Hybrid), ценовой ориентир, % платформе, AI-теги (вертикаль, гео, сегмент SMB/Mid-market/Enterprise). После модерации — бейдж «Approved by BetConstruct» или «Partner by BetConstruct» и доступ в кабинет партнёра.',
     'Аффилейт / Маркетинг (форма): тип (Affiliate-сеть/Трафик-команда/Маркетинг-агентство/Инфлюенсер), модель (CPA/RevShare/Hybrid/Fixed fee), гео, вертикали, источники трафика, объёмы, кейсы и метрики, минимальные условия, KYB.',
@@ -1471,7 +1493,7 @@ function catalog(){
     ${PCAT.map((c,i)=>`<div class="pcat" id="cat${i}"><div class="hd" onclick="togglePc('cat${i}')"><span class="l">${ic(c.ic)} ${c.cat}</span><span class="more">${c.items.length} · ${ic('chevD')}</span></div>
       <div class="solhint">${ic('bulb')}<div><div class="what">${c.short}</div></div></div>
       <div class="body">
-        ${c.items.map(it=>`<details class="prow"><summary><span class="pn">${it[0]}<span class="car">${ic('chevD')}</span></span><span class="pp">${it[2]||''}</span></summary>
+        ${c.items.map(it=>`<details class="prow" data-p="${it[0]}"><summary><span class="pn">${it[0]}<span class="car">${ic('chevD')}</span></span><span class="pp">${it[2]||''}</span></summary>
           <div class="pd">${it[1]}</div>
           <div class="pbody"><div class="pfor"><b>Для чего:</b> ${it[4]}</div>
           ${it[3]?`<div class="pfacts">${it[3]}</div>`:''}</div></details>`).join('')}
@@ -1594,6 +1616,57 @@ function regNeed(r){
     ? 'Своя лицензия не обязательна — можно стартовать на White Label под лицензиями BetConstruct. Со своей лицензией — Turnkey.'
     : 'Нужна своя лицензия (Turnkey) или своя работающая платформа (API) — White Label в этом регионе не предлагается.';
 }
+function openProduct(name){
+  go('catalog');
+  const ci=PCAT.findIndex(c=>c.items.some(x=>x[0]===name)); if(ci<0)return;
+  document.getElementById('cat'+ci).classList.add('open');
+  const row=document.querySelector(`#cat${ci} details.prow[data-p="${name}"]`);
+  if(row){row.open=true; row.scrollIntoView({block:'center'});}
+}
+function openPlatform(name){
+  go('platforms');
+  const i=PLAT.findIndex(x=>x.name===name), el=document.getElementById('plat'+i);
+  if(el){el.classList.add('open'); el.scrollIntoView({block:'start'});}
+}
+function openCategory(cat){
+  go('catalog');
+  const i=PCAT.findIndex(c=>c.cat===cat), el=document.getElementById('cat'+i);
+  if(el){el.classList.add('open'); el.scrollIntoView({block:'start'});}
+}
+// Быстрый доступ: плитка -> подсказка из каталога (для чего, цифры, цена) -> «Подробно»
+function quickInfo(q){
+  const kind=q[2], name=q[3], firstSent=t=>{const p=(t||'').split(/(?<=\.)\s+/); let r=''; for(const x of p){if((r+x).length>190&&r)break; r+=(r?' ':'')+x;} return r;};
+  if(kind==='prod'){const it=PCAT.flatMap(c=>c.items).find(x=>x[0]===name)||[];
+    return {sub:name, hint:q[4]||it[4], facts:firstSent(it[3]), price:it[2], open:`openProduct('${name}')`};}
+  if(kind==='sol'){const x=SOL.find(v=>v.name===name)||{};
+    return {sub:name, hint:x.short, facts:(x.facts||[]).map(f=>f[0]+' '+f[1]).join(' · '), open:`openSolution('${name}')`};}
+  if(kind==='plat'){const x=PLAT.find(v=>v.name===name)||{};
+    return {sub:name, hint:x.short, facts:(x.facts||[]).map(f=>f[0]+' '+f[1]).join(' · '), price:x.price&&x.price[0]?x.price[0][1]:'', open:`openPlatform('${name}')`};}
+  if(kind==='cat'){const c=PCAT.find(v=>v.cat===name)||{items:[]};
+    return {sub:name, hint:c.short, facts:c.items.map(x=>x[0]).join(', '), open:`openCategory('${name}')`};}
+  return null;
+}
+function quickTap(i){
+  const q=QUICK[i]; if(q[2]==='url'){openURL(q[3]);return;}
+  const d=quickInfo(q); if(!d)return;
+  track('click','quick_tile',{name:q[1]});
+  closeSheet();
+  const w=document.createElement('div'); w.id='qsheet';
+  w.innerHTML=`<div class="qsh-bg" onclick="closeSheet()"></div>
+    <div class="qsh" role="dialog" aria-modal="true" aria-label="${q[1]}" tabindex="-1">
+      <div class="qsh-grip"></div>
+      <div class="qsh-hd">${ic(q[0])}<div style="flex:1"><b>${q[1]}</b>${d.sub!==q[1]?`<div class="qsh-sub">→ ${d.sub.replace(' (игры)','')}</div>`:''}</div><button class="qsh-x" onclick="closeSheet()" aria-label="Закрыть">×</button></div>
+      <div class="pfor"><b>Для чего:</b> ${d.hint}</div>
+      ${d.facts?`<div class="pfacts">${d.facts}</div>`:''}
+      ${d.price?`<div class="qsh-price">Цена: <b>${d.price}</b></div>`:''}
+      <button class="btn" onclick="closeSheet();${d.open}">${ic('chevD')} Подробно</button>
+      <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="closeSheet();advise()">${ic('sparkles')} Подобрать с AI-советником</button>
+    </div>`;
+  document.body.appendChild(w);
+  w.querySelector('.qsh').focus();
+}
+function closeSheet(){const w=document.getElementById('qsheet'); if(w)w.remove();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
 function openRegion(name){
   go('regional');
   const i=REGIONS.findIndex(r=>r[1]===name), el=document.getElementById('reg'+i);
