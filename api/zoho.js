@@ -145,7 +145,7 @@ async function zget(token, path) {
   if (r.status === 204) return { data: [] };
   try { return await r.json(); } catch (e) { return {}; }
 }
-const WRITE_MODULES = { Leads: 1, Deals: 1, Contacts: 1, Tasks: 1 };
+const WRITE_MODULES = { Leads: 1, Deals: 1, Contacts: 1, Tasks: 1, Accounts: 1, Events: 1, Calls: 1 };
 
 export default async function handler(req, res) {
   // Запись в Zoho (создание/обновление/заметка). Только авторизованным; сотрудник — только свой owner.
@@ -259,18 +259,21 @@ export default async function handler(req, res) {
     if (!token) throw new Error('no access_token (проверь refresh token/ключи)');
 
     // Выборка напрямую по владельцу (Owner.email = email сотрудника)
-    const [L, D, C, T] = await Promise.all([
+    const [L, D, C, T, A, M, CL] = await Promise.all([
       coqlByOwner(token, 'Leads', email, 'id,Company,Full_Name,Lead_Source,Lead_Status,Email,Phone'),
       coqlByOwner(token, 'Deals', email, 'id,Deal_Name,Stage,Amount,Closing_Date'),
       coqlByOwner(token, 'Contacts', email, 'id,Full_Name,Account_Name,Email,Phone'),
-      coqlByOwner(token, 'Tasks', email, 'id,Subject,Due_Date,Status')
+      coqlByOwner(token, 'Tasks', email, 'id,Subject,Due_Date,Status'),
+      coqlByOwner(token, 'Accounts', email, 'id,Account_Name,Phone,Website,Industry'),
+      coqlByOwner(token, 'Events', email, 'id,Event_Title,Start_DateTime,End_DateTime,Venue'),
+      coqlByOwner(token, 'Calls', email, 'id,Subject,Call_Type,Call_Start_Time,Call_Duration,Call_Result')
     ]);
-    const leads = L.data, deals = D.data, contacts = C.data, tasks = T.data;
-    const errs = [L.error, D.error, C.error, T.error].filter(Boolean);
+    const leads = L.data, deals = D.data, contacts = C.data, tasks = T.data, accounts = A.data, meetings = M.data, calls = CL.data;
+    const errs = [L.error, D.error, C.error, T.error, A.error, M.error, CL.error].filter(Boolean);
     return res.status(200).json({
       connected: true, owner: email,
-      counts: { leads: leads.length, deals: deals.length, contacts: contacts.length, tasks: tasks.length },
-      leads, deals, contacts, tasks,
+      counts: { leads: leads.length, deals: deals.length, contacts: contacts.length, tasks: tasks.length, accounts: accounts.length, meetings: meetings.length, calls: calls.length },
+      leads, deals, contacts, tasks, accounts, meetings, calls,
       note: errs.length ? ('coql_error: ' + errs[0]) : undefined
     });
   } catch (e) {
