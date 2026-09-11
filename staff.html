@@ -89,6 +89,29 @@ const STAGES=[{k:'lead',n:'Lead Email'},{k:'deal',n:'Convert to Deal'},{k:'confi
 const FLOW=[{t:'Lead check',role:'Sales'},{t:'Agreement & Fee',role:'Sales'},{t:'Resource request',role:'Service Sales'},{t:'Kickoff chat',role:'PM'},{t:'Development',role:'PM'},{t:'Go Live notice',role:'PM'},{t:'AM Handover',role:'Account Manager'}];
 function stageIdx(k){return STAGES.findIndex(s=>s.k===k);}
 function stageName(k){const s=STAGES.find(x=>x.k===k);return s?s.n:k;}
+// --- Zoho CRM (полная воронка + запись) ---
+const DEAL_STAGE_ORDER=['1st Contact','2nd Contact','3rd Contact','Qualification','NDA','KYC','Price Negotiation','Negotiations','Project Details Discussion','Project Confirmed','Agreement Sent','Agreement Signed','Agreement signed & payment done','Paid','Project Started','Hand Over to Account Manager','On Hold','Closed Won (LIVE)','Success','Closed (Lost) - Other','Closed-Lost to Competition','Closed (Lost) Commercial/Legal/Disappeared','Rejected','Cold Lead','Hot Lead'];
+const LEAD_STATUS_ORDER=['Not Contacted Yet','Cold Lead','Warm Lead','Hot Lead','Unresponsive','Junk Lead','Lost Lead'];
+function zoWon(s){return /closed won|success|live/i.test(s||'');}
+function zoLost(s){return /lost|rejected|junk/i.test(s||'');}
+let zoTab='deals', zoFilter='';
+function setZoTab(t){zoTab=t;zoFilter='';paintBody();}
+function setZoFilter(v){zoFilter=(zoFilter===v?'':v);paintBody();}
+async function zoPost(payload){
+  const email=S.email||await myEmail();if(!email){toast('Нет email');return;}
+  let tok='';try{const{data}=await db.auth.getSession();tok=(data&&data.session&&data.session.access_token)||'';}catch(e){}
+  if(!tok){toast('Действия доступны после входа через корпоративный аккаунт');return;}
+  toast('Zoho: сохраняю…');
+  try{const r=await fetch('/api/zoho',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify(Object.assign({owner:email},payload))});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.ok){toast('Zoho: готово ✓');zoho=null;zohoLoading=false;ensureZoho();}
+    else{const rr=d&&d.result&&d.result.data&&d.result.data[0];const msg=(rr&&rr.message)||(d&&d.error)||('HTTP '+r.status);toast('Zoho: '+msg);}
+  }catch(e){toast('Zoho: нет связи');}
+}
+function zoUpdate(m,id,f){zoPost({action:'update',module:m,id:id,data:f});}
+function zoNote(m,id){const t=prompt('Заметка для Zoho:');if(t&&t.trim())zoPost({action:'note',module:m,id:id,data:{title:'Заметка',content:t.trim()}});}
+function zoCreateForm(prefix,module,map){const data={};map.forEach(function(x){const el=document.getElementById(prefix+x[0]);if(el&&el.value!=='')data[x[1]]=el.value;});if(!Object.keys(data).length){toast('Заполните поля');return;}zoPost({action:'create',module:module,data:data});}
+function zoToggle(k){const el=document.getElementById('zof_'+k);if(el)el.hidden=!el.hidden;}
 
 // ---------- LOAD ----------
 async function loadAll(){
