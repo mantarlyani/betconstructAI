@@ -165,7 +165,7 @@ export default async function handler(req, res) {
     const leads = L.data, deals = D.data, contacts = C.data, tasks = T.data;
     const errs = [L.error, D.error, C.error, T.error].filter(Boolean);
     return res.status(200).json({
-      connected: true, owner: email, owner_id: me.id,
+      connected: true, owner: email,
       counts: { leads: leads.length, deals: deals.length, contacts: contacts.length, tasks: tasks.length },
       leads, deals, contacts, tasks,
       note: errs.length ? ('coql_error: ' + errs[0]) : undefined
