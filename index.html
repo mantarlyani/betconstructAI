@@ -1038,8 +1038,8 @@ function bcKB(){
   L.push('\n## Пакеты и цены\n'+PACKS.map(p=>'  · '+p[0]+' — '+p[1]+': '+p[2]).join('\n'));
   L.push('\n## Продукты по категориям\n'+_kbProducts());
   L.push('\n## Backoffice / Spring BME (единая облачная консоль, console.betconstruct.com)\nBackOffice — управление работающим бизнесом; Spring BME — сборка и расширение проекта. Кому: начинающим операторам, действующим партнёрам, выбирающим White Label. Запуск: создать проект в консоли → добавить продукты → включить инструменты (CMS, бэкофис, CRM) → управлять из одной платформы. Есть бесплатная пробная версия.\n'+BME.map(b=>'  · '+b[0]+' — для чего: '+b[1]+' Детали: '+b[2]).join('\n'));
-  L.push('\n## Регионы и юрисдикции\n'+REGIONS.map(r=>'  · '+r[1]+': '+r[2]).join('\n'));
-  L.push('\n## Лицензии и сертификаты\n'+LICENSES.map(l=>'  · '+l[0]+': '+l[1]).join('\n'));
+  L.push('\n## Регионы и юрисдикции\n'+REGIONS.map(r=>'  · '+r[1]+' ['+r[5]+']: '+r[3]+' Детали: '+r[4]).join('\n'));
+  L.push('\n## Лицензии и сертификаты (итого: 16 регуляторов, 15 стран, 25+ лицензий, 60+ сертификатов GLI)\n'+LICENSES.map(l=>'  · '+l[0]+' ('+l[1]+', '+l[2]+'): '+l[3]).join('\n')+'\nСертификаты:\n'+CERTS.map(c=>'  · '+c[0]+' ('+c[1]+'): '+c[2]).join('\n'));
   L.push('\n## Платежи\n'+PAY.map(p=>'  · '+p[1]+': '+p[2]).join('\n'));
   L.push('\n## Loyalty-программа (XP → VIP-уровень → Level Up бонус CIC)\n'+_kbLoyalty());
   L.push('\n## Демо фронтенда и живые продукты (ссылки можно давать клиенту)\n'+FRONTEND.map(f=>'  · '+f[1]+' — '+f[2]).join('\n'));
@@ -1497,31 +1497,90 @@ function bme(){
   </div>`;
 }
 const REGIONS=[
- ['ti','United Kingdom','Предложение под рынок UK — регулируется UK Gambling Commission.'],
- ['ti','Latin America','Растущие рынки LATAM.'],
- ['ti','South Africa','Рынки ЮАР и Африки.'],
- ['ti','Asia','Азиатские рынки с локальными платёжными методами.'],
- ['ti','France','Рынок Франции.'],
- ['ti','Cyprus','Кипр — юрисдикция ЕС.'],
- ['ti','Malta','Мальта — лицензия MGA.'],
- ['ti','Ukraine','Рынок Украины.']
+ // [icon, название, старая строка (есть перевод EN/HY), суть рынка, детали, главный регулятор]
+ ['ti','United Kingdom','Предложение под рынок UK — регулируется UK Gambling Commission.',
+  'Самый зрелый и строгий рынок Европы: работать можно только с лицензией UKGC — у BetConstruct она есть, B2B и B2C.',
+  'Основа рынка — скачки и футбол, в казино — рулетка и карточные игры. Жёсткие требования ответственной игры. Продукты: Sportsbook, Esports, Virtual Sports, Casino Suite, Land Based, Odds Feed, Live Scouting Data, CRM. Модели: White Label, Turnkey, Partner API, SWARM API. Офис в Лондоне.',
+  'UKGC'],
+ ['ti','Latin America','Растущие рынки LATAM.',
+  'Быстрорастущий регион с разными правилами в каждой стране — есть свои офисы и местные лицензии в Перу и Бразилии.',
+  'Лицензии: MINCETUR (Перу) PT0000043 — спортсбук, казино, live-казино; Бразилия — Ordinance SPA/MF No. 254/2025; плюс MGA и UKGC. Сертификаты GLI для Колумбии и Аргентины. Офисы в Монтевидео, Лиме и Бразилии, локальные директора. Продукты: Sportsbook, Esports, Virtual Sports, Casino Suite, Live Casino, Poker, Land Based. Модели: White Label, Turnkey, Partner API, SWARM API.',
+  'Перу · Бразилия'],
+ ['ti','South Africa','Рынки ЮАР и Африки.',
+  'Мобильный рынок: большинство ставок идёт с телефона, в том числе через SMS и USSD — для этого есть отдельные решения.',
+  'Лицензии: National Manufacturer Licence (National Gambling Board) и Western Cape Gambling and Racing Board 10183381-009 — онлайн-ставки и казино. Продукты: спортивные ставки, виртуальный спорт, казино, кено, наземные решения, SMS/USSD-ставки. Модели: Turnkey, SWARM API, Partner API. Офис в Кейптауне.',
+  'NGB · WCGRB'],
+ ['ti','Asia','Азиатские рынки с локальными платёжными методами.',
+  'Один из самых быстрорастущих рынков: нужны свой интерфейс, местные платежи и работа в часовом поясе UTC+8.',
+  'Региональный офис на Филиппинах, работа в UTC+8. Лицензии MGA и UKGC. Продукты: Sportsbook, Esports, Casino, Live Casino, CRM, видеотрансляции, статистические виджеты, наземные решения. Модели: Turnkey и Partner API. В каталоге под Азию есть отдельный интерфейс BetChain и Agent System — для агентской модели привлечения игроков.',
+  'MGA · UKGC'],
+ ['ti','France','Рынок Франции.',
+  'Закрытый рынок с жёстким регулятором ANJ: в 2017 году BetConstruct стала первой новой компанией с лицензией на ставки с 2010 года.',
+  'Три лицензии ANJ на онлайн-ставки на спорт, ежегодная сертификация ANJ и Mazars. Разрешены: Sportsbook, Poker, Social Gaming, CRM, Agent System, Affiliate Marketing — онлайн-казино во Франции не лицензируется. Офисы в Монако, Париже (Нейи-сюр-Сен) и Женеве. Модели: White Label, Turnkey, Partner API, SWARM API.',
+  'ANJ'],
+ ['ti','Cyprus','Кипр — юрисдикция ЕС.',
+  'Рынок разделён надвое: в Республике Кипр онлайн разрешены только ставки на спорт с фиксированными коэффициентами, на Севере регулирования нет.',
+  'Республика Кипр — Betting Law 2012: только спортивные ставки с фиксированными коэффициентами. Северный Кипр — без официального регулирования онлайн-операций. Продукты: Sportsbook, Esports, Virtual Sports, Land Based. Лицензии MGA и UKGC. Модели: White Label, Turnkey, API, SWARM API. Офис в Никосии.',
+  'Betting Law 2012'],
+ ['ti','Malta','Мальта — лицензия MGA.',
+  'Самая удобная юрисдикция ЕС для старта: MGA — первый онлайн-регулятор Евросоюза, лицензии BetConstruct покрывают B2B и B2C.',
+  'MGA регулирует онлайн-гейминг с 2004 года — первым в ЕС. Лицензии B2B MGA/B2B/286/2014 и B2C MGA/B2C/292/2015: казино, ставки с фиксированными коэффициентами включая live, skill-игры, покер. Продукты: Sportsbook, Live Casino, Virtual Sports, Esports, Poker, Casino Suite, Odds Feed и др. Модели: White Label, Turnkey, SWARM API. Офис в Портомазо, Сент-Джулианс.',
+  'MGA'],
+ ['ti','Ukraine','Рынок Украины.',
+  'Самый перспективный рынок СНГ с оценкой до $2 млрд; государство выдаёт лицензии и на онлайн, и на розницу.',
+  'Лицензии для веб- и розничных операций выдаёт государство; у BetConstruct — B2B-разрешение регулятора PlayCity (N 150-Р от 12.11.25), плюс MGA и UKGC. Продукты: Sportsbook, Live Casino, Casino Suite, Esports, CRM, Odds Feed. Модели: White Label, Turnkey, Partner API, SWARM API. Офис в Киеве.',
+  'PlayCity']
 ];
 const LICENSES=[
- ['Malta Gaming Authority (MGA)','Gaming Service Licence MGA/B2B/286/2014 (с 1 августа 2018).'],
- ['UK Gambling Commission (UKGC)','Account № 40767 — услуги для рынка Великобритании.'],
- ['Оператор','Soft Construct (Malta) Ltd, рег. № C45929, Мальта.']
+ // [регулятор, страна, тип, детали] — у первых двух и «Оператора» детали начинаются со старой строки (есть перевод)
+ ['Malta Gaming Authority (MGA)','Мальта','B2B · B2C','Gaming Service Licence MGA/B2B/286/2014 (с 1 августа 2018). B2C — MGA/B2C/292/2015. Казино, ставки с фиксированными коэффициентами включая live, skill-игры, покер, P2P.'],
+ ['UK Gambling Commission (UKGC)','Великобритания','B2B · B2C','Account № 40767 — услуги для рынка Великобритании. B2B 000-040767-R-320911-012: ставки на реальные события, поставка и адаптация игрового ПО, казино. B2C 000-044662-R-324273-021: ставки, казино, ставки на виртуальные события.'],
+ ['ANJ','Франция','3 лицензии','Онлайн-ставки на спорт: 0057-PS-2022-07-07, 0059-PS-2022-07-07, 0066-PS-2025-07-27-AGR-00. Ежегодная сертификация ANJ и Mazars.'],
+ ['ONJN','Румыния','4 лицензии · B2B','Class II: №908 — производство, продажа и обслуживание игрового ПО и оборудования; №1017 — розничное решение; №2239 — remote gaming. Remote Gambling L1244251W001596 — спортсбук и казино.'],
+ ['Spelinspektionen','Швеция','B2B · B2C','B2C 23Si361 — ставки на спорт и казино. B2B 23Si1219 — производство, поставка, установка и модификация игрового ПО.'],
+ ['Spillemyndigheden','Дания','2 лицензии','20-13603 — ставки, онлайн-казино, live-казино, розница для бетшопов. J.nr. 24-453675 — поставка: спортсбук, казино, live, покер, розница, виртуальный спорт.'],
+ ['GGL','Германия','2 лицензии','208.2.2-12254-2021/58 — виртуальные слоты. 21.42-122588-SpoWe SCGO Ltd — ставки на спорт.'],
+ ['Kansspelautoriteit (NGA)','Нидерланды','1 лицензия','2187/01.293.261 — ставки на спорт и казино.'],
+ ['Belgian Gaming Commission','Бельгия','B2B','E 565281 — онлайн-казино, онлайн-автоматы, онлайн-ставки.'],
+ ['Hellenic Gaming Commission','Греция','A1 Manufacturer','HGC–000126–MN — ставки на спорт, казино.'],
+ ['Western Cape Gambling and Racing Board','ЮАР','B2B','10183381-009 — онлайн-ставки на спорт и казино. Также National Manufacturer Licence от National Gambling Board.'],
+ ['MINCETUR','Перу','1 лицензия','PT0000043 — спортсбук, казино и live-казино.'],
+ ['Secretary of Prizes and Betting','Бразилия','1 лицензия','Ordinance SPA/MF No. 254/2025 — ставки на спорт и онлайн-игры.'],
+ ['Gaming Board Bahamas','Багамы','Supplier','SUP0022 — игровое ПО и компоненты.'],
+ ['PlayCity','Украина','B2B','Решение N 150-Р от 12.11.25 — услуги в сфере азартных игр.'],
+ ['Оператор','Мальта','юрлицо','Soft Construct (Malta) Ltd, рег. № C45929, Мальта.']
 ];
+const CERTS=[
+ ['GLI','60+ сертификатов','Игры, платформы и генератор случайных чисел BC Centralized RNG v3.1 — в юрисдикциях Великобритания, Мальта, Нидерланды, Дания, Румыния, Литва, Латвия, Греция, Болгария, Грузия, Колумбия, Аргентина, Перу и Онтарио (Канада). Платформа PAM и Sportsbook сертифицированы для Онтарио и Колумбии.'],
+ ['ISO/IEC 27001:2013','весь мир','Международный стандарт информационной безопасности (ITA).'],
+ ['BMM','Румыния','Онлайн-платформа, Sportsbook и интеграция игр.'],
+ ['MGA','Мальта','Сертификаты на собственные игры: Talisman, Big Hi-Lo, Blast и Striker.'],
+ ['Mazars и ANJ','Франция','Ежегодная сертификация.']
+];
+
 function regional(){
+  const row=(name,right,inner)=>`<details class="prow"><summary><span class="pn">${name}<span class="car">${ic('chevD')}</span></span><span class="pp">${right}</span></summary>${inner}</details>`;
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('globe')} Regional / Jurisdiction</h2><p class="sub">Регион-специфичные предложения — подберём решение под ваш рынок и юрисдикцию (USA, Asia, Africa, Europe и др.).</p>
-    <div class="h2" style="margin:4px 0 10px;padding:0"><span class="lft">Регионы</span></div>
-    <div class="pcat"><div class="body" style="display:block;border:none">
-      ${REGIONS.map(r=>`<div style="padding:12px 16px;border-top:1px solid var(--line)"><div style="display:flex;align-items:center;gap:9px"><i class="ti ti-map-pin" style="display:none"></i>${ic('pin')}<b style="font-size:14px">${r[1]}</b></div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${r[2]}</div></div>`).join('')}
+    <div class="solpick">
+      <div class="ttl">${ic('bulb')} Для чего этот раздел</div>
+      <div class="li">Где вы можете работать легально и что для этого понадобится. Сначала выбирают рынок — от него зависят лицензия, разрешённые продукты и платежи.</div>
+    </div>
+    <div class="pcat"><div class="solfacts" style="margin:0;border:none">
+      <div><b>15</b><span>стран с лицензиями</span></div><div><b>25+</b><span>лицензий</span></div><div><b>60+</b><span>сертификатов GLI</span></div>
     </div></div>
-    <div class="h2" style="margin:16px 0 10px;padding:0"><span class="lft">Лицензии и сертификаты</span></div>
-    <div class="pcat"><div class="body" style="display:block;border:none">
-      ${LICENSES.map(l=>`<div style="padding:12px 16px;border-top:1px solid var(--line)"><div style="display:flex;align-items:center;gap:9px">${ic('badge')}<b style="font-size:14px">${l[0]}</b></div><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${l[1]}</div></div>`).join('')}
-    </div></div>
+    <div class="h2" style="margin:14px 0 10px;padding:0"><span class="lft">Регионы</span></div>
+    <div class="pcat">
+      ${REGIONS.map(r=>row(r[1],r[5],`<div class="pd">${r[2]}</div><div class="pbody"><div class="pfor"><b>Суть рынка:</b> ${r[3]}</div><div class="pfacts">${r[4]}</div></div>`)).join('')}
+    </div>
+    <div class="h2" style="margin:16px 0 10px;padding:0"><span class="lft">Лицензии</span></div>
+    <div class="pcat">
+      ${LICENSES.map(l=>row(l[0],l[1]+' · '+l[2],`<div class="pbody" style="padding-top:0"><div class="pfacts">${l[3]}</div></div>`)).join('')}
+    </div>
+    <div class="h2" style="margin:16px 0 10px;padding:0"><span class="lft">Сертификаты</span></div>
+    <div class="pcat">
+      ${CERTS.map(c=>row(c[0],c[1],`<div class="pbody" style="padding-top:0"><div class="pfacts">${c[2]}</div></div>`)).join('')}
+    </div>
     <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать регион с AI-советником</button>
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
   </div>`;
