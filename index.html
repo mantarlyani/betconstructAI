@@ -1011,7 +1011,7 @@ function _kbPlat(){
   ].filter(Boolean).join('\n')).join('\n');
 }
 function _kbProducts(){
-  return PCAT.map(c=>'### '+c.cat+'\n'+c.items.map(it=>'  · '+it[0]+' — '+it[1]+(it[2]?(' | цена: '+it[2]):'')).join('\n')).join('\n');
+  return PCAT.map(c=>'### '+c.cat+'\nДля чего: '+c.short+'\n'+c.items.map(it=>'  · '+it[0]+' — '+it[1]+(it[2]?(' | цена: '+it[2]):'')).join('\n')).join('\n');
 }
 function _kbLoyalty(){
   return LTIERS.map(tr=>'  · '+tr.name+' ('+tr.vip+'): '+tr.lv.map(l=>'ур.'+l[0]+' — '+fmtN(l[1])+' XP → +'+fmtN(l[2])+' CIC').join('; ')).join('\n');
@@ -1356,14 +1356,18 @@ function platforms(){
   </div>`;
 }
 const PCAT=[
- {cat:'Ставки и казино',ic:'ball',items:[
+ {cat:'Ставки и казино',ic:'ball',
+  short:'Сами продукты, на которых игрок делает ставку. С них начинается любой проект — без них остальное не нужно.',
+  items:[
    ['Sportsbook','90 000+ live-матчей, доступно на 20+ языках','от €19.9K'],
    ['Esport','Ставки на LoL, CS:GO, DOTA2, Overwatch, Starcraft и др.','от €10K'],
    ['Virtual Sports','9 виртуальных видов спорта, нон-стоп, здоровая маржа','€10K'],
    ['Casino Platform','45 000+ игр от BetConstruct и топ-провайдеров','€10K'],
    ['Live Casino','Живые дилеры + возможности роста бизнеса','€10K']
  ]},
- {cat:'Data Feed',ic:'chart',items:[
+ {cat:'Data Feed',ic:'chart',
+  short:'Данные, на которых держатся ставки: коэффициенты, live-статистика, трансляции, защита от рисков. Берут отдельно, когда платформа своя.',
+  items:[
    ['Odds Feed','700+ профессиональных трейдеров, отзывчивый odds-фид','от €5K'],
    ['Live Scouting Data','Быстрые и защищённые live-данные для котировок','€6.5 / матч'],
    ['Stats Widgets','Все спорт-данные на одной странице','€1.75K / мес'],
@@ -1371,7 +1375,9 @@ const PCAT=[
    ['BetGuard','Защита трейдинга от рисков и финансовых потерь','от €15K + RevShare'],
    ['Dataspot','Аналитика поведения и предпочтений игроков','по запросу']
  ]},
- {cat:'Платформы',ic:'puzzle',items:[
+ {cat:'Платформы',ic:'puzzle',
+  short:'Оболочка, в которой живут продукты: сайт, приложение, витрина бетшопа. Отвечает за то, как всё выглядит и кто этим управляет.',
+  items:[
    ['CMS Pro','Гибкая масштабируемая система управления контентом','по запросу'],
    ['SpringBuilder X','No-code конструктор mobile-first сайта','по запросу'],
    ['Native Apps','Нативные приложения iOS/Android для продуктов BC','по запросу'],
@@ -1381,7 +1387,9 @@ const PCAT=[
    ['LOYA','Платформа клиентской лояльности','по запросу'],
    ['Bet Easy','Кросс-платформенные мобильные приложения (iOS/Android)','по запросу']
  ]},
- {cat:'Операционные инструменты',ic:'gear',items:[
+ {cat:'Операционные инструменты',ic:'gear',
+  short:'То, чем управляют бизнесом после запуска: удержание игроков, маркетинг, риски, аналитика, агентская сеть.',
+  items:[
    ['Last Battle','Лояльность нового уровня с кастомными журналами','по запросу'],
    ['Last Battle Universe (B2B)','Первая B2B-система лояльности, до 100% cashback на setup','по запросу'],
    ['Affiliate Ecosystem','ПО + управление + сеть: мост между аффилейтами и операторами','по запросу'],
@@ -1394,9 +1402,11 @@ const PCAT=[
    ['iGaming BOT','Перенос iGaming-бизнеса в Telegram','по запросу'],
    ['BetNetwork','Соцфичи: чаты, комьюнити, друзья','по запросу'],
    ['CRM AI','Таргетированные маркетинг-кампании','€1.5K / мес'],
-   ['AI Game Recommendation','Гипер-релевантные рекомендации игр','по запросу']
+   ['AI Lobby Personalization','Персональное лобби: подборка игр под каждого игрока','по запросу']
  ]},
- {cat:'Games Suite (игры)',ic:'dice',items:[
+ {cat:'Games Suite (игры)',ic:'dice',
+  short:'Собственные игры BetConstruct. Отличают вас от операторов с одинаковым набором слотов от тех же провайдеров.',
+  items:[
    ['Pool Masters','Прогнозы исходов и общий призовой фонд','€2K'],
    ['Poker','Богатый онлайн-функционал, для новичков и про','€10K'],
    ['Social Gaming','Кастомные социальные казино-игры под ваш бренд','€25K'],
@@ -1424,6 +1434,7 @@ function catalog(){
     ${PACKS.map(p=>`<div class="pcat" style="padding:14px 16px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b style="font-size:15px">${p[0]}</b><span style="color:var(--mag);font-weight:800;font-size:15px;white-space:nowrap">${p[1]}</span></div><div style="font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5">${p[2]}</div></div>`).join('')}
     <div class="h2" style="margin:16px 0 10px;padding:0"><span class="lft">Продукты по категориям</span></div>
     ${PCAT.map((c,i)=>`<div class="pcat" id="cat${i}"><div class="hd" onclick="togglePc('cat${i}')"><span class="l">${ic(c.ic)} ${c.cat}</span><span class="more">${c.items.length} · ${ic('chevD')}</span></div>
+      <div class="solhint">${ic('bulb')}<div><div class="what">${c.short}</div></div></div>
       <div class="body">
         ${c.items.map(it=>`<div style="padding:11px 16px;border-top:1px solid var(--line)"><b style="font-size:14px">${it[0]}</b><div style="font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5">${it[1]}</div></div>`).join('')}
       </div></div>`).join('')}
