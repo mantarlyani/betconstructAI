@@ -131,6 +131,15 @@ async function znote(token, module, id, title, content) {
   const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/${module}/${id}/Notes`, { method: 'POST', headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [{ Note_Title: title || 'Заметка', Note_Content: content || '' }] }) });
   let d = {}; try { d = await r.json(); } catch (e) {} return { ok: r.ok, d };
 }
+// Выборка по всей команде (без фильтра владельца) — для админ-CRM.
+async function coqlAll(token, module, fields) {
+  const q = `select ${fields} from ${module} where Created_Time > '2000-01-01T00:00:00+04:00' order by Modified_Time desc limit 200`;
+  const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/coql`, { method: 'POST', headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ select_query: q }) });
+  if (r.status === 204) return { data: [] };
+  let d = {}; try { d = await r.json(); } catch (e) {}
+  if (!r.ok) return { data: [], error: (d && (d.message || d.code)) || ('HTTP ' + r.status) };
+  return { data: (d && d.data) || [] };
+}
 async function zget(token, path) {
   const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/${path}`, { headers: { Authorization: 'Zoho-oauthtoken ' + token } });
   if (r.status === 204) return { data: [] };
@@ -190,6 +199,21 @@ export default async function handler(req, res) {
 
   const auth = await authUser(req);
   const isAdmin = !!auth && auth.role === 'admin';
+
+  // Командный CRM (все владельцы) — только для админа.
+  if (req.query && req.query.team) {
+    if (!auth) return res.status(401).json({ error: 'auth required' });
+    if (auth.role !== 'admin') return res.status(403).json({ error: 'admin only' });
+    if (!CID || !SECRET || !RT) return res.status(400).json({ error: 'zoho not configured' });
+    try {
+      const token = await accessToken();
+      const [D, L] = await Promise.all([
+        coqlAll(token, 'Deals', 'id,Deal_Name,Stage,Amount,Closing_Date,Owner.email'),
+        coqlAll(token, 'Leads', 'id,Company,Full_Name,Lead_Status,Owner.email')
+      ]);
+      return res.status(200).json({ deals: D.data, leads: L.data, note: (D.error || L.error) ? ('coql_error: ' + (D.error || L.error)) : undefined });
+    } catch (e) { return res.status(500).json({ error: String((e && e.message) || e) }); }
+  }
 
   // Детальная карточка: одна запись + её заметки. Только авторизованным; сотрудник — только свою.
   if (req.query && req.query.detail) {

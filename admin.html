@@ -526,13 +526,13 @@ let banners=[{title:'Запусти казино за 2 недели',sub:'Turnk
 let idxToggles={quick:true,live:true,promo:true,sections:true};
 
 /* ---------- TABS ---------- */
-const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['accts','Аккаунты','building'],['crm','CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['history','История','clock'],['content','Контент','layout']];
+const TABS=[['dash','Дашборд','dash'],['mod','Заявки на продукт','shield'],['staff','Сотрудники','users'],['zcrm','CRM','crm'],['accts','Аккаунты','building'],['crm','Внутр. CRM','crm'],['agr','Соглашения','shield'],['tasks','Задачи','layout'],['chat','Чат','megaphone'],['docs','Документы','layout'],['stats','Аналитика','chart'],['history','История','clock'],['content','Контент','layout']];
 let cur='dash';
 function renderTabs(){$('#tabs').innerHTML=TABS.map(t=>`<div class="tab ${cur===t[0]?'on':''}" onclick="go('${t[0]}')">${ic(t[2])}${t[1]}</div>`).join('');translateDOM($('#tabs'));}
-function go(t){if(t!=='chat'&&t!=='staff')chatBackStaff=null;cur=t;renderTabs();render();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();loadEvents();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();if(t==='dash'||t==='history')loadActionLog();}
+function go(t){if(t!=='chat'&&t!=='staff')chatBackStaff=null;if(t!=='zcrm'&&t!=='staff'){zoDetail=null;zoDetailData=null;}cur=t;renderTabs();render();if(t==='zcrm')loadZTeam();if(t==='mod'||t==='dash'){loadApps();loadVendors();}if(t==='stats'){loadStats();loadVendors();loadEvents();}if(t==='sales'||t==='crm'||t==='dash'){loadLeads();loadShifts();loadDeals();}if(t==='dash')loadEvents();if(t==='docs')loadDocs();if(t==='agr')loadAgreements();if(t==='tasks'||t==='dash')loadTasks();if(t==='chat')loadThreads();if(t==='accts'||t==='sales'||t==='dash')loadAccounts();if(t==='staff'||t==='sales'||t==='crm'||t==='tasks')loadStaff();if(t==='dash'||t==='history')loadActionLog();}
 
 /* ---------- VIEWS ---------- */
-function render(){if(!AUTHED)return;$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,history:vHistory,content:vContent}[cur])();if(KEEP_SCROLL){KEEP_SCROLL=false;}else{window.scrollTo(0,0);}translateDOM(document.body);paintLangSw();}
+function render(){if(!AUTHED)return;$('#main').innerHTML=({dash:vDash,mod:vMod,staff:vStaff,zcrm:vZCrm,accts:vAccounts,sales:vSales,chat:vChat,crm:vCrm,agr:vAgr,tasks:vTasks,docs:vDocs,stats:vStats,history:vHistory,content:vContent}[cur])();if(KEEP_SCROLL){KEEP_SCROLL=false;}else{window.scrollTo(0,0);}translateDOM(document.body);paintLangSw();}
 
 function vDash(){
   const pend=apps.filter(a=>a.status==='pending').length;
@@ -687,6 +687,59 @@ function vStaff(){
       <td data-label="Доступ">${s.id?`<span class="sw ${s.active!==false?'on':''}" onclick="toggleStaffActive('${s.id}',${s.active!==false})"><b></b></span>`:'—'}</td>
       <td data-label="">${s.id?`<button class="btn r sm" onclick="delStaff('${s.id}')">${ic('x')} Удалить</button>`:''}</td></tr>`).join('')}
     </table></div></div>`;
+}
+// --- Командный CRM (все sales), вкладка рядом с Сотрудники ---
+let zteam=null, zteamLoading=false, ztTab='deals', ztFilter='';
+function setZtTab(t){ztTab=t;ztFilter='';render();}
+function setZtFilter(v){ztFilter=(ztFilter===v?'':v);render();}
+function zStaffName(email){const s=staff.find(x=>x.email&&x.email.toLowerCase()===String(email||'').toLowerCase());return s?s.name:(email||'—');}
+async function loadZTeam(force){
+  if(zteamLoading)return; if(zteam&&!force)return;
+  zteamLoading=true;
+  let tok='';try{const{data}=await db.auth.getSession();tok=(data&&data.session&&data.session.access_token)||'';}catch(e){}
+  try{const r=await fetch('/api/zoho?team=1',tok?{headers:{Authorization:'Bearer '+tok}}:{});zteam=await r.json().catch(()=>({error:'Ошибка загрузки'}));}
+  catch(e){zteam={error:'Нет связи'};}
+  zteamLoading=false;if(cur==='zcrm')render();
+}
+function vZCrm(){
+  if(zoDetail)return zoDetailCard();
+  const head=`<div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">${ic('crm')} CRM команды · Zoho</h2><button class="btn sec sm" onclick="loadZTeam(true)">↻ Обновить</button></div>`;
+  const z=zteam;
+  if(!z)return `${head}<p class="sub">Загрузка из Zoho…</p>`;
+  if(z.error)return `${head}<div class="card"><p class="sub">${esc(z.error)}</p></div>`;
+  const D=(z.deals||[]).map(d=>({id:d.id,name:d.Deal_Name||'—',stage:d.Stage||'—',amount:Number(d.Amount||0),owner:d['Owner.email']||''}));
+  const L=(z.leads||[]).map(l=>({id:l.id,company:l.Company||'—',name:l.Full_Name||'',status:l.Lead_Status||'',owner:l['Owner.email']||''}));
+  const money=n=>'€'+Number(n||0).toLocaleString('ru-RU');
+  const chip=(val,lab,active)=>`<span onclick="setZtFilter('${String(val).replace(/'/g,"\\'")}')" style="cursor:pointer;padding:3px 10px;border-radius:999px;font-size:12px;white-space:nowrap;border:1px solid ${active?'var(--mag)':'var(--line,#e7e2e8)'};background:${active?'#faf2f6':'var(--card,#fff)'};color:${active?'var(--mag)':'inherit'}">${esc(lab)}</span>`;
+  const chipsWrap=i=>`<div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;overflow-x:auto">${i}</div>`;
+  const tabBtn=(k,lab,n)=>`<button class="btn ${ztTab===k?'':'sec'} sm" onclick="setZtTab('${k}')">${lab} <span class="pill">${n}</span></button>`;
+  const total=D.reduce((a,d)=>a+d.amount,0),won=D.filter(d=>zoWon(d.stage)).reduce((a,d)=>a+d.amount,0);
+  const note=z.note?`<p class="sub" style="color:var(--red,#d63d38)">⚠ ${esc(z.note)}</p>`:'';
+  let body='';
+  if(ztTab==='deals'){
+    const present=[...new Set(D.map(d=>d.stage))];
+    const stages=DEAL_STAGE_ORDER.filter(s=>present.includes(s)).concat(present.filter(s=>!DEAL_STAGE_ORDER.includes(s)));
+    const chips=chipsWrap(chip('','Все стадии',!ztFilter)+stages.map(s=>chip(s,s+' ('+D.filter(d=>d.stage===s).length+')',ztFilter===s)).join(''));
+    const show=ztFilter?stages.filter(s=>s===ztFilter):stages;
+    const row=d=>`<div class="fbar"><span style="flex:1;min-width:120px"><b style="color:var(--mag);cursor:pointer" onclick="openZoDetail('Deals','${d.id}')">${esc(d.name)}</b><br><span class="sub" style="font-size:11px">👤 ${esc(zStaffName(d.owner))}</span></span><b style="white-space:nowrap">${money(d.amount)}</b></div>`;
+    const groups=show.map(s=>{const list=D.filter(d=>d.stage===s);const sum=list.reduce((a,d)=>a+d.amount,0);return `<div style="margin-top:10px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:13px">${zoWon(s)?'🏆 ':zoLost(s)?'✖ ':''}${esc(s)}</b><span class="sub">${list.length} · ${money(sum)}</span></div>${list.length?list.map(row).join(''):'<p class="sub" style="margin:4px 0">—</p>'}</div>`;}).join('');
+    body=`${chips}${D.length?groups:'<p class="sub">Сделок в Zoho нет.</p>'}`;
+  } else {
+    const present=[...new Set(L.map(l=>l.status).filter(Boolean))];
+    const statuses=LEAD_STATUS_ORDER.filter(s=>present.includes(s)).concat(present.filter(s=>!LEAD_STATUS_ORDER.includes(s)));
+    const chips=chipsWrap(chip('','Все',!ztFilter)+statuses.map(s=>chip(s,s+' ('+L.filter(l=>l.status===s).length+')',ztFilter===s)).join(''));
+    const list=ztFilter?L.filter(l=>l.status===ztFilter):L;
+    body=`${chips}${list.length?list.map(l=>`<div class="fbar"><span style="flex:1;min-width:120px"><b style="color:var(--mag);cursor:pointer" onclick="openZoDetail('Leads','${l.id}')">${esc(l.company)}</b> <span class="sub">${esc(l.name)}</span><br><span class="sub" style="font-size:11px">👤 ${esc(zStaffName(l.owner))}</span></span><span class="pill">${esc(l.status||'—')}</span></div>`).join(''):'<p class="sub">Лидов нет.</p>'}`;
+  }
+  return `${head}<p class="sub">Лиды и сделки всей команды из Zoho (по всем владельцам). Клик по записи — детальная карточка.</p>${note}
+  <div class="kpis">
+    <div class="kpi"><div class="n">${D.length}</div><div class="l">Сделки</div></div>
+    <div class="kpi"><div class="n">${money(total)}</div><div class="l">Сумма</div></div>
+    <div class="kpi"><div class="n">${money(won)}</div><div class="l">Выиграно</div></div>
+    <div class="kpi"><div class="n">${L.length}</div><div class="l">Лиды</div></div>
+  </div>
+  <div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">${tabBtn('deals','Сделки',D.length)}${tabBtn('leads','Лиды',L.length)}</div>
+  <div class="card">${body}</div>`;
 }
 function zohoCard(s){
   const email=s&&s.email;
