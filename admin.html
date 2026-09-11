@@ -718,9 +718,6 @@ function zohoCard(s){
 }
 function vStaffDetail(){
   const s=staff.find(x=>x.id===activeStaff)||{};
-  const myLeads=leadsData.filter(l=>l.owner===s.name);
-  const myDeals=deals.filter(d=>[d.resp,d.ssales,d.pm,d.am].includes(s.name));
-  const emails=staffComms.filter(m=>m.channel==='email');
   return `<div class="row" style="margin-bottom:10px"><button class="btn sec sm" onclick="closeStaff()">‹ Вся команда</button></div>
   <div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><h3 style="margin:0">${s.name||'—'}</h3><span class="sub">${s.role||''} · ${s.login||''}</span></div>
     <span style="color:${isOnlineNow(s.name)?'var(--green)':'var(--muted)'};font-weight:700">${isOnlineNow(s.name)?'● в сети':'○ офлайн'}</span></div>
@@ -733,32 +730,12 @@ function vStaffDetail(){
     <div class="row" style="margin-top:12px;align-items:center;gap:10px">
       ${s.gmail_connected?`<span class="st ap">✓ Gmail подключён</span> <span class="sub">${s.email||''}</span> <a class="btn sec sm" href="/api/gmail-auth-start?staff=${s.id}" target="_blank">Переподключить</a>`:`<a class="btn sm" href="/api/gmail-auth-start?staff=${s.id}" target="_blank">✉ Подключить Gmail</a> <span class="sub">двусторонняя синхронизация почты</span>`}</div></div>
   ${zohoCard(s)}
-  <div class="kpis">
-    <div class="kpi"><div class="n">${myLeads.length}</div><div class="l">Лиды</div></div>
-    <div class="kpi"><div class="n">${myDeals.length}</div><div class="l">Сделки</div></div>
-    <div class="kpi"><div class="n">${myDeals.filter(d=>d.stage==='won').length}</div><div class="l">Closed Won</div></div>
-    <div class="kpi"><div class="n">${emails.length}</div><div class="l">Письма</div></div>
-    <div class="kpi"><div class="n">${s.shifts_total||0}</div><div class="l">Смен</div></div>
-  </div>
-  <div class="grid2">
-    <div class="card"><h3>${ic('star')} Продажи и выплаты</h3>
-      <div class="kpis" style="margin-bottom:12px">
-        <div class="kpi"><div class="n">${s.deals||myDeals.length||0}</div><div class="l">Сделок</div></div>
-        <div class="kpi"><div class="n">€${(s.payout||0).toLocaleString('ru-RU')}</div><div class="l">К выплате</div></div>
-        <div class="kpi"><div class="n">${s.conv||0}%</div><div class="l">Конверсия</div></div>
-      </div>
-      <div class="row"><button class="btn sm" onclick="chatBackStaff='${s.id}';go('chat')">${ic('megaphone')} Чаты менеджера</button>
-        <button class="btn sec sm" onclick="toast('Выплата поставлена в очередь')">Отметить выплату</button></div></div>
-    <div class="card"><h3>${ic('clock')} Присутствие</h3>
-      <label>Дата</label><input type="date" value="${presDate}" onchange="setPresDate(this.value)" style="max-width:190px">
-      ${presenceCard(s,true)}</div>
-  </div>
-  <div class="grid2">
-    <div class="card"><h3>${ic('crm')} Лиды (${myLeads.length})</h3>${myLeads.length?myLeads.slice(0,12).map(l=>`<div class="fbar"><span style="flex:1"><b>${esc(l.product||l.vendor||'—')}</b><br><span class="sub" style="font-size:11.5px">${esc(l.visitor_name||'Гость')}${l.contact?(' · '+esc(l.contact)):''}</span></span><span class="st ${l.source==='cart'?'pt':'nw'}" style="font-size:10px">${l.source==='cart'?'корзина':'демо'}</span></div>`).join(''):'<p class="sub">Нет лидов.</p>'}</div>
-    <div class="card"><h3>${ic('crm')} Сделки (${myDeals.length})</h3>${myDeals.length?myDeals.map(d=>`<div class="fbar" style="cursor:pointer" onclick="go('crm');openDeal('${d.id}')"><span style="flex:1"><b>${d.client}</b> <span class="sub">${d.id}</span></span><span class="pill">${stageName(d.stage)}</span></div>`).join(''):'<p class="sub">Нет сделок.</p>'}</div>
-  </div>
-  <div class="card"><h3>${ic('megaphone')} Почтовая переписка по сделкам (${emails.length})</h3>
-    ${emails.length?emails.map(m=>`<div class="fbar" style="align-items:flex-start"><span style="width:22px">✉</span><div style="flex:1"><span class="st ${m.direction==='in'?'ap':'pt'}" style="font-size:10px">${m.direction==='in'?'входящее':'исходящее'}</span>${m.subject?` <b>${m.subject}</b>`:''}<br><span style="font-size:13px">${(m.body||'').slice(0,180).replace(/</g,'&lt;')}</span></div><span class="sub" style="white-space:nowrap">${(m.created_at||'').slice(0,16).replace('T',' ')}</span></div>`).join(''):'<p class="sub">Переписки пока нет. Появится после подключения почты (пересылка/BCC на /api/email-inbound).</p>'}</div>`;
+  <div class="card"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <h3 style="margin:0">${ic('clock')} Присутствие и смены</h3>
+      <div class="row" style="gap:8px;align-items:center"><span class="sub"><b>${s.shifts_total||0}</b> смен в графике · ${s.shifts_weekend||0} вых.</span>
+        <button class="btn sec sm" onclick="chatBackStaff='${s.id}';go('chat')">${ic('megaphone')} Чаты менеджера</button></div></div>
+    <label>Дата</label><input type="date" value="${presDate}" onchange="setPresDate(this.value)" style="max-width:190px">
+    ${presenceCard(s,true)}</div>`;
 }
 function addStaff(){const n=($('#s_name')||{}).value||'';const r=($('#s_role')||{}).value||'Sales';const em=($('#s_email')||{}).value||'';
   if(!n.trim()){toast('Укажите имя');return;}
