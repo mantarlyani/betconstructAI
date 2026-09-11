@@ -763,13 +763,24 @@ function sendCart(){
 }
 let vendorSel=null;
 function goVendor(i){vendorSel=(window.MKT_LIST||[])[i];track('click','vendor_open',{name:vendorSel&&vendorSel[0]});render('vendor');}
+// продукт BetConstruct в Marketplace — подтягиваем «для чего», факты и живой пример из разделов сайта
+function bcInfo(name){
+  const it=PCAT.flatMap(c=>c.items).find(x=>x[0]===name), so=SOL.find(x=>x.name===name), pl=PLAT.find(x=>x.name===name);
+  const q=QUICK.find(x=>x[3]===name&&x[5]);
+  const short=it?it[4]:so?so.short:pl?pl.short:'', facts=it?it[3]:(so||pl)&&(so||pl).facts?(so||pl).facts.map(f=>f[0]+' '+f[1]).join(' · '):'';
+  return (short||facts||q)?{short,facts,demo:q?q[5]:''}:null;
+}
 function vendor(){
   const v=vendorSel;if(!v)return market();
+  const bi=v[3]==='bc'?bcInfo(v[0]):null;
   return header()+`<div class="page"><div class="back" onclick="go('market')">${ic('chevL')} ${t('back')}</div>
     <div class="vcard"><div class="vtop"><div class="vlogo">${ic('building')}</div>
       <div class="vmain"><div class="vname" style="font-size:19px">${v[0]}</div><div class="vcat">${v[1]}</div>
-        <div class="vbadges">${badgeHTML(v[3])}<span class="vb geo">${ic('pin')} ${v[6]}</span></div></div></div></div>
-    <div class="pcat" style="padding:14px 16px;margin-top:12px"><div style="font-size:13.5px;line-height:1.6">${v[2]||'—'}</div></div>
+        <div class="vbadges">${badgeHTML(v[3])}${(v[6]&&v[6]!=='—')?`<span class="vb geo">${ic('pin')} ${v[6]}</span>`:''}</div></div></div></div>
+    <div class="pcat" style="padding:14px 16px;margin-top:12px"><div style="font-size:13.5px;line-height:1.6">${v[2]||'—'}</div>
+      ${bi&&bi.short?`<div class="solneed" style="margin-top:12px">${ic('bulb')}<div><b>Для чего:</b> ${bi.short}</div></div>`:''}
+      ${bi&&bi.facts?`<div style="font-size:12.5px;line-height:1.6;color:var(--muted);border-left:2px solid var(--mag);padding-left:11px;margin-top:12px">${bi.facts}</div>`:''}</div>
+    ${bi&&bi.demo?`<a class="btn" href="${bi.demo}" target="_blank" rel="noopener" style="text-decoration:none;margin-bottom:8px">${ic('external')} Смотреть вживую на VBET</a>`:''}
     <div class="pcat"><div class="body" style="display:block;border:none">
       <div style="padding:11px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px"><span style="color:var(--muted)">Категория</span><b>${v[1]||'—'}</b></div>
       ${v[8]?`<div style="padding:11px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px"><span style="color:var(--muted)">Цена</span><b style="color:var(--mag)">${v[8]}</b></div>`:''}
@@ -976,6 +987,10 @@ function partners(){
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div><h2>${ic('users')} ${t('nav')[4]}</h2><p class="sub">${t('partnersSub')}</p>
     <div class="lcard" style="width:100%;margin-bottom:10px" onclick="go('market')">${ic('store')} ${t('buy')}</div>
     <div class="lcard" style="width:100%;margin-bottom:14px" onclick="go('partner')">${ic('briefcase')} ${t('provide')}</div>
+    ${ps.length?'':`<div class="pcat" style="padding:22px 18px;text-align:center"><div style="font-size:30px;color:var(--mag)">${ic('users')}</div>
+      <b style="display:block;font-size:15px;margin:8px 0 6px">${lang==='en'?'No partners here yet':lang==='hy'?'Այստեղ դեռ գործընկերներ չկան':'Партнёров пока нет — место свободно'}</b>
+      <div style="font-size:13px;color:var(--muted);line-height:1.55;max-width:34ch;margin:0 auto 14px">${lang==='en'?'List your product first: after moderation it appears in the Marketplace and in AI advisor recommendations.':lang==='hy'?'Տեղադրեք ձեր ապրանքը առաջինը․ մոդերացիայից հետո այն կհայտնվի Marketplace-ում և AI խորհրդատուի առաջարկներում։':'Разместите продукт первым: после модерации он появится в Marketplace и в рекомендациях AI-советника.'}</div>
+      <button class="btn" onclick="go('partner')">${ic('briefcase')} ${t('provide')}</button></div>`}
     ${ps.map(p=>`<div class="pcat"><div class="hd"><span class="l">${ic('building')} ${esc(p.company)}</span><span class="more">${(p.status==='approved')?ic('star')+' Approved':'на проверке'}</span></div>
       <div class="body" style="display:block;border-top:1px solid var(--line)"><div style="padding:10px 16px;font-size:12.5px;color:var(--muted);line-height:1.5">${esc(p.category||'')}${p.regions?(' · '+esc(p.regions)):''}${p.contact?(' · '+esc(p.contact)):''}</div></div></div>`).join('')}</div>`;
 }
@@ -1120,8 +1135,11 @@ function navKB(){
   ].join('\n');
 }
 function buildKB(){
-  const v='# MARKETPLACE — продукты вендоров\n'+_vlist().map(v=>`• ${v.name} [${v.category||'—'}] — ${v.desc||''}; регионы: ${v.regions||'—'}; статус: ${v.status||'—'}`).join('\n');
-  const p='# ПАРТНЁРЫ — производители\n'+_plist().map(x=>`• ${x.company} — ${x.category||''}; статус: ${x.status||''}`).join('\n');
+  const vl=_vlist(), pl=_plist();
+  const v='# MARKETPLACE — продукты вендоров\n'+(vl.length?vl.map(v=>`• ${v.name} [${v.category||'—'}] — ${v.desc||''}; регионы: ${v.regions||'—'}; статус: ${v.status||'—'}`).join('\n')
+    :'Сторонних вендоров на платформе пока нет. НЕ называй и не придумывай вендоров — рекомендуй продукты BetConstruct из данных выше; производителю предложи разместить продукт через форму «Стать партнёром».');
+  const p='# ПАРТНЁРЫ — производители\n'+(pl.length?pl.map(x=>`• ${x.company} — ${x.category||''}; статус: ${x.status||''}`).join('\n')
+    :'Партнёров-производителей на платформе пока нет. НЕ называй и не придумывай партнёров.');
   return [bcKB(),navKB(),v,p].join('\n\n');
 }
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
