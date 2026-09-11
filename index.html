@@ -1037,7 +1037,7 @@ function bcKB(){
   L.push('\n## Платформы и конструкторы (цены за лицензию/сетап)\n'+_kbPlat());
   L.push('\n## Пакеты и цены\n'+PACKS.map(p=>'  · '+p[0]+' — '+p[1]+': '+p[2]).join('\n'));
   L.push('\n## Продукты по категориям\n'+_kbProducts());
-  L.push('\n## Backoffice / Spring BME (единая облачная консоль, console.betconstruct.com)\n'+BME.map(b=>'  · '+b[0]+': '+b[1]).join('\n'));
+  L.push('\n## Backoffice / Spring BME (единая облачная консоль, console.betconstruct.com)\nBackOffice — управление работающим бизнесом; Spring BME — сборка и расширение проекта. Кому: начинающим операторам, действующим партнёрам, выбирающим White Label. Запуск: создать проект в консоли → добавить продукты → включить инструменты (CMS, бэкофис, CRM) → управлять из одной платформы. Есть бесплатная пробная версия.\n'+BME.map(b=>'  · '+b[0]+' — для чего: '+b[1]+' Детали: '+b[2]).join('\n'));
   L.push('\n## Регионы и юрисдикции\n'+REGIONS.map(r=>'  · '+r[1]+': '+r[2]).join('\n'));
   L.push('\n## Лицензии и сертификаты\n'+LICENSES.map(l=>'  · '+l[0]+': '+l[1]).join('\n'));
   L.push('\n## Платежи\n'+PAY.map(p=>'  · '+p[1]+': '+p[2]).join('\n'));
@@ -1460,17 +1460,37 @@ function catalog(){
   </div>`;
 }
 const BME=[
- ['Что такое Spring BME','Платформа со всем необходимым для гейминг/беттинг-бизнеса: создаёшь проект за минуты, добавляешь iGaming-продукты, включаешь/выключаешь инструменты (CMS, бэкофис и др.). White Label — заявка прямо из консоли. Всё управление из одного места — экономит время, силы и ресурсы.'],
- ['26+ продуктов','Награждённые Sportsbook и Casino, poker, live casino, sports betting, а также собственные игры (Talisman, Blast и др.) — легко интегрируются в бизнес.'],
- ['Инструменты','Конструкторы сайта (SpringBuilder, Classic CMS) без технических навыков; маркетинг: Affiliate-маркетинг и CRM — продвижение и управление данными клиентов.'],
- ['Услуги','Для старта и для действующих партнёров: поддержка, маркетинг, трейдинг, риск-менеджмент — от экспертов индустрии.'],
- ['True iGaming Diversity','Продукты BetConstruct + сторонние (3rd party) продукты, инструменты и услуги — соберите полноценный iGaming-сайт. Внутри: iGaming Solutions, Request Demo, Become Partner.']
+ ['BackOffice','Центр управления операцией: игроки, деньги, ставки и риски — в одном окне.',
+  'Аккаунты игроков и их верификация; транзакции, депозиты и выводы; все ставки с историей; настройка лимитов и маржи; риск-менеджмент и защита от фрода; отчётность и мониторинг по казино и спортсбуку. Входит в Turnkey, White Label и API — отдельно подключать не нужно.'],
+ ['Что такое Spring BME','Облачная консоль, где собирают и запускают весь iGaming-проект — без переписки с менеджерами.',
+  'Платформа со всем необходимым для гейминг/беттинг-бизнеса: создаёшь проект за минуты, добавляешь iGaming-продукты, включаешь/выключаешь инструменты (CMS, бэкофис и др.). White Label — заявка прямо из консоли. Всё управление из одного места — экономит время, силы и ресурсы. Есть бесплатная пробная версия.'],
+ ['26+ продуктов','Готовая витрина: подключаешь нужный продукт кнопкой, а не отдельным договором.',
+  'Награждённые Sportsbook и Casino, poker, live casino, sports betting, а также собственные игры (Talisman, Blast и др.) — легко интегрируются в бизнес.'],
+ ['Инструменты','Сайт и маркетинг силами своей команды, без программистов.',
+  'Конструкторы сайта (SpringBuilder, Classic CMS) без технических навыков; маркетинг: Affiliate-маркетинг и CRM — продвижение и управление данными клиентов.'],
+ ['Услуги','Экспертиза, которой нет в своей команде, — по подписке.',
+  'Для старта и для действующих партнёров: поддержка, маркетинг, трейдинг, риск-менеджмент — от экспертов индустрии.'],
+ ['True iGaming Diversity','Не только продукты BetConstruct: сторонние решения подключаются там же.',
+  'Продукты BetConstruct + сторонние (3rd party) продукты, инструменты и услуги — соберите полноценный iGaming-сайт. Внутри: iGaming Solutions, Request Demo, Become Partner.']
 ];
 function bme(){
   return header()+`<div class="page"><div class="back" onclick="go('home')">${ic('chevL')} ${t('back')}</div>
     <h2>${ic('gear')} Backoffice / BME</h2><p class="sub">Spring BME — создавай, управляй и развивай iGaming-бизнес из единой облачной консоли.</p>
-    ${BME.map((b,i)=>`<div class="pcat" id="bme${i}"><div class="hd" onclick="togglePc('bme${i}')"><span class="l">${b[0]}</span><span class="more">${ic('chevD')}</span></div>
-      <div class="body" style="padding:13px 16px"><div style="font-size:13.5px;color:var(--muted);line-height:1.6">${b[1]}</div></div></div>`).join('')}
+    <div class="solpick">
+      <div class="ttl">${ic('bulb')} Для чего этот раздел</div>
+      <div class="li">BackOffice — чем вы <b>управляете</b> работающим бизнесом каждый день. Spring BME — где вы этот бизнес <b>собираете</b> и расширяете.</div>
+      <div class="li"><b>Кому:</b> начинающим операторам, действующим партнёрам и тем, кто выбирает White Label.</div>
+    </div>
+    <div class="solpick" style="background:var(--card)">
+      <div class="ttl">${ic('check')} Как запускается проект в BME</div>
+      <div class="li"><b>1.</b> Создаёте проект в консоли — за минуты.</div>
+      <div class="li"><b>2.</b> Добавляете нужные iGaming-продукты.</div>
+      <div class="li"><b>3.</b> Включаете инструменты: CMS, бэкофис, CRM.</div>
+      <div class="li"><b>4.</b> Управляете всем бизнесом из одной платформы.</div>
+    </div>
+    ${BME.map((b,i)=>`<div class="pcat" id="bme${i}"><div class="hd" onclick="togglePc('bme${i}')"><span class="l">${b[0]}</span><span class="more">Подробно ${ic('chevD')}</span></div>
+      <div class="solhint">${ic('bulb')}<div><div class="what">${b[1]}</div></div></div>
+      <div class="body" style="padding:13px 16px"><div style="font-size:13.5px;color:var(--muted);line-height:1.6">${b[2]}</div></div></div>`).join('')}
     <a class="btn" href="https://console.betconstruct.com/" target="_blank" rel="noopener" style="text-decoration:none;margin-top:6px">${ic('external')} Открыть BME-консоль</a>
     <button class="btn" onclick="advise()">${ic('sparkles')} Подобрать с AI-советником</button>
     <button class="btn" style="margin-top:8px;background:var(--card);color:var(--mag);border:1px solid var(--mag)" onclick="go('chat')">${ic('message')} Обсудить с менеджером</button>
