@@ -123,7 +123,9 @@ export default async function handler(req, res) {
     try {
       const t = await accessToken();
       let users = 0, uerr; try { const U = await zohoUsers(t); users = (U.list || []).length; uerr = U.error; } catch (e) { uerr = String(e && e.message || e); }
-      return res.status(200).json({ health: true, env, token_ok: true, zoho_users: users, users_error: uerr });
+      // Проба COQL (нужен scope ZohoCRM.coql.READ). Не возвращаем данные — только ok/ошибку.
+      let coql_ok = false, coql_error; try { const P = await coqlByOwner(t, 'Contacts', '__healthcheck__@none.invalid', 'id'); coql_ok = !P.error; coql_error = P.error; } catch (e) { coql_error = String(e && e.message || e); }
+      return res.status(200).json({ health: true, env, token_ok: true, zoho_users: users, users_error: uerr, coql_ok, coql_error });
     } catch (e) {
       return res.status(200).json({ health: true, env, token_ok: false, error: String((e && e.message) || e) });
     }
