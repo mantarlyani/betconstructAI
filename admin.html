@@ -689,9 +689,11 @@ function vStaff(){
     </table></div></div>`;
 }
 // --- Командный CRM (все sales), вкладка рядом с Сотрудники ---
-let zteam=null, zteamLoading=false, ztTab='deals', ztFilter='';
+let zteam=null, zteamLoading=false, ztTab='deals', ztFilter='', ztOwner='';
 function setZtTab(t){ztTab=t;ztFilter='';render();}
 function setZtFilter(v){ztFilter=(ztFilter===v?'':v);render();}
+function setZtOwner(v){ztOwner=v;ztFilter='';render();}
+function drillOwner(email){ztOwner=email;ztTab='deals';ztFilter='';render();}
 function zStaffName(email){const s=staff.find(x=>x.email&&x.email.toLowerCase()===String(email||'').toLowerCase());return s?s.name:(email||'—');}
 async function loadZTeam(force){
   if(zteamLoading)return; if(zteam&&!force)return;
@@ -715,30 +717,45 @@ function vZCrm(){
   const tabBtn=(k,lab,n)=>`<button class="btn ${ztTab===k?'':'sec'} sm" onclick="setZtTab('${k}')">${lab} <span class="pill">${n}</span></button>`;
   const total=D.reduce((a,d)=>a+d.amount,0),won=D.filter(d=>zoWon(d.stage)).reduce((a,d)=>a+d.amount,0);
   const note=z.note?`<p class="sub" style="color:var(--red,#d63d38)">⚠ ${esc(z.note)}</p>`:'';
+  // владельцы (менеджеры) из данных
+  const ownerSet=[...new Set(D.map(d=>d.owner).concat(L.map(l=>l.owner)).filter(Boolean))].sort((a,b)=>zStaffName(a).localeCompare(zStaffName(b)));
+  const ownerSel=`<select onchange="setZtOwner(this.value)" style="max-width:220px"><option value="">Все менеджеры (${ownerSet.length})</option>${ownerSet.map(o=>`<option value="${esc(o)}" ${ztOwner===o?'selected':''}>${esc(zStaffName(o))}</option>`).join('')}</select>`;
+  const DD=ztOwner?D.filter(d=>d.owner===ztOwner):D;
+  const LL=ztOwner?L.filter(l=>l.owner===ztOwner):L;
   let body='';
-  if(ztTab==='deals'){
-    const present=[...new Set(D.map(d=>d.stage))];
+  if(ztTab==='managers'){
+    const agg={};
+    D.forEach(d=>{const o=d.owner||'—';(agg[o]=agg[o]||{deals:0,sum:0,won:0,leads:0}).deals++;agg[o].sum+=d.amount;if(zoWon(d.stage))agg[o].won+=d.amount;});
+    L.forEach(l=>{const o=l.owner||'—';(agg[o]=agg[o]||{deals:0,sum:0,won:0,leads:0}).leads++;});
+    const rows=Object.keys(agg).map(o=>Object.assign({email:o,name:zStaffName(o)},agg[o])).sort((a,b)=>b.sum-a.sum||b.deals-a.deals||b.leads-a.leads);
+    body=`<div style="overflow-x:auto"><table class="mtab cardtab"><tr><th>Менеджер</th><th>Сделки</th><th>Сумма</th><th>Выиграно</th><th>Лиды</th></tr>
+      ${rows.length?rows.map(r=>`<tr>
+        <td data-label="Менеджер"><b style="color:var(--mag);cursor:pointer" onclick="drillOwner('${String(r.email).replace(/'/g,"\\'")}')">${esc(r.name)}</b></td>
+        <td data-label="Сделки">${r.deals}</td><td data-label="Сумма">${money(r.sum)}</td><td data-label="Выиграно">${money(r.won)}</td><td data-label="Лиды">${r.leads}</td></tr>`).join(''):'<tr><td colspan="5"><span class="sub">Нет данных.</span></td></tr>'}
+    </table></div><p class="sub" style="margin-top:8px">Клик по менеджеру — его воронка.</p>`;
+  } else if(ztTab==='deals'){
+    const present=[...new Set(DD.map(d=>d.stage))];
     const stages=DEAL_STAGE_ORDER.filter(s=>present.includes(s)).concat(present.filter(s=>!DEAL_STAGE_ORDER.includes(s)));
-    const chips=chipsWrap(chip('','Все стадии',!ztFilter)+stages.map(s=>chip(s,s+' ('+D.filter(d=>d.stage===s).length+')',ztFilter===s)).join(''));
+    const chips=chipsWrap(chip('','Все стадии',!ztFilter)+stages.map(s=>chip(s,s+' ('+DD.filter(d=>d.stage===s).length+')',ztFilter===s)).join(''));
     const show=ztFilter?stages.filter(s=>s===ztFilter):stages;
     const row=d=>`<div class="fbar"><span style="flex:1;min-width:120px"><b style="color:var(--mag);cursor:pointer" onclick="openZoDetail('Deals','${d.id}')">${esc(d.name)}</b><br><span class="sub" style="font-size:11px">👤 ${esc(zStaffName(d.owner))}</span></span><b style="white-space:nowrap">${money(d.amount)}</b></div>`;
-    const groups=show.map(s=>{const list=D.filter(d=>d.stage===s);const sum=list.reduce((a,d)=>a+d.amount,0);return `<div style="margin-top:10px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:13px">${zoWon(s)?'🏆 ':zoLost(s)?'✖ ':''}${esc(s)}</b><span class="sub">${list.length} · ${money(sum)}</span></div>${list.length?list.map(row).join(''):'<p class="sub" style="margin:4px 0">—</p>'}</div>`;}).join('');
-    body=`${chips}${D.length?groups:'<p class="sub">Сделок в Zoho нет.</p>'}`;
+    const groups=show.map(s=>{const list=DD.filter(d=>d.stage===s);const sum=list.reduce((a,d)=>a+d.amount,0);return `<div style="margin-top:10px"><div class="row" style="justify-content:space-between;align-items:center"><b style="font-size:13px">${zoWon(s)?'🏆 ':zoLost(s)?'✖ ':''}${esc(s)}</b><span class="sub">${list.length} · ${money(sum)}</span></div>${list.length?list.map(row).join(''):'<p class="sub" style="margin:4px 0">—</p>'}</div>`;}).join('');
+    body=`${chips}${DD.length?groups:'<p class="sub">Сделок нет.</p>'}`;
   } else {
-    const present=[...new Set(L.map(l=>l.status).filter(Boolean))];
+    const present=[...new Set(LL.map(l=>l.status).filter(Boolean))];
     const statuses=LEAD_STATUS_ORDER.filter(s=>present.includes(s)).concat(present.filter(s=>!LEAD_STATUS_ORDER.includes(s)));
-    const chips=chipsWrap(chip('','Все',!ztFilter)+statuses.map(s=>chip(s,s+' ('+L.filter(l=>l.status===s).length+')',ztFilter===s)).join(''));
-    const list=ztFilter?L.filter(l=>l.status===ztFilter):L;
+    const chips=chipsWrap(chip('','Все',!ztFilter)+statuses.map(s=>chip(s,s+' ('+LL.filter(l=>l.status===s).length+')',ztFilter===s)).join(''));
+    const list=ztFilter?LL.filter(l=>l.status===ztFilter):LL;
     body=`${chips}${list.length?list.map(l=>`<div class="fbar"><span style="flex:1;min-width:120px"><b style="color:var(--mag);cursor:pointer" onclick="openZoDetail('Leads','${l.id}')">${esc(l.company)}</b> <span class="sub">${esc(l.name)}</span><br><span class="sub" style="font-size:11px">👤 ${esc(zStaffName(l.owner))}</span></span><span class="pill">${esc(l.status||'—')}</span></div>`).join(''):'<p class="sub">Лидов нет.</p>'}`;
   }
-  return `${head}<p class="sub">Лиды и сделки всей команды из Zoho (по всем владельцам). Клик по записи — детальная карточка.</p>${note}
+  return `${head}<p class="sub">Лиды и сделки всей команды из Zoho. Клик по записи — детальная карточка.</p>${note}
   <div class="kpis">
-    <div class="kpi"><div class="n">${D.length}</div><div class="l">Сделки</div></div>
-    <div class="kpi"><div class="n">${money(total)}</div><div class="l">Сумма</div></div>
-    <div class="kpi"><div class="n">${money(won)}</div><div class="l">Выиграно</div></div>
-    <div class="kpi"><div class="n">${L.length}</div><div class="l">Лиды</div></div>
+    <div class="kpi"><div class="n">${DD.length}</div><div class="l">Сделки</div></div>
+    <div class="kpi"><div class="n">${money(DD.reduce((a,d)=>a+d.amount,0))}</div><div class="l">Сумма</div></div>
+    <div class="kpi"><div class="n">${money(DD.filter(d=>zoWon(d.stage)).reduce((a,d)=>a+d.amount,0))}</div><div class="l">Выиграно</div></div>
+    <div class="kpi"><div class="n">${LL.length}</div><div class="l">Лиды</div></div>
   </div>
-  <div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">${tabBtn('deals','Сделки',D.length)}${tabBtn('leads','Лиды',L.length)}</div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0;align-items:center">${tabBtn('deals','Сделки',DD.length)}${tabBtn('leads','Лиды',LL.length)}${tabBtn('managers','Менеджеры',ownerSet.length)}<span style="flex:1"></span>${ztTab!=='managers'?ownerSel:''}</div>
   <div class="card">${body}</div>`;
 }
 function zohoCard(s){
