@@ -131,6 +131,11 @@ async function znote(token, module, id, title, content) {
   const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/${module}/${id}/Notes`, { method: 'POST', headers: { Authorization: 'Zoho-oauthtoken ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ data: [{ Note_Title: title || 'Заметка', Note_Content: content || '' }] }) });
   let d = {}; try { d = await r.json(); } catch (e) {} return { ok: r.ok, d };
 }
+async function zget(token, path) {
+  const r = await fetch(`https://www.zohoapis.${DC}/crm/v3/${path}`, { headers: { Authorization: 'Zoho-oauthtoken ' + token } });
+  if (r.status === 204) return { data: [] };
+  try { return await r.json(); } catch (e) { return {}; }
+}
 const WRITE_MODULES = { Leads: 1, Deals: 1, Contacts: 1, Tasks: 1 };
 
 export default async function handler(req, res) {
@@ -185,6 +190,26 @@ export default async function handler(req, res) {
 
   const auth = await authUser(req);
   const isAdmin = !!auth && auth.role === 'admin';
+
+  // Детальная карточка: одна запись + её заметки. Только авторизованным; сотрудник — только свою.
+  if (req.query && req.query.detail) {
+    if (!auth) return res.status(401).json({ error: 'auth required' });
+    if (!CID || !SECRET || !RT) return res.status(400).json({ error: 'zoho not configured' });
+    const module = String(req.query.module || ''), id = String(req.query.id || '');
+    if (!WRITE_MODULES[module] || !id) return res.status(400).json({ error: 'bad module/id' });
+    try {
+      const token = await accessToken();
+      const rec = await zget(token, `${module}/${id}`);
+      const record = (rec && rec.data && rec.data[0]) || null;
+      if (!record) return res.status(404).json({ error: 'not found' });
+      const ownerEmail = (record.Owner && record.Owner.email) ? String(record.Owner.email).toLowerCase() : '';
+      if (!isAdmin && ownerEmail && ownerEmail !== auth.email) return res.status(403).json({ error: 'forbidden' });
+      let notes = [];
+      try { const n = await zget(token, `${module}/${id}/Notes?per_page=50`); notes = (n && n.data) || []; } catch (e) {}
+      return res.status(200).json({ record, notes });
+    } catch (e) { return res.status(500).json({ error: String((e && e.message) || e) }); }
+  }
+
   let email = String((req.query && req.query.email) || '').trim().toLowerCase();
   // Модель «каждый свой»: сотрудник видит только свой email; админ — любой.
   if (auth && !isAdmin) email = auth.email;
