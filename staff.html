@@ -232,7 +232,7 @@ function vLeads(){
 function leadRow(l,mine){
   const ac=acctFor(l);const own=ac&&ac.owner?`<span class="st pt" style="margin-left:6px">клиент ведёт ${esc(ac.owner)}</span>`:(ac?`<span class="st nw" style="margin-left:6px">клиент без владельца</span>`:'');
   const takenByOther=ac&&ac.owner&&ac.owner!==S.name;
-  return `<div class="fbar"><div style="flex:1"><b>${esc(l.product||l.vendor||'—')}</b> <span class="st ${l.source==='cart'?'pt':'nw'}">${l.source==='cart'?'корзина':'демо'}</span>${own}
+  return `<div class="fbar"><div style="flex:1"><b>${esc(l.product||l.vendor||'—')}</b> <span class="st ${l.source==='cart'?'pt':'nw'}">${l.source==='cart'?'корзина':(l.source||'').startsWith('promo')?'промо':'демо'}</span>${own}
     <br><span class="sub">${esc(l.visitor_name||'Гость')}${l.contact?(' · '+esc(l.contact)):''} · ${(l.created_at||'').slice(0,16).replace('T',' ')}</span>${l.message?`<br><span style="font-size:13px">${esc(l.message)}</span>`:''}</div>
     ${mine?'<span class="st ap">моя</span>':(takenByOther?'<span class="st rej">занят</span>':`<button class="btn sm" onclick="claimLead('${l.id}')">Взять</button>`)}</div>`;
 }

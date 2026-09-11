@@ -619,7 +619,7 @@ function home(){
   <div class="h2"><span class="lft">${t('quick')}</span><a onclick="toggleQuick()">${quickOpen?(lang==='ru'?'Свернуть':lang==='en'?'Collapse':'Փակել'):(lang==='ru'?'Ещё':lang==='en'?'More':'Ավելին')} ${quickOpen?'▴':'▾'}</a></div>
   <p class="qhint">Нажмите на плитку — подсказка по продукту. <span class="qdot"></span> — можно посмотреть вживую на VBET.</p>
   <div class="qa">${(quickOpen?QUICK:QUICK.slice(0,8)).map((q,i)=>`<div class="qtile${q[5]?' demo':''}" onclick="quickTap(${i})">${ic(q[0])}<p>${q[1]}</p></div>`).join('')}</div>
-  <div class="promo" onclick="openURL('https://www.betconstruct.com/products')"><div><div class="t">${ic('sparkles')} ${t('promoT')}</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
+  <div class="promo" role="button" tabindex="0" onclick="promoSales()" onkeydown="if(event.key==='Enter')promoSales()"><div><div class="t">${ic('sparkles')} ${t('promoT')}</div><div class="d">${t('wonderD')}</div></div><div class="chev">›</div></div>
   <div style="height:16px"></div>`;
 }
 function vpnCard(){
@@ -719,6 +719,25 @@ function doDemo(){
   notifyApp({kind:'demo_request',company:v[0],category:v[1]||'',contact_name:window.USER||'',email:contact,description:'Запрос демо на продукт «'+v[0]+'»'});
   toast('Запрос демо отправлен');
   go('chat');
+}
+// Промо «Запусти казино за 2 недели» -> лид в «Входящие лиды» для sales + чат с менеджером.
+// Лид создаётся один раз на посетителя, чтобы повторные нажатия не плодили дубли.
+function promoSales(){
+  const offer='Turnkey · Curaçao · Casino Suite';
+  let contact='';try{const g=JSON.parse(localStorage.getItem('bc_guest')||'null');if(g)contact=g.contact||'';}catch(e){}
+  let seen=false;try{seen=localStorage.getItem('bc_promo_casino2w')==='1';}catch(e){}
+  if(!seen){
+    if(db){db.from('leads').insert({vendor:'BetConstruct',product:offer,visitor_name:window.USER||'',contact:contact,message:'Промо: запуск казино за 2 недели',source:'promo_casino_2w',status:'new'}).then(()=>{},()=>{});}
+    notifyApp({kind:'promo_request',company:'BetConstruct',category:offer,contact_name:window.USER||'',email:contact,description:'Промо «Запусти казино за 2 недели»: '+offer});
+    try{localStorage.setItem('bc_promo_casino2w','1');}catch(e){}
+  }
+  track('lead','promo_casino_2w',{repeat:seen});
+  go('chat');
+  const msg=lang==='en'?'Hello! I want to launch a casino in 2 weeks: '+offer+'. Please tell me about the terms.'
+    :lang==='hy'?'Բարև ձեզ։ Ուզում եմ գործարկել կազինո 2 շաբաթում՝ '+offer+'։ Պատմեք պայմանների մասին։'
+    :'Здравствуйте! Хочу запустить казино за 2 недели: '+offer+'. Расскажите об условиях.';
+  const el=document.getElementById('cin'); if(el){el.value=msg; el.focus();}
+  toast(lang==='en'?'Sales manager is notified — send your message':lang==='hy'?'Մենեջերը տեղեկացված է — ուղարկեք հաղորդագրությունը':'Менеджер по продажам в курсе — отправьте сообщение');
 }
 let CART=[];try{CART=JSON.parse(localStorage.getItem('bc_cart')||'[]');}catch(e){}
 function saveCart(){try{localStorage.setItem('bc_cart',JSON.stringify(CART));}catch(e){}}
@@ -1091,6 +1110,7 @@ function navKB(){
     'Loyalty — XP и VIP-уровни с бонусами.',
     'Быстрый доступ на главной: плитки продуктов — по нажатию подсказка и переход в карточку каталога. Живые примеры работы продуктов у оператора VBET (vbet.com): '+QUICK.filter(q=>q[5]).map(q=>q[1]+' — '+q[5]).join('; ')+'. Советуй клиенту посмотреть живой пример, если он хочет увидеть продукт в работе.',
     'Чат с менеджером — живой чат для финальных условий и договора.',
+    'Промо на главной «Запусти казино за 2 недели» (Turnkey · Curaçao · Casino Suite) — открывает чат с отделом продаж и сразу создаёт для них заявку.',
     'Стать партнёром (форма): KYB-данные компании, тип продукта ('+['Игра','Платёжная система','Платформа','Инструмент / Софт','Лицензионный сервис','Маркетинг / Affiliate'].join('/')+'), описание и ценность, регионы и запрещённые рынки, языки и валюты, крипто-поддержка, комплаенс, модель монетизации (RevShare/CPA/Fixed fee/License/Hybrid), ценовой ориентир, % платформе, AI-теги (вертикаль, гео, сегмент SMB/Mid-market/Enterprise). После модерации — бейдж «Approved by BetConstruct» или «Partner by BetConstruct» и доступ в кабинет партнёра.',
     'Аффилейт / Маркетинг (форма): тип (Affiliate-сеть/Трафик-команда/Маркетинг-агентство/Инфлюенсер), модель (CPA/RevShare/Hybrid/Fixed fee), гео, вертикали, источники трафика, объёмы, кейсы и метрики, минимальные условия, KYB.',
     'Роли при регистрации: оператор-покупатель, поставщик игр, платёжный провайдер, аффилейт.'
